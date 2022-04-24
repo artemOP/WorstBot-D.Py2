@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
-import asyncio
 import Tokens
 from os import listdir
 import asyncpg
 import datetime
+import logging
 
+logging.basicConfig(level=logging.INFO)
 class WorstBot(commands.Bot):
     def __init__(self, command_prefix, activity, intents):
         super().__init__(command_prefix, intents=intents)
