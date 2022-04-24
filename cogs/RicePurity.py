@@ -26,7 +26,6 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
             child.disabled = True
         await self.response.edit(content="This interaction has ended", view=self)
 
-
     async def on_complete(self, interaction: discord.Interaction):
         await self.on_timeout()
         await interaction.response.edit_message(content=f"Your score was:{self.score}")
@@ -60,8 +59,7 @@ class PurityLeaderboard(discord.ui.View):
     def __init__(self, timeout):
         super().__init__(timeout=timeout)
         self.response=None
-        self.users = None
-        self.embedlist = []
+        self.embedlist = None
         self.page = 0
 
     async def on_timeout(self) -> None:
@@ -139,14 +137,13 @@ class RicePurity(commands.Cog, app_commands.Group,name="ricepurity"):  # Main co
     @app_commands.command(name="leaderboard")
     async def leaderboard(self, interaction: discord.Interaction):
         view = PurityLeaderboard(timeout=300)
-        view.users = {}
+        users = {}
         for member in interaction.guild.members:
             async with self.bot.pool.acquire() as conn:
                 async with conn.transaction():
-                    if (
-                    score := await conn.fetchval("SELECT score FROM RicePurity WHERE id=$1", member.id)) is not None:
-                        view.users[member.id] = score
-        view.embedlist = await self.embedforming(view.users)
+                    if (score := await conn.fetchval("SELECT score FROM RicePurity WHERE id=$1", member.id)) is not None:
+                        users[member.id] = score
+        view.embedlist = await self.embedforming(users)
         await interaction.response.send_message(view=view, embed=view.embedlist[0])
         view.response = await interaction.original_message()
 
