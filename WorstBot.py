@@ -32,3 +32,5 @@ bot = WorstBot(command_prefix=".",
                   activity=discord.Game(name="With ones and zeros"),
                   intents=intents)
 bot.run(Tokens.discord)
+
+#TODO:CREATE DB TABLE FORMAT GUILD ID, COMMAND1,2,3... WITH BOOL VALUES TO DETERMINE IF ENABLED OR NOT, USE app_commands.check  TO DETERMINE STATE AND ONLY RUN IF TRUE
