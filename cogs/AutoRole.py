@@ -109,5 +109,19 @@ class AutoRole(commands.Cog, app_commands.Group,name="autorole"):
         await interaction.response.send_message(view=view, embed=view.embedlist[0])
         view.response = await interaction.original_message()
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        async with self.bot.pool.acquire() as conn:
+            async with conn.transaction():
+                roles = await conn.fetch("SELECT role FROM Autorole WHERE guild=$1", member.guild.id)
+        for role in roles:
+            role = member.guild.get_role(role["role"])
+            try:
+                await member.add_roles(role)
+            except:
+                pass
+
+
+
 async def setup(bot):
     await bot.add_cog(AutoRole(bot))

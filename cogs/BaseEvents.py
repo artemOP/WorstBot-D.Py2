@@ -10,11 +10,7 @@ class BaseEvents(commands.Cog):
     async def on_ready(self):
         print("BaseEvents cog online")
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                roles = await conn.fetchall("SELECT role FROM Autorole WHERE guild=$1", member.guild.id)
+
 
 async def setup(bot):
     await bot.add_cog(BaseEvents(bot))
