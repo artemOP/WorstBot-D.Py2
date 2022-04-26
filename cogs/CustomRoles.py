@@ -5,8 +5,9 @@ from discord import app_commands
 from discord.ext import commands
 from pprint import pprint
 
-class CustomRoles(commands.Cog):
+class CustomRoles(commands.Cog, app_commands.Group,name="custom-role"):
     def __init__(self, bot: commands.Bot):
+        super().__init__()
         self.bot = bot
 
     @commands.Cog.listener()
@@ -51,7 +52,7 @@ class CustomRoles(commands.Cog):
                     "INSERT INTO CustomRoles(guild,member,role) VALUES($1,$2,$3) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role",
                     interaction.guild.id, interaction.user.id, role.id)
 
-    @app_commands.command(name="role")
+    @app_commands.command(name="colour")
     async def EditRole(self, interaction:discord.Interaction, colour: str):
         colour = discord.Colour(value=int(colour, 16))
         async with self.bot.pool.acquire() as conn:
@@ -67,7 +68,7 @@ class CustomRoles(commands.Cog):
             await self.CreateRole(interaction, colour)
         await interaction.response.send_message(content=f'your colour has now been set to {colour}',ephemeral=True)
 
-    @app_commands.command(name="colour")
+    @app_commands.command(name="check")
     async def colourCheck(self, interaction:discord.Interaction, arg: Optional[discord.User] = None):
         if arg:
             user = arg.id
