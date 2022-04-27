@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 from pprint import pprint
 
-class CustomRoles(commands.Cog, app_commands.Group,name="custom-role"):
+class CustomRoles(commands.Cog, app_commands.Group,name="role"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
