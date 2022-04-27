@@ -2,13 +2,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import discord.utils
-from asyncio import sleep
 
 
 class PersonalCalls(commands.Cog, app_commands.Group):
     UserBlacklistGroup = app_commands.Group(name="blacklist", description="Add/Remove/Search users to voice blacklist")
-    CallBlacklistGroup = app_commands.Group(name="protect",
-                                            description="Add/Remove/List calls to stop them being handled by PersonalCalls")
+    CallBlacklistGroup = app_commands.Group(name="protect", description="Add/Remove/List calls to stop them being handled by PersonalCalls")
 
     def __init__(self, bot):
         super().__init__(name="personal-call")
