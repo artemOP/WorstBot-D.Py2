@@ -30,7 +30,7 @@ class Opinion(commands.Cog):
                         await conn.execute("INSERT INTO Opinion(guild, timestamp, content, attachment) VALUES ($1,$2,$3,$4)",
                                            message.guild.id, message.created_at, message.clean_content, message.attachments)
 
-    @app_commands.command(name="opinion",description="Ask worst bot for its opinion on your super important questions")
+    @app_commands.command(name="opinion", description="Ask worst bot for its opinion on your super important questions")
     async def opinion(self,interaction:discord.Interaction, opinion:str=None):
         async with self.bot.pool.acquire() as conn:
             async with conn.transaction():
