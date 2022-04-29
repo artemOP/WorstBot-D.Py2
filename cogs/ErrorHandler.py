@@ -23,6 +23,9 @@ class ErrorHandler(commands.Cog):
                 await interaction.response.send_message(f"WorstBot is missing the {error.missing_permissions} perms")
             case app_commands.CommandInvokeError():
                 await interaction.response.send_message(f"Command errored on invoke\n\nTraceback: {error}")
+            case app_commands.MissingPermissions():
+                print(error)
+                await interaction.response.send_message(f"You are missing the {error.missing_permissions[0]} permissions")
             case _:
                 # print(error)
                 raise
