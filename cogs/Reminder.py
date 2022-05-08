@@ -1,19 +1,20 @@
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-from asyncio import sleep
-from datetime import datetime as dt
+from typing import Optional
+from datetime import datetime as dt, timedelta
 
 
-class Reminder(commands.Cog):
+class Reminder(commands.Cog, app_commands.Group):
     def __init__(self, bot: commands.Bot):
+        super().__init__(name = "reminder")
         self.bot = bot
         self.reminder.start()
 
     @commands.Cog.listener()
     async def on_ready(self):
         await self.execute(
-            "CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime INTEGER NOT NULL,message TEXT NOT NULL, jumplink TEXT NOT NULL)",
+            "CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime INTERVAL SECOND NOT NULL, jumplink TEXT NOT NULL)",
             [])
         print("Reminder cog online")
 
@@ -32,16 +33,19 @@ class Reminder(commands.Cog):
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
-    @app_commands.describe(year="YYYY", month="MM", day="DD", hour="HH", minute="MM", second="SS", message="reminder message")
-    @app_commands.command(name="remindme", description="Set a DM reminder for all your important things (all fields are optional)")
-    async def ReminderCreate(self, interaction: discord.Interaction, year: int = None, month: int = None, day: int = None, hour: int = None, minute: int = None, second: int = None, message: str = "..."):
-        expiretime = dt(year=year, month=month, day=day, hour=hour, minute=minute, second=second)
-        await interaction.response.send_message(f"""Reminding you about "{message}" """)
-        response = await interaction.original_message()
+    @app_commands.command(name = "create",
+                          description = "Set a DM reminder for all your important things (all fields are optional)")
+    @app_commands.describe(year = "YYYY", month = "MM", day = "DD", hour = "HH", minute = "MM", second = "SS",
+                           message = "reminder message")
+    async def ReminderCreate(self, interaction: discord.Interaction,
+                             year: int = dt.now().year, month: int = dt.now().month, day: int = dt.now().day,
+                             hour: int = dt.now().hour, minute: int = dt.now().minute, second: int = dt.now().second,
+                             message: str = "..."):  # TODO:args
+        expiretime = timedelta(year, month, day, hour, minute, second)
         await self.execute(
-            "INSERT INTO reminder(guild, member, creationtime, expiretime, message, jumplink) VALUES($1, $2, $3, $4, $5, $6)",
-            [interaction.guild.id, interaction.user.id, interaction.created_at, expiretime.timestamp(), message, response.jump_url])
-        self.reminder.restart()
+            "INSERT INTO reminder(guild, member, creationtime, expiretime, jumplink) VALUES($1, $2, $3, $4, $5)",
+            [interaction.guild.id, interaction.user.id, interaction.created_at, expiretime.total_seconds,
+             interaction.message.jump_url])  # TODO:jump link errors, find new way to link back
 
     """
     reminder create YY, MM, DD, HH, MM, SS, message
@@ -49,12 +53,9 @@ class Reminder(commands.Cog):
     restart task on invoke
     """
 
-    @tasks.loop(seconds=30, reconnect=True)
+    @tasks.loop(seconds = 30, reconnect = True)
     async def reminder(self):
-        #reminder = await self.fetch("SELECT guild, member, creationtime, MIN(expiretime), message, jumplink FROM reminder GROUP BY guild, member, creationtime, message, jumplink",[])
-        reminder = await self.fetchval("SELECT MIN(expiretime) FROM Reminder", [])
-        await self.execute("DELETE FROM Reminder WHERE expiretime=$1",[reminder])
-        print(reminder)
+        pass
 
     """
     get first reminder sorted by soonest expiring
