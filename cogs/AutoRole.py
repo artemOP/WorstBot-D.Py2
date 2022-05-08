@@ -50,7 +50,7 @@ class AutoRoleList(discord.ui.View):
         await interaction.response.edit_message(embed=self.embedlist[self.page])
 
 
-class AutoRole(commands.GroupCog,name="autorole"):
+class AutoRole(commands.Cog, app_commands.Group,name="autorole"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot

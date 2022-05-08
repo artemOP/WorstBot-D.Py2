@@ -4,12 +4,12 @@ from discord.ext import commands
 import discord.utils
 
 
-class PersonalCalls(commands.GroupCog,name="personal-call"):
+class PersonalCalls(commands.Cog, app_commands.Group):
     UserBlacklistGroup = app_commands.Group(name="blacklist", description="Add/Remove/Search users to voice blacklist", default_permissions = discord.Permissions(ban_members=True),guild_only = True)
     CallBlacklistGroup = app_commands.Group(name="protect", description="Add/Remove/List calls to stop them being handled by PersonalCalls", default_permissions = discord.Permissions(manage_channels=True), guild_only = True)
 
-    def __init__(self, bot:commands.Bot):
-        super().__init__()
+    def __init__(self, bot):
+        super().__init__(name="personal-call")
         self.bot = bot
 
     @commands.Cog.listener()

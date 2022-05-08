@@ -5,9 +5,9 @@ from os import listdir
 
 
 # noinspection PyUnresolvedReferences
-class PersonalCommands(commands.GroupCog, name="admin"):
+class PersonalCommands(commands.Cog, app_commands.Group):
     def __init__(self, bot: commands.Bot):
-        super().__init__()
+        super().__init__(name = "admin")
         self.bot = bot
 
     @commands.Cog.listener()
