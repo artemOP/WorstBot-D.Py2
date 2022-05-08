@@ -19,8 +19,7 @@ class WorstBot(commands.Bot):
             if filename.endswith(".py"):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 pass
-        bot.pool = await asyncpg.create_pool(database = "WorstDB", user = "WorstBot", password = Tokens.postgres,
-                                             command_timeout = 10, max_size = 100, min_size = 25)
+        bot.pool = await asyncpg.create_pool(database = "WorstDB", user = "WorstBot", password = Tokens.postgres, command_timeout = 10, max_size = 100, min_size = 25)
 
     async def on_ready (self):
         alpha = discord.Object(id = 700833272380522496)
