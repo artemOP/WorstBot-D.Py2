@@ -16,8 +16,7 @@ class PersonalCalls(commands.Cog, app_commands.Group):
     async def on_ready(self):
         async with self.bot.pool.acquire() as conn:
             async with conn.transaction():
-                await conn.execute(
-                    "CREATE TABLE IF NOT EXISTS PersonalCall(guild BIGINT UNIQUE, channel BIGINT UNIQUE)")
+                await conn.execute("CREATE TABLE IF NOT EXISTS PersonalCall(guild BIGINT UNIQUE, channel BIGINT UNIQUE)")
                 await conn.execute("CREATE TABLE IF NOT EXISTS CallBlacklist(guild BIGINT, channel BIGINT)")
                 await conn.execute("CREATE TABLE IF NOT EXISTS UserBlacklist(member BIGINT UNIQUE)")
         print("Personal call cog online")
@@ -41,19 +40,16 @@ class PersonalCalls(commands.Cog, app_commands.Group):
     async def on_voice_state_update(self, member, before, after):
         PersonalChannel = self.bot.get_channel(
             await self.fetchval("SELECT channel FROM PersonalCall WHERE guild=$1", [member.guild.id]))
-        if await self.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE member=$1)",
-                               [member.id]) is True and after.channel is not None:
+        if await self.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE member=$1)", [member.id]) is True and after.channel is not None:
             # if after.channel.id == PersonalChannel.id:
             await member.edit(voice_channel=None)
             return
         if before.channel is None and after.channel is not None:
             if after.channel.id == PersonalChannel.id:
-                channel = await after.channel.category.create_voice_channel(name=member.name, user_limit=99,
-                                                                            bitrate=member.guild.bitrate_limit)
+                channel = await after.channel.category.create_voice_channel(name=member.name, user_limit=99, bitrate=member.guild.bitrate_limit)
                 await member.move_to(channel)
         elif before.channel is not None and before.channel.id != PersonalChannel.id:
-            if await self.fetchval("SELECT EXISTS(SELECT 1 FROM CallBlacklist WHERE channel=$1)",
-                                   [before.channel.id]) is False and before.channel.members == []:
+            if await self.fetchval("SELECT EXISTS(SELECT 1 FROM CallBlacklist WHERE channel=$1)", [before.channel.id]) is False and before.channel.members == []:
                 await before.channel.delete()
         if after.channel is not None and after.channel.id == PersonalChannel.id:
             await member.edit(voice_channel=None)
@@ -62,15 +58,13 @@ class PersonalCalls(commands.Cog, app_commands.Group):
     @app_commands.checks.has_permissions(manage_channels=True)
     async def PersonalCallSetup(self, interaction: discord.Interaction, channel: discord.VoiceChannel):
         await self.execute(
-            "INSERT INTO PersonalCall(guild, channel) VALUES($1, $2) ON CONFLICT (guild) DO UPDATE SET channel = EXCLUDED.channel",
-            [interaction.guild.id, channel.id])
+            "INSERT INTO PersonalCall(guild, channel) VALUES($1, $2) ON CONFLICT (guild) DO UPDATE SET channel = EXCLUDED.channel", [interaction.guild.id, channel.id])
         await interaction.response.send_message(f"the new base voice call is {channel}", ephemeral=True)
 
     @CallBlacklistGroup.command(name="add")
     @app_commands.checks.has_permissions(manage_channels=True)
     async def CallBlacklistAdd(self, interaction: discord.Interaction, channel: discord.VoiceChannel):
-        await self.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)",
-                           [interaction.guild.id, channel.id])
+        await self.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)", [interaction.guild.id, channel.id])
         await interaction.response.send_message(f"{channel} is now protected", ephemeral=True)
 
     @CallBlacklistGroup.command(name="remove")
