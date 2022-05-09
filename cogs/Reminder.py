@@ -36,7 +36,6 @@ class Reminder(commands.Cog):
 
     @tasks.loop(seconds = 30, reconnect = True)
     async def ReminderTask(self):
-        print("run")
         async with self.bot.pool.acquire() as conn:
             async with conn.transaction():
                 reminder = await conn.fetchrow("SELECT * FROM reminder WHERE expiretime = (SELECT MIN(expiretime) FROM reminder)")
