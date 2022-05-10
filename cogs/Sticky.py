@@ -3,7 +3,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-class StickyMessage(commands.Cog, app_commands.Group,name="sticky"):
+class StickyMessage(commands.GroupCog,name="sticky"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
@@ -13,7 +13,7 @@ class StickyMessage(commands.Cog, app_commands.Group,name="sticky"):
         async with self.bot.pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute("CREATE TABLE IF NOT EXISTS Sticky(channel BIGINT UNIQUE NOT NULL,messageid BIGINT, message TEXT NOT NULL )")
-        print("BaseEvents cog online")
+        print("StickyMessage cog online")
 
     @app_commands.command(name="add", description = "Pin a message to the bottom of a channel")
     @app_commands.default_permissions(manage_messages = True)

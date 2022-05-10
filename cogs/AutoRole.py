@@ -49,25 +49,24 @@ class AutoRoleList(discord.ui.View):
         self.page=len(self.embedlist)-1
         await interaction.response.edit_message(embed=self.embedlist[self.page])
 
+async def embedforming(role):
+    embedlist = []
+    totalcount = 0
+    while totalcount < len(role):
+        fieldcount = 0
+        embed = discord.Embed(colour=discord.Colour.dark_purple(), title="Automatically applied roles")
+        while fieldcount < 24 and totalcount < len(role):
+            embed.add_field(name="Role:", value=role[totalcount].mention)
+            fieldcount += 1
+            totalcount += 1
+        embed.set_footer(text=f"Page {ceil(totalcount / 25)} of {ceil(len(role) / 25)}")
+        embedlist.append(embed)
+    return embedlist
 
-class AutoRole(commands.Cog, app_commands.Group,name="autorole"):
+class AutoRole(commands.GroupCog, name="autorole"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
-
-    async def embedforming(self,role):
-        embedlist = []
-        totalcount = 0
-        while totalcount < len(role):
-            fieldcount = 0
-            embed = discord.Embed(colour=discord.Colour.dark_purple(), title="Automatically applied roles")
-            while fieldcount < 24 and totalcount < len(role):
-                embed.add_field(name="Role:", value=role[totalcount].mention)
-                fieldcount += 1
-                totalcount += 1
-            embed.set_footer(text=f"Page {ceil(totalcount / 25)} of {ceil(len(role) / 25)}")
-            embedlist.append(embed)
-        return embedlist
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -105,7 +104,7 @@ class AutoRole(commands.Cog, app_commands.Group,name="autorole"):
                 roles = await conn.fetch("SELECT role FROM Autorole WHERE guild=$1", interaction.guild.id)
         for role in roles:
             roles[roles.index(role)] = interaction.guild.get_role(role["role"])
-        view.embedlist = await self.embedforming(roles)
+        view.embedlist = await embedforming(roles)
         await interaction.response.send_message(view=view, embed=view.embedlist[0])
         view.response = await interaction.original_message()
 
