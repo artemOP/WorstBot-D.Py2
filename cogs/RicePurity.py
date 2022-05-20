@@ -12,13 +12,13 @@ def generator():
         yield str(i + 1), questions[i]
 
 class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives output
-    def __init__(self, timeout):
+    def __init__(self, timeout, bot: commands.Bot):
         super().__init__(timeout=timeout)
         self.response = None
         self.score = 100
         self.counter = 0
         self.generator = generator()
-        self.pool = None
+        self.bot = bot
 
     async def on_timeout(self) -> None:
         for child in self.children:
@@ -29,9 +29,7 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
     async def on_complete(self, interaction: discord.Interaction):
         await self.on_timeout()
         await interaction.response.edit_message(content=f"Your score was:{self.score}")
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute("INSERT INTO RicePurity(id, score) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET score = EXCLUDED.score", interaction.user.id, self.score)
+        await self.bot.execute("INSERT INTO RicePurity(id, score) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET score = EXCLUDED.score", interaction.user.id, self.score)
 
     @discord.ui.button(emoji="✅", style=discord.ButtonStyle.grey)
     async def tick(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -108,9 +106,7 @@ class RicePurity(commands.GroupCog,name="ricepurity"):  # Main cog class
 
     @commands.Cog.listener()
     async def on_ready(self):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute("CREATE TABLE IF NOT EXISTS RicePurity(id BIGINT PRIMARY KEY, score INT)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS RicePurity(id BIGINT PRIMARY KEY, score INT)")
         print("RicePurity cog online")
 
     async def embedforming(self,users):
@@ -129,20 +125,17 @@ class RicePurity(commands.GroupCog,name="ricepurity"):  # Main cog class
 
     @app_commands.command(name="test")
     async def test(self, interaction: discord.Interaction):
-        view = PurityButtons(timeout=60)
+        view = PurityButtons(timeout=60, bot = self.bot)
         await interaction.response.send_message('Are you ready to begin your rice purity test?', view=view,ephemeral=True)
         view.response = await interaction.original_message()
-        view.pool = self.bot.pool
 
     @app_commands.command(name="leaderboard")
     async def leaderboard(self, interaction: discord.Interaction):
         view = PurityLeaderboard(timeout=300)
         users = {}
         for member in interaction.guild.members:
-            async with self.bot.pool.acquire() as conn:
-                async with conn.transaction():
-                    if (score := await conn.fetchval("SELECT score FROM RicePurity WHERE id=$1", member.id)) is not None:
-                        users[member.id] = score
+            if (score := await self.bot.fetchval("SELECT score FROM RicePurity WHERE id=$1", member.id)) is not None:
+                users[member.id] = score
         view.embedlist = await self.embedforming(users)
         await interaction.response.send_message(view=view, embed=view.embedlist[0])
         view.response = await interaction.original_message()

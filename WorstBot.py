@@ -20,6 +20,10 @@ class WorstBot(commands.Bot):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 pass
         bot.pool = await asyncpg.create_pool(database = "WorstDB", user = "WorstBot", password = Tokens.postgres, command_timeout = 10, max_size = 100, min_size = 25)
+        bot.fetch = self.fetch
+        bot.fetchrow = self.fetchrow
+        bot.fetchval = self.fetchval
+        bot.execute = self.execute
 
     async def on_ready (self):
         alpha = discord.Object(id = 700833272380522496)
@@ -28,6 +32,26 @@ class WorstBot(commands.Bot):
         bot.tree.copy_global_to(guild = alpha)
         await bot.tree.sync(guild = alpha)
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
+
+    async def fetch(self, sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetch(sql, *args)
+
+    async def fetchrow(self, sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetchrow(sql, *args)
+
+    async def fetchval(self, sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetchval(sql, *args)
+
+    async def execute(self, sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetchval(sql, *args)
 
 
 intents = discord.Intents.all()

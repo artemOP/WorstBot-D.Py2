@@ -71,37 +71,23 @@ class AutoRole(commands.GroupCog, name="autorole"):
     @commands.Cog.listener()
     async def on_ready(self):
         print("AutoRole cog online")
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute("CREATE TABLE IF NOT EXISTS AutoRole(guild BIGINT, role BIGINT UNIQUE )")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS AutoRole(guild BIGINT, role BIGINT UNIQUE )")
 
     @app_commands.command(name="add")
     async def AutoRoleAdd(self, interaction:discord.Interaction, role:discord.Role):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                try:
-                    await conn.execute("INSERT INTO AutoRole(guild, role) VALUES($1,$2) ON CONFLICT (role) DO NOTHING", interaction.guild.id, role.id)
-                    await interaction.response.send_message(content=f"{role.name} successfully added to the AutoRole")
-                except Exception as e:
-                    await interaction.response.send_message(content=f"failed to add {role.name} to AutoRole\n\n Error code:\n{e}")
-                    raise
+        await self.bot.execute("INSERT INTO AutoRole(guild, role) VALUES($1,$2) ON CONFLICT (role) DO NOTHING", interaction.guild.id, role.id)
+        await interaction.response.send_message(content = f"{role.name} successfully added to the AutoRole")
+
 
     @app_commands.command(name="remove")
     async def AutoRoleRemove(self, interaction: discord.Interaction, role: discord.Role):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                try:
-                    await conn.execute("DELETE FROM AutoRole WHERE guild=$1 AND role=$2", interaction.guild.id, role.id)
-                    await interaction.response.send_message(content=f"{role.name} successfully removed to the AutoRole")
-                except Exception as e:
-                    await interaction.response.send_message(content=f"failed to removed {role.name} to AutoRole\n\n Error code:\n{e}")
+        await self.bot.execute("DELETE FROM AutoRole WHERE guild=$1 AND role=$2", interaction.guild.id, role.id)
+        await interaction.response.send_message(content = f"{role.name} successfully removed to the AutoRole")
 
     @app_commands.command(name="list")
     async def AutoRoleList(self,interaction:discord.Interaction):
         view = AutoRoleList(timeout=60)
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                roles = await conn.fetch("SELECT role FROM Autorole WHERE guild=$1", interaction.guild.id)
+        roles = await self.bot.fetch("SELECT role FROM Autorole WHERE guild=$1", interaction.guild.id)
         for role in roles:
             roles[roles.index(role)] = interaction.guild.get_role(role["role"])
         view.embedlist = await embedforming(roles)
@@ -110,16 +96,13 @@ class AutoRole(commands.GroupCog, name="autorole"):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                roles = await conn.fetch("SELECT role FROM Autorole WHERE guild=$1", member.guild.id)
+        roles = await self.bot.fetch("SELECT role FROM Autorole WHERE guild=$1", member.guild.id)
         for role in roles:
             role = member.guild.get_role(role["role"])
             try:
                 await member.add_roles(role)
             except:
                 pass
-
 
 
 async def setup(bot):
