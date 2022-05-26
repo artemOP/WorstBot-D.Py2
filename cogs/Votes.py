@@ -34,12 +34,6 @@ class StartPollModal(ui.Modal, title = "Poll"):
     async def on_error(self, interaction: Interaction, error: Exception) -> None:
         raise
 
-class Vote(ui.View):#todo:rename
-    def __init__(self, *, bot: commands.Bot, timeout: int):
-        super().__init__(timeout = timeout)
-        self.bot = bot
-        self.embedlist = None
-
 class Votes(commands.GroupCog, name = "poll"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
@@ -49,7 +43,7 @@ class Votes(commands.GroupCog, name = "poll"):
     async def on_ready(self):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS votes(voteid SERIAL PRIMARY KEY, guild BIGINT, question TEXT NOT NULL, creationtime timestamptz)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS answers(voteid INT REFERENCES votes(voteid) ON UPDATE CASCADE ON DELETE CASCADE, answerid SERIAL PRIMARY KEY, answer TEXT NOT NULL)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS voters(answerid INT REFERENCES answers(answerid) ON UPDATE CASCADE ON DELETE CASCADE, member BIGINT NOT NULL UNIQUE )")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS voters(voteid INT REFERENCES votes(voteid) ON UPDATE CASCADE ON DELETE CASCADE, answerid INT REFERENCES answers(answerid) ON UPDATE CASCADE ON DELETE CASCADE, member BIGINT NOT NULL, UNIQUE(voteid, member))")
         print("Votes cog online")
 
     async def isVote(self, guild: int):
@@ -66,24 +60,25 @@ class Votes(commands.GroupCog, name = "poll"):
             await interaction.response.send_message("poll ended", ephemeral = True)
 
     @app_commands.command(name = "response", description = "respond to a poll")
-    async def Response(self, interaction: Interaction, poll: int):
-        """
-        create view
-        join tables
-        collect all polls in guild_id
-        embed paginate
-        button for each answer
-        dropdown for poll select
-        timeout after 30 seconds and delete message
-        """
-        view = Vote(bot = self.bot, timeout = 30)
+    async def Response(self, interaction: Interaction, poll: int, answer: int):
+        await self.bot.execute("INSERT INTO voters(voteid, answerid, member) VALUES($1, $2, $3) ON CONFLICT (voteid, member) DO UPDATE SET answerid=$2",poll, answer, interaction.user.id)
+        await interaction.response.send_message("vote recorded", ephemeral = True)
 
 
     @Response.autocomplete("poll")
     @VoteEnd.autocomplete("poll")
-    async def ReponseAutoComplete(self, interaction:Interaction, current):
-        responses = await self.bot.fetch("SELECT voteid, question FROM votes WHERE guild=$1 LIMIT 25", interaction.guild_id)
+    async def ResponsePollAutocomplete(self, interaction: Interaction, current):
+        if not current:
+            current = "%"
+        responses = await self.bot.fetch("SELECT voteid, question FROM votes WHERE guild=$1 AND question LIKE $2 LIMIT 25", interaction.guild_id, current)
         return [app_commands.Choice(name = question, value = voteid) for voteid, question in responses]
+
+    @Response.autocomplete("answer")
+    async def ResponseAnswerAutocomplete(self, interaction: Interaction, current):
+        if not current:
+            current = "%"
+        responses = await self.bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1 AND answer LIKE $2 LIMIT 25", interaction.namespace.poll, current)
+        return [app_commands.Choice(name = answer, value = answerid) for answerid, answer in responses]
 
 
 async def setup(bot):
