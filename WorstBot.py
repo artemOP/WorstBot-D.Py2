@@ -20,6 +20,7 @@ class WorstBot(commands.Bot):
         bot.fetchrow = self.fetchrow
         bot.fetchval = self.fetchval
         bot.execute = self.execute
+        bot.current = self.current
 
     async def on_ready (self):
         alpha = discord.Object(id = 700833272380522496)
@@ -52,6 +53,10 @@ class WorstBot(commands.Bot):
         async with bot.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
+
+    @staticmethod
+    def current(current: str):
+        return "%" if not current else current
 
 
 intents = discord.Intents.all()

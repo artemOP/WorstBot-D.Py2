@@ -140,22 +140,19 @@ class Votes(commands.GroupCog, name = "poll"):
         await view.wait()
         await self.bot.execute("DELETE FROM votes WHERE voteid=$1", poll)
 
-    @staticmethod
-    def current(current: str):
-        return "%" if not current else current
 
     @VoteResponse.autocomplete("poll")
     @VoteEdit.autocomplete("poll")
     @VoteResults.autocomplete("poll")
     @VoteEnd.autocomplete("poll")
     async def ResponsePollAutocomplete(self, interaction: Interaction, current):
-        current = self.current(current)
+        current = self.bot.current(current)
         responses = await self.bot.fetch("SELECT voteid, question FROM votes WHERE guild=$1 AND question LIKE $2", interaction.guild_id, current)
         return [app_commands.Choice(name = question, value = voteid) for voteid, question in responses]
 
     @VoteResponse.autocomplete("answer")
     async def ResponseAnswerAutocomplete(self, interaction: Interaction, current):
-        current = self.current(current)
+        current = self.bot.current(current)
         responses = await self.bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1 AND answer LIKE $2", interaction.namespace.poll, current)
         return [app_commands.Choice(name = answer, value = answerid) for answerid, answer in responses]
 
