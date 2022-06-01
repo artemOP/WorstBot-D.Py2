@@ -1,71 +1,53 @@
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-from typing import Optional
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt, timezone
+from asyncio import sleep
 
 
-class Reminder(commands.Cog, app_commands.Group):
+class Reminder(commands.Cog):
     def __init__(self, bot: commands.Bot):
-        super().__init__(name = "reminder")
         self.bot = bot
-        self.reminder.start()
+        self.ReminderTask.start()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.execute(
-            "CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime INTERVAL SECOND NOT NULL, jumplink TEXT NOT NULL)",
-            [])
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime TIMESTAMP WITH TIME ZONE NOT NULL,message TEXT NOT NULL, jumplink TEXT NOT NULL)")
         print("Reminder cog online")
 
-    async def fetch(self, sql: str, args: list):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                return await conn.fetch(sql, *args)
+    @app_commands.command(name = "remindme", description = "Set a DM reminder for all your important things (all fields are optional)")
+    @app_commands.describe(year = "YYYY", month = "MM", day = "DD", hour = "HH", minute = "MM", second = "SS", message = "reminder message")
+    async def ReminderCreate(self, interaction: discord.Interaction, year: int = None, month: int = None, day: int = None, hour: int = None, minute: int = None, second: int = None, message: str = "..."):
+        expiretime = dt(year or dt.now().year, month or dt.now().month, day or dt.now().day, hour or dt.now().hour, minute or dt.now().minute, second or dt.now().second)
+        await interaction.response.send_message(f"""Reminding you about "{message}" at {str(expiretime).split("+")[0]} """)
+        response = await interaction.original_message()
+        await self.bot.execute("INSERT INTO reminder(guild, member, creationtime, expiretime,message, jumplink) VALUES($1, $2, $3, $4, $5, $6)", interaction.guild.id, interaction.user.id, interaction.created_at, expiretime, message, response.jump_url)
+        if self.ReminderTask.is_running():
+            self.ReminderTask.restart()
+        else:
+            self.ReminderTask.start()
 
-    async def fetchval(self, sql: str, args: list):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                return await conn.fetchval(sql, *args)
-
-    async def execute(self, sql: str, args: list):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                return await conn.fetchval(sql, *args)
-
-    @app_commands.command(name = "create",
-                          description = "Set a DM reminder for all your important things (all fields are optional)")
-    @app_commands.describe(year = "YYYY", month = "MM", day = "DD", hour = "HH", minute = "MM", second = "SS",
-                           message = "reminder message")
-    async def ReminderCreate(self, interaction: discord.Interaction,
-                             year: int = dt.now().year, month: int = dt.now().month, day: int = dt.now().day,
-                             hour: int = dt.now().hour, minute: int = dt.now().minute, second: int = dt.now().second,
-                             message: str = "..."):  # TODO:args
-        expiretime = timedelta(year, month, day, hour, minute, second)
-        await self.execute(
-            "INSERT INTO reminder(guild, member, creationtime, expiretime, jumplink) VALUES($1, $2, $3, $4, $5)",
-            [interaction.guild.id, interaction.user.id, interaction.created_at, expiretime.total_seconds,
-             interaction.message.jump_url])  # TODO:jump link errors, find new way to link back
-
-    """
-    reminder create YY, MM, DD, HH, MM, SS, message
-    database: guild user creationTime expireTime message, jumpLink
-    restart task on invoke
-    """
 
     @tasks.loop(seconds = 30, reconnect = True)
-    async def reminder(self):
-        pass
+    async def ReminderTask(self):
+        reminder = await self.bot.fetchrow("SELECT * FROM reminder WHERE expiretime = (SELECT MIN(expiretime) FROM reminder)")
 
-    """
-    get first reminder sorted by soonest expiring
-    sleep until expire
-    get user
-    send dm containing message
-    include jumpLink as button
-    """
+        if not reminder:
+            self.ReminderTask.stop()
+            return
 
-    @reminder.before_loop
+        if (reminder["expiretime"] - dt.now(timezone.utc)).days > 7:
+            self.ReminderTask.stop()
+        else:
+            await discord.utils.sleep_until(reminder["expiretime"])
+            user = self.bot.get_user(reminder["member"])
+            embed = discord.Embed(colour = discord.Color.random(), title = "**Reminder**", description = f"""You asked to be reminded of: "{reminder["message"]}" """)
+            embed.add_field(name = "**original message:**", value = reminder["jumplink"])
+            await user.send(embed=embed)
+            await self.bot.execute("DELETE FROM reminder WHERE expiretime<=now()")
+
+
+    @ReminderTask.before_loop
     async def BeforeReminder(self):
         await self.bot.wait_until_ready()
 

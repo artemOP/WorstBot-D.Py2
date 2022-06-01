@@ -1,20 +1,16 @@
 from typing import Optional
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-from pprint import pprint
 
-class CustomRoles(commands.Cog, app_commands.Group,name="role"):
+class CustomRoles(commands.GroupCog,name="role"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute("CREATE TABLE IF NOT EXISTS CustomRoles(guild BIGINT, member BIGINT, role BIGINT UNIQUE )")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS CustomRoles(guild BIGINT, member BIGINT, role BIGINT UNIQUE )")
         print("BaseEvents cog online")
 
     @commands.Cog.listener()
@@ -46,18 +42,12 @@ class CustomRoles(commands.Cog, app_commands.Group,name="role"):
         role = await interaction.guild.create_role(name=str(interaction.user.name), colour=colour, hoist=False)
         await role.edit(position=interaction.user.top_role.position - 1)
         await interaction.user.add_roles(role)
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute(
-                    "INSERT INTO CustomRoles(guild,member,role) VALUES($1,$2,$3) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role",
-                    interaction.guild.id, interaction.user.id, role.id)
+        await self.bot.execute("INSERT INTO CustomRoles(guild, member, role) VALUES($1,$2,$3) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role", interaction.guild.id, interaction.user.id, role.id)
 
     @app_commands.command(name="colour")
     async def EditRole(self, interaction:discord.Interaction, colour: str):
         colour = discord.Colour(value=int(colour, 16))
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                role = await conn.fetchval("SELECT role FROM CustomRoles WHERE guild=$1 AND member=$2", interaction.guild.id,interaction.user.id)
+        role = await self.bot.fetchval("SELECT role FROM CustomRoles WHERE guild=$1 AND member=$2", interaction.guild.id,interaction.user.id)
         if role:
             try:
                 role = interaction.guild.get_role(role)
@@ -74,10 +64,8 @@ class CustomRoles(commands.Cog, app_commands.Group,name="role"):
             user = arg.id
         else:
             user = interaction.user.id
-        async with self.bot.pool.acquire() as conn:
-            async with conn.transaction():
-                role = await conn.fetchval("SELECT role FROM CustomRoles WHERE guild=$1 AND member=$2", interaction.guild.id,user)
-                role = interaction.guild.get_role(role)
+        role = await self.bot.fetchval("SELECT role FROM CustomRoles WHERE guild=$1 AND member=$2", interaction.guild.id, user)
+        role = interaction.guild.get_role(role)
         user = interaction.guild.get_member(user)
         if role is not None:
             embed = discord.Embed(colour=role.colour)
@@ -97,7 +85,7 @@ class CustomRoles(commands.Cog, app_commands.Group,name="role"):
         elif isinstance(error, commands.MissingPermissions):
             await interaction.response.send_message(f'{interaction.user.mention} you are missing the required permissions to use this command')
         else:
-            raise error
+            raise error#TODO:move into global handler
 
 async def setup(bot):
     await bot.add_cog(CustomRoles(bot))

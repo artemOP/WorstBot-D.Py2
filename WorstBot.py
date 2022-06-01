@@ -4,10 +4,6 @@ import Tokens
 from os import listdir
 import asyncpg
 import datetime
-import logging
-
-logging.basicConfig(level = logging.INFO)
-
 
 class WorstBot(commands.Bot):
     def __init__ (self, command_prefix, activity, intents):
@@ -19,8 +15,12 @@ class WorstBot(commands.Bot):
             if filename.endswith(".py"):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 pass
-        bot.pool = await asyncpg.create_pool(database = "WorstDB", user = "WorstBot", password = Tokens.postgres,
-                                             command_timeout = 10, max_size = 100, min_size = 25)
+        bot.pool = await asyncpg.create_pool(database = "WorstDB", user = "WorstBot", password = Tokens.postgres, command_timeout = 10, max_size = 100, min_size = 25)
+        bot.fetch = self.fetch
+        bot.fetchrow = self.fetchrow
+        bot.fetchval = self.fetchval
+        bot.execute = self.execute
+        bot.current = self.current
 
     async def on_ready (self):
         alpha = discord.Object(id = 700833272380522496)
@@ -30,11 +30,37 @@ class WorstBot(commands.Bot):
         await bot.tree.sync(guild = alpha)
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
+    @staticmethod
+    async def fetch(sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetch(sql, *args)
+
+    @staticmethod
+    async def fetchrow(sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetchrow(sql, *args)
+
+    @staticmethod
+    async def fetchval(sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetchval(sql, *args)
+
+    @staticmethod
+    async def execute(sql: str, *args):
+        async with bot.pool.acquire() as conn:
+            async with conn.transaction():
+                return await conn.fetchval(sql, *args)
+
+    @staticmethod
+    def current(current: str):
+        return "%" if not current else current
+
 
 intents = discord.Intents.all()
 bot = WorstBot(command_prefix = commands.when_mentioned_or('.'),
                activity = discord.Game(name = "With ones and zeros"),
                intents = intents)
 bot.run(Tokens.discord)
-
-# TODO:CREATE DB TABLE FORMAT GUILD ID, COMMAND1,2,3... WITH BOOL VALUES TO DETERMINE IF ENABLED OR NOT, USE app_commands.check  TO DETERMINE STATE AND ONLY RUN IF TRUE
