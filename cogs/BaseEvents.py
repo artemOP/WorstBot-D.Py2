@@ -1,5 +1,3 @@
-import discord
-from discord import app_commands
 from discord.ext import commands
 
 class BaseEvents(commands.Cog):
@@ -9,8 +7,6 @@ class BaseEvents(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("BaseEvents cog online")
-
-
 
 async def setup(bot):
     await bot.add_cog(BaseEvents(bot))
