@@ -1,22 +1,19 @@
+from math import ceil
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from math import ceil
 
 
 class AutoRoleList(discord.ui.View):
     def __init__(self, timeout):
-        super().__init__(timeout=timeout)
-        self.response=None
+        super().__init__(timeout = timeout)
+        self.response = None
         self.embedlist = None
         self.page = 0
 
     async def on_timeout(self) -> None:
-        for child in self.children:
-            child.style = discord.ButtonStyle.red
-            child.disabled = True
-        await self.response.edit(content="This interaction has ended",embed=None, view=self)
-        #self.stop()
+        await self.response.edit(view = None)
 
     @discord.ui.button(label='First page', style=discord.ButtonStyle.red)
     async def first(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -73,18 +70,20 @@ class AutoRole(commands.GroupCog, name="autorole"):
         print("AutoRole cog online")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS AutoRole(guild BIGINT, role BIGINT UNIQUE )")
 
-    @app_commands.command(name="add")
+    @app_commands.command(name = "add")
+    @app_commands.default_permissions(manage_roles = True)
     async def AutoRoleAdd(self, interaction:discord.Interaction, role:discord.Role):
         await self.bot.execute("INSERT INTO AutoRole(guild, role) VALUES($1,$2) ON CONFLICT (role) DO NOTHING", interaction.guild.id, role.id)
         await interaction.response.send_message(content = f"{role.name} successfully added to the AutoRole")
 
-
-    @app_commands.command(name="remove")
+    @app_commands.command(name = "remove")
+    @app_commands.default_permissions(manage_roles = True)
     async def AutoRoleRemove(self, interaction: discord.Interaction, role: discord.Role):
         await self.bot.execute("DELETE FROM AutoRole WHERE guild=$1 AND role=$2", interaction.guild.id, role.id)
         await interaction.response.send_message(content = f"{role.name} successfully removed to the AutoRole")
 
-    @app_commands.command(name="list")
+    @app_commands.command(name = "list")
+    @app_commands.default_permissions(manage_roles = True)
     async def AutoRoleList(self,interaction:discord.Interaction):
         view = AutoRoleList(timeout=60)
         roles = await self.bot.fetch("SELECT role FROM Autorole WHERE guild=$1", interaction.guild.id)
