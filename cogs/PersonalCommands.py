@@ -42,14 +42,11 @@ class PersonalCommands(commands.GroupCog, name = "admin"):
         except:
             await interaction.response.send_message(f"{cog} is not a valid input", ephemeral = True)
 
-    @app_commands.command(name = "cogs", description = "list out the subfiles within WorstBot")
-    @app_commands.default_permissions(administrator = True)
-    async def Cogs(self, interaction: discord.Interaction):
-        embed = discord.Embed(colour = discord.Color.random(), title = "cogs")
-        for filename in listdir("cogs"):
-            if filename.endswith(".py") and not filename.startswith("-"):
-                embed.add_field(name = filename[:-3], value = "\u200b", inline = True)
-        await interaction.response.send_message(embed = embed, ephemeral = True)
+    @CogLoad.autocomplete("cog")
+    @CogUnload.autocomplete("cog")
+    @CogReload.autocomplete("cog")
+    async def CogAutocomplete(self, interaction: discord.Interaction, current):
+        return [app_commands.Choice(name = cog[:-3], value = cog[:-3]) for cog in listdir("cogs") if cog.endswith(".py") and not cog.startswith("-")]
 
     @app_commands.command(name = "nickname", description = "Change WorstBot's nickname")
     @app_commands.check(owner_only)
