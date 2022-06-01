@@ -4,10 +4,6 @@ import Tokens
 from os import listdir
 import asyncpg
 import datetime
-import logging
-
-logging.basicConfig(level = logging.INFO)
-
 
 class WorstBot(commands.Bot):
     def __init__ (self, command_prefix, activity, intents):
@@ -33,22 +29,26 @@ class WorstBot(commands.Bot):
         await bot.tree.sync(guild = alpha)
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
-    async def fetch(self, sql: str, *args):
+    @staticmethod
+    async def fetch(sql: str, *args):
         async with bot.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetch(sql, *args)
 
-    async def fetchrow(self, sql: str, *args):
+    @staticmethod
+    async def fetchrow(sql: str, *args):
         async with bot.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchrow(sql, *args)
 
-    async def fetchval(self, sql: str, *args):
+    @staticmethod
+    async def fetchval(sql: str, *args):
         async with bot.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
-    async def execute(self, sql: str, *args):
+    @staticmethod
+    async def execute(sql: str, *args):
         async with bot.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
@@ -59,5 +59,3 @@ bot = WorstBot(command_prefix = commands.when_mentioned_or('.'),
                activity = discord.Game(name = "With ones and zeros"),
                intents = intents)
 bot.run(Tokens.discord)
-
-# TODO:CREATE DB TABLE FORMAT GUILD ID, COMMAND1,2,3... WITH BOOL VALUES TO DETERMINE IF ENABLED OR NOT, USE app_commands.check  TO DETERMINE STATE AND ONLY RUN IF TRUE
