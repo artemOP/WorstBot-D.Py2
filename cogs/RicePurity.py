@@ -1,8 +1,8 @@
 from json import load
+from math import ceil
 import discord
 from discord import app_commands
 from discord.ext import commands
-from math import ceil
 
 
 def generator():
@@ -21,10 +21,7 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
         self.bot = bot
 
     async def on_timeout(self) -> None:
-        for child in self.children:
-            child.style = discord.ButtonStyle.red
-            child.disabled = True
-        await self.response.edit(content="This interaction has ended", view=self)
+        await self.response.edit(view = None)
 
     async def on_complete(self, interaction: discord.Interaction):
         await self.on_timeout()
@@ -61,11 +58,7 @@ class PurityLeaderboard(discord.ui.View):
         self.page = 0
 
     async def on_timeout(self) -> None:
-        for child in self.children:
-            child.style = discord.ButtonStyle.red
-            child.disabled = True
-        await self.response.edit(content="This interaction has ended", view=self)
-        #self.stop()
+        await self.response.edit(view = None)
 
     @discord.ui.button(label='First page', style=discord.ButtonStyle.red, custom_id='RicePurityPersistent:FirstPage')
     async def first(self, interaction: discord.Interaction, button: discord.ui.Button):
