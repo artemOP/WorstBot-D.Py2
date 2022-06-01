@@ -1,7 +1,8 @@
+from os import listdir
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from os import listdir
 
 
 # noinspection PyUnresolvedReferences
@@ -20,24 +21,29 @@ class PersonalCommands(commands.GroupCog, name = "admin"):
 
     @app_commands.command(name = "load")
     @app_commands.check(owner_only)
+    @app_commands.default_permissions(administrator = True)
     async def CogLoad(self, interaction: discord.Interaction, cog: str):
         await self.bot.load_extension(f"cogs.{cog}")
         await interaction.response.send_message(f"{cog} has been loaded", ephemeral = True)
 
     @app_commands.command(name = "unload")
     @app_commands.check(owner_only)
+    @app_commands.default_permissions(administrator = True)
     async def CogUnload(self, interaction: discord.Interaction, cog: str):
         await self.bot.unload_extension(f"cogs.{cog}")
         await interaction.response.send_message(f"{cog} has been unloaded", ephemeral = True)
 
     @app_commands.command(name = "reload")
-    @commands.has_permissions(administrator = True)
+    @app_commands.default_permissions(administrator = True)
     async def CogReload(self, interaction: discord.Interaction, cog: str):
-        await self.bot.reload_extension(f"cogs.{cog}")
-        await interaction.response.send_message(f"{cog} has been reloaded", ephemeral = True)
+        try:
+            await self.bot.reload_extension(f"cogs.{cog}")
+            await interaction.response.send_message(f"{cog} has been reloaded", ephemeral = True)
+        except:
+            await interaction.response.send_message(f"{cog} is not a valid input", ephemeral = True)
 
     @app_commands.command(name = "cogs", description = "list out the subfiles within WorstBot")
-    @commands.has_permissions(administrator = True)
+    @app_commands.default_permissions(administrator = True)
     async def Cogs(self, interaction: discord.Interaction):
         embed = discord.Embed(colour = discord.Color.random(), title = "cogs")
         for filename in listdir("cogs"):
@@ -47,6 +53,7 @@ class PersonalCommands(commands.GroupCog, name = "admin"):
 
     @app_commands.command(name = "nickname", description = "Change WorstBot's nickname")
     @app_commands.check(owner_only)
+    @app_commands.default_permissions(administrator = True)
     async def nickname(self, interaction: discord.Interaction, nickname: str = ""):
         await interaction.guild.me.edit(nick = nickname)
         await interaction.response.send_message(f"nickname set to {nickname}", ephemeral = True)
