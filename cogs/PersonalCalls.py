@@ -4,8 +4,6 @@ from discord.ext import commands
 
 
 class PersonalCalls(commands.GroupCog, name = "personal-call"):
-    UserBlacklistGroup = app_commands.Group(name = "blacklist", description = "Add/Remove/Search users to voice blacklist", default_permissions = discord.Permissions(ban_members = True), guild_only = True)
-    CallBlacklistGroup = app_commands.Group(name = "protect", description = "Add/Remove/List calls to stop them being handled by PersonalCalls", default_permissions = discord.Permissions(manage_channels = True), guild_only = True)
 
     def __init__(self, bot):
         super().__init__()
@@ -43,20 +41,25 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         await self.bot.execute("INSERT INTO PersonalCall(guild, channel) VALUES($1, $2) ON CONFLICT (guild) DO UPDATE SET channel = EXCLUDED.channel", interaction.guild.id, channel.id)
         await interaction.response.send_message(f"the new base voice call is {channel}", ephemeral = True)
 
-    @CallBlacklistGroup.command(name = "add")
-    @app_commands.checks.has_permissions(manage_channels = True)
+    @app_commands.command(name = "call-protect-add")
+    @app_commands.default_permissions(manage_channels = True)
     async def CallBlacklistAdd(self, interaction: discord.Interaction, channel: discord.VoiceChannel):
         await self.bot.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)", interaction.guild.id, channel.id)
         await interaction.response.send_message(f"{channel} is now protected", ephemeral = True)
 
-    @CallBlacklistGroup.command(name = "remove")
-    @app_commands.checks.has_permissions(manage_channels = True)
-    async def CallBlacklistRemove(self, interaction: discord.Interaction, channel: discord.VoiceChannel):
-        await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel.id)
-        await interaction.response.send_message(f"{channel} is no longer protected", ephemeral = True)
+    @app_commands.command(name = "call-protect-remove")
+    @app_commands.default_permissions(manage_channels = True)
+    async def CallBlacklistRemove(self, interaction: discord.Interaction, channel: int):
+        await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel)
+        await interaction.response.send_message("channel is no longer protected", ephemeral = True)
 
-    @CallBlacklistGroup.command(name="list")
-    @app_commands.checks.has_permissions(manage_channels=True)
+    @CallBlacklistRemove.autocomplete("channel")
+    async def CallBlacklistRemoveAutocomplete(self, interaction: discord.Interaction, current):
+        channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
+        return [app_commands.Choice(name = self.bot.get_channel(channel["channel"]), value = channel["channel"]) for channel in channels]
+
+    @app_commands.command(name="call-protect-list")
+    @app_commands.default_permissions(manage_channels=True)
     async def CallBlacklistList(self, interaction: discord.Interaction):
         embed = discord.Embed(colour=discord.Colour.random(), title="Protected channels")
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
@@ -64,21 +67,21 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
             embed.add_field(name=self.bot.get_channel(channel["channel"]), value="\u200b")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @UserBlacklistGroup.command(name="add")
-    @app_commands.checks.has_permissions(ban_members=True)
+    @app_commands.command(name="user-blacklist-add")
+    @app_commands.default_permissions(ban_members=True)
     async def UserBlacklistAdd(self, interaction: discord.Interaction, member: discord.Member):
         await self.bot.execute("INSERT INTO UserBlacklist(member) VALUES($1) ON CONFLICT DO NOTHING", member.id)
         await interaction.response.send_message(f"{member.name} has been blacklisted from calls", ephemeral=True)
 
-    @UserBlacklistGroup.command(name="remove")
-    @app_commands.checks.has_permissions(ban_members=True)
+    @app_commands.command(name="user-blacklist-remove")
+    @app_commands.default_permissions(ban_members=True)
     async def UserBlacklistRemove(self, interaction: discord.Interaction, member: discord.Member):
         await self.bot.execute("DELETE FROM UserBlacklist WHERE member=$1", member.id)
         await interaction.response.send_message(f"{member.name} is no longer blacklisted from calls", ephemeral=True)
 
-    @UserBlacklistGroup.command(name="search")
-    @app_commands.checks.has_permissions(ban_members=True)
-    async def UserBlacklistRemove(self, interaction: discord.Interaction, member: discord.Member):
+    @app_commands.command(name="user-blacklist-search")
+    @app_commands.default_permissions(ban_members=True)
+    async def UserBlacklistSearch(self, interaction: discord.Interaction, member: discord.Member):
         if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE member=$1)", member.id) is True:
             await interaction.response.send_message(f"{member.name} is blacklisted from calls", ephemeral=True)
         else:
