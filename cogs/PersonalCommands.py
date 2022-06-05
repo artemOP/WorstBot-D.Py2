@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 
 
-# noinspection PyUnresolvedReferences
+@app_commands.default_permissions()
 class PersonalCommands(commands.GroupCog, name = "admin"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
@@ -21,20 +21,17 @@ class PersonalCommands(commands.GroupCog, name = "admin"):
 
     @app_commands.command(name = "load")
     @app_commands.check(owner_only)
-    @app_commands.default_permissions(administrator = True)
     async def CogLoad(self, interaction: discord.Interaction, cog: str):
         await self.bot.load_extension(f"cogs.{cog}")
         await interaction.response.send_message(f"{cog} has been loaded", ephemeral = True)
 
     @app_commands.command(name = "unload")
     @app_commands.check(owner_only)
-    @app_commands.default_permissions(administrator = True)
     async def CogUnload(self, interaction: discord.Interaction, cog: str):
         await self.bot.unload_extension(f"cogs.{cog}")
         await interaction.response.send_message(f"{cog} has been unloaded", ephemeral = True)
 
     @app_commands.command(name = "reload")
-    @app_commands.default_permissions(administrator = True)
     async def CogReload(self, interaction: discord.Interaction, cog: str):
         try:
             await self.bot.reload_extension(f"cogs.{cog}")
