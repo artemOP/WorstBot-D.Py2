@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 from os import environ
 from asyncio import sleep
 
-
+@app_commands.default_permissions()
 class Twitch(commands.GroupCog, name = "twitch"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
