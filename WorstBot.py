@@ -19,7 +19,7 @@ class WorstBot(commands.Bot):
             if filename.endswith(".py"):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 pass
-        bot.pool = await asyncpg.create_pool(database = "WorstDB", user = "WorstBot", password = environ.get("postgres"), command_timeout = 10, max_size = 100, min_size = 25)
+        bot.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
         bot.session = ClientSession()
         bot.post = self.post
         bot.get = self.get
