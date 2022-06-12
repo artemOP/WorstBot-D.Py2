@@ -8,13 +8,13 @@ from aiohttp import ClientSession
 
 
 class WorstBot(commands.Bot):
-    def __init__ (self, command_prefix, activity, intents):
+    def __init__(self, command_prefix, activity, intents):
         super().__init__(command_prefix, intents = intents)
         self.pool = None
         self.session = None
         self.activity = activity
 
-    async def setup_hook (self) -> None:
+    async def setup_hook(self) -> None:
         for filename in listdir("cogs"):
             if filename.endswith(".py"):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
@@ -29,7 +29,7 @@ class WorstBot(commands.Bot):
         bot.execute = self.execute
         bot.current = self.current
 
-    async def on_ready (self):
+    async def on_ready(self):
         alpha = discord.Object(id = 700833272380522496)
         bot.tree.clear_commands(guild = alpha)
         bot.tree.copy_global_to(guild = alpha)
