@@ -140,7 +140,6 @@ class Votes(commands.GroupCog, name = "poll"):
         await view.wait()
         await self.bot.execute("DELETE FROM votes WHERE voteid=$1", poll)
 
-
     @VoteResponse.autocomplete("poll")
     @VoteEdit.autocomplete("poll")
     @VoteResults.autocomplete("poll")
