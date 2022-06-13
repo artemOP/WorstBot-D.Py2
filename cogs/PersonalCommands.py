@@ -43,7 +43,7 @@ class PersonalCommands(commands.GroupCog, name = "admin"):
     @CogUnload.autocomplete("cog")
     @CogReload.autocomplete("cog")
     async def CogAutocomplete(self, interaction: discord.Interaction, current):
-        return [app_commands.Choice(name = cog[:-3], value = cog[:-3]) for cog in listdir("cogs") if cog.endswith(".py") and not cog.startswith("-")]
+        return [app_commands.Choice(name = cog[:-3], value = cog[:-3]) for cog in listdir("cogs") if cog.endswith(".py") and not cog.startswith("-") and current.lower() in cog.lower()]
 
     @app_commands.command(name = "nickname", description = "Change WorstBot's nickname")
     @app_commands.check(owner_only)
