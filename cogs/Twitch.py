@@ -59,14 +59,14 @@ class Twitch(commands.GroupCog, name = "twitch"):
             return []
         if len(current) < 3:
             return []
-        responses = await self.bot.get(url = "https://api.twitch.tv/helix/search/channels", params = {"query": current}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
+        responses = await self.bot.get(url = "https://api.twitch.tv/helix/search/channels", params = {"query": current, "first": 25}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
         return [app_commands.Choice(name = response["display_name"], value = int(response["id"])) for response in responses["data"]]
 
     @LiveTrackingRemove.autocomplete("twitch_user")
     async def LiveTrackingRemoveAutocomplete(self, interaction: Interaction, current):
         if not await self.validate(self.token):
             return []
-        streamIDs = await self.bot.fetch("SELECT userid FROM twitch WHERE guild=$1 LIMIT 100", interaction.guild_id)
+        streamIDs = await self.bot.fetch("SELECT userid FROM twitch WHERE guild=$1 LIMIT 25", interaction.guild_id)
         if not streamIDs:
             return []
         streamers = await self.bot.get(url = "https://api.twitch.tv/helix/channels", params = {"broadcaster_id": [streamID["userid"] for streamID in streamIDs]}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
