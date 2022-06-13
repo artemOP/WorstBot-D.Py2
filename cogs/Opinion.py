@@ -33,6 +33,7 @@ class Opinion(commands.Cog):
         await interaction.response.send_message(content=f"""{row["content"]}""")
 
     @app_commands.command(name = "prefix-blacklist", description = "blacklist prefixes used by other bots in opinion forming")
+    @app_commands.default_permissions()
     async def PrefixBlacklist(self, interaction: discord.Interaction, prefix: str):
         await self.bot.execute("INSERT INTO prefixblacklist(guild, prefix) VALUES ($1, $2)", interaction.guild_id, prefix)
         await interaction.response.send_message(f"messages starting with {prefix} will be ignored", ephemeral = True)
