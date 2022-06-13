@@ -23,6 +23,7 @@ class WorstBot(commands.Bot):
         bot.session = ClientSession()
         bot.post = self.post
         bot.get = self.get
+        bot.getstatus = self.getstatus
         bot.fetch = self.fetch
         bot.fetchrow = self.fetchrow
         bot.fetchval = self.fetchval
@@ -30,10 +31,6 @@ class WorstBot(commands.Bot):
         bot.current = self.current
 
     async def on_ready(self):
-        alpha = discord.Object(id = 700833272380522496)
-        bot.tree.clear_commands(guild = alpha)
-        bot.tree.copy_global_to(guild = alpha)
-        await bot.tree.sync(guild = alpha)
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
     @staticmethod
@@ -49,6 +46,11 @@ class WorstBot(commands.Bot):
             content = await response.json()
             content["status"] = response.status
             return content
+
+    @staticmethod
+    async def getstatus(*, url: str, params: dict = None, headers: dict = None):
+        async with bot.session.get(url = url, params = params, headers = headers) as response:
+            return response.status
 
     @staticmethod
     async def fetch(sql: str, *args):
