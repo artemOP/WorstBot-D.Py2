@@ -1,8 +1,10 @@
 from json import load
 from math import ceil
 import discord
-from discord import app_commands
+from discord import app_commands, Interaction
+from discord.ui import Item, Button, button
 from discord.ext import commands
+from typing import Any
 
 
 def generator():
@@ -15,21 +17,24 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
     def __init__(self, timeout, bot: commands.Bot):
         super().__init__(timeout = timeout)
         self.response = None
-        self.score = 100
+        self.score = 101
         self.counter = 0
         self.generator = generator()
         self.bot = bot
 
     async def on_timeout(self) -> None:
         await self.response.edit(view = None)
+    
+    async def on_error(self, interaction: Interaction, error: Exception, item: Item[Any]) -> None:
+        await interaction.response.edit_message(content = error)
 
-    async def on_complete(self, interaction: discord.Interaction):
+    async def on_complete(self, interaction: Interaction):
         await self.on_timeout()
         await interaction.response.edit_message(content = f"Your score was:{self.score}")
         await self.bot.execute("INSERT INTO ricepurity(id, score) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET score = excluded.score", interaction.user.id, self.score)
 
-    @discord.ui.button(emoji = "✅", style = discord.ButtonStyle.grey)
-    async def tick(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(emoji = "✅", style = discord.ButtonStyle.grey)
+    async def tick(self, interaction: Interaction, button: Button):
         self.score -= 1
         self.counter += 1
         if self.counter == 100:
@@ -37,11 +42,11 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
         else:
             await interaction.response.edit_message(view = self, content = ": ".join(next(self.generator)))
 
-    @discord.ui.button(emoji = "❌", style = discord.ButtonStyle.grey)
-    async def cross(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(emoji = "❌", style = discord.ButtonStyle.grey)
+    async def cross(self, interaction: Interaction, button: Button):
         match self.counter:
             case 0:
-                await interaction.response.edit_message(content = "")
+                await interaction.response.edit_message(content = "Test Cancelled")
                 await self.on_timeout()
             case 100:
                 await self.on_complete(interaction)
@@ -60,13 +65,13 @@ class PurityLeaderboard(discord.ui.View):
     async def on_timeout(self) -> None:
         await self.response.edit(view = None)
 
-    @discord.ui.button(label = 'First page', style = discord.ButtonStyle.red, custom_id = 'RicePurityPersistent:FirstPage')
-    async def first(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(label = 'First page', style = discord.ButtonStyle.red, custom_id = 'RicePurityPersistent:FirstPage')
+    async def first(self, interaction: Interaction, button: Button):
         await interaction.response.edit_message(embed = self.embedlist[0])
         self.page = 0
 
-    @discord.ui.button(label = 'Previous page', style = discord.ButtonStyle.red, custom_id = 'RicePurityPersistent:back')
-    async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(label = 'Previous page', style = discord.ButtonStyle.red, custom_id = 'RicePurityPersistent:back')
+    async def previous(self, interaction: Interaction, button: Button):
         if self.page >= 1:
             self.page -= 1
             await interaction.response.edit_message(embed = self.embedlist[self.page])
@@ -74,19 +79,19 @@ class PurityLeaderboard(discord.ui.View):
             self.page = len(self.embedlist) - 1
             await interaction.response.edit_message(embed = self.embedlist[self.page])
 
-    @discord.ui.button(label = 'Stop', style = discord.ButtonStyle.grey, custom_id = 'RicePurityPersistent:exit')
-    async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(label = 'Stop', style = discord.ButtonStyle.grey, custom_id = 'RicePurityPersistent:exit')
+    async def exit(self, interaction: Interaction, button: Button):
         await self.on_timeout()
 
-    @discord.ui.button(label = 'Next Page', style = discord.ButtonStyle.green, custom_id = 'RicePurityPersistent:forward')
-    async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(label = 'Next Page', style = discord.ButtonStyle.green, custom_id = 'RicePurityPersistent:forward')
+    async def next(self, interaction: Interaction, button: Button):
         self.page += 1
         if self.page > len(self.embedlist) - 1:
             self.page = 0
         await interaction.response.edit_message(embed = self.embedlist[self.page])
 
-    @discord.ui.button(label = 'Last Page', style = discord.ButtonStyle.green, custom_id = 'RicePurityPersistent:LastPage')
-    async def last(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(label = 'Last Page', style = discord.ButtonStyle.green, custom_id = 'RicePurityPersistent:LastPage')
+    async def last(self, interaction: Interaction, button: Button):
         self.page = len(self.embedlist) - 1
         await interaction.response.edit_message(embed = self.embedlist[self.page])
 
@@ -117,18 +122,19 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
         return embedlist
 
     @app_commands.command(name = "test")
-    async def test(self, interaction: discord.Interaction):
+    async def test(self, interaction: Interaction):
         view = PurityButtons(timeout = 60, bot = self.bot)
         await interaction.response.send_message('Are you ready to begin your rice purity test?', view = view, ephemeral = True)
         view.response = await interaction.original_message()
 
     @app_commands.command(name = "leaderboard")
-    async def leaderboard(self, interaction: discord.Interaction):
+    async def leaderboard(self, interaction: Interaction):
         view = PurityLeaderboard(timeout = 300)
         users = {}
         for member in interaction.guild.members:
             if (score := await self.bot.fetchval("SELECT score FROM ricepurity WHERE id=$1", member.id)) is not None:
                 users[member.id] = score
+        users = {key: value for key, value in sorted(users.items(), key = lambda item: item[1])}
         view.embedlist = await self.embedforming(users)
         await interaction.response.send_message(view = view, embed = view.embedlist[0])
         view.response = await interaction.original_message()
