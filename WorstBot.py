@@ -29,6 +29,7 @@ class WorstBot(commands.Bot):
         bot.fetchval = self.fetchval
         bot.execute = self.execute
         bot.current = self.current
+        bot.to_int = self.to_int
 
     async def on_ready(self):
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
@@ -77,8 +78,15 @@ class WorstBot(commands.Bot):
                 return await conn.fetchval(sql, *args)
 
     @staticmethod
-    def current(current: str):
+    def current(current: str) -> str:
         return "%" if not current else current
+
+    @staticmethod
+    async def to_int(string: str) -> int:
+        try:
+            return int(string)
+        except ValueError:
+            return 0
 
 
 load_dotenv()

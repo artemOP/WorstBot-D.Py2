@@ -46,14 +46,15 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         await interaction.response.send_message(f"{channel} is now protected", ephemeral = True)
 
     @app_commands.command(name = "remove-protection", description = "allows a channel to be deleted when empty")
-    async def CallBlacklistRemove(self, interaction: discord.Interaction, channel: int):
+    async def CallBlacklistRemove(self, interaction: discord.Interaction, channel: str):
+        channel = await self.bot.to_int(channel)
         await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel)
         await interaction.response.send_message("channel is no longer protected", ephemeral = True)
 
     @CallBlacklistRemove.autocomplete("channel")
     async def CallBlacklistRemoveAutocomplete(self, interaction: discord.Interaction, current):
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
-        return [app_commands.Choice(name = self.bot.get_channel(channel["channel"]), value = channel["channel"]) for channel in channels]
+        return [app_commands.Choice(name = self.bot.get_channel(channel["channel"]).name, value = str(channel["channel"])) for channel in channels]
 
     @app_commands.command(name="protection-list", description = "Lists out channels blocked from deletion")
     async def CallBlacklistList(self, interaction: discord.Interaction):

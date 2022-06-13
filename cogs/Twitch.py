@@ -42,13 +42,15 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.token = token["access_token"]
 
     @app_commands.command(name = "add", description = "Get live alerts for your selected twitch channel")
-    async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: int):
+    async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str):
+        twitch_user = await self.bot.to_int(twitch_user)
         await self.bot.execute("INSERT INTO twitch(guild, channel, userid) VALUES($1, $2, $3) ON CONFLICT (guild, userid) DO NOTHING", interaction.guild_id, channel.id, twitch_user)
         await self.streamers()
         await interaction.response.send_message("Streamer has been added to the Tracking list", ephemeral = True)
 
     @app_commands.command(name = "remove", description = "Remove live alerts from your selected channel")
-    async def LiveTrackingRemove(self, interaction: Interaction, twitch_user: int):
+    async def LiveTrackingRemove(self, interaction: Interaction, twitch_user: str):
+        twitch_user = await self.bot.to_int(twitch_user)
         await self.bot.execute("DELETE FROM twitch WHERE userid=$1", twitch_user)
         await self.streamers()
         await interaction.response.send_message("Streamer has been removed from the Tracking list", ephemeral = True)
@@ -60,7 +62,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
         if len(current) < 3:
             return []
         responses = await self.bot.get(url = "https://api.twitch.tv/helix/search/channels", params = {"query": current, "first": 25}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
-        return [app_commands.Choice(name = response["display_name"], value = int(response["id"])) for response in responses["data"]]
+        return [app_commands.Choice(name = response["display_name"], value = response["id"]) for response in responses["data"]]
 
     @LiveTrackingRemove.autocomplete("twitch_user")
     async def LiveTrackingRemoveAutocomplete(self, interaction: Interaction, current):
@@ -70,7 +72,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
         if not streamIDs:
             return []
         streamers = await self.bot.get(url = "https://api.twitch.tv/helix/channels", params = {"broadcaster_id": [streamID["userid"] for streamID in streamIDs]}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
-        return [app_commands.Choice(name = streamer["broadcaster_name"], value = int(streamer["broadcaster_id"])) for streamer in streamers["data"]]
+        return [app_commands.Choice(name = streamer["broadcaster_name"], value = streamer["broadcaster_id"]) for streamer in streamers["data"]]
 
     @tasks.loop(minutes = 1, reconnect = True)
     async def request(self):
