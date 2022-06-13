@@ -16,6 +16,8 @@ class Opinion(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if not message.channel.guild:
+            return
         if any((message.author.bot, message.channel.is_nsfw(), message.attachments)):
             return
         prefixes = await self.bot.fetch("SELECT prefix FROM PrefixBlacklist WHERE guild = $1", message.guild.id)
