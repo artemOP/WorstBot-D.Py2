@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from re import sub
+from asyncio import sleep
 
 class Opinion(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -28,13 +29,13 @@ class Opinion(commands.Cog):
 
     @app_commands.command(name="opinion", description="Ask worst bot for its opinion on your super important questions")
     async def opinion(self, interaction: discord.Interaction, opinion: str = None):
-        row = await self.bot.fetch("SELECT content, attachment FROM Opinion WHERE GUILD=$1 ORDER BY random() LIMIT 1", interaction.guild.id)
-        await interaction.response.send_message(content=f"""{row[0]["content"]}\n{row[0]["attachment"]}""")
+        row = await self.bot.fetchrow("SELECT content FROM Opinion WHERE GUILD=$1 ORDER BY random() LIMIT 1", interaction.guild.id)
+        await interaction.response.send_message(content=f"""{row["content"]}""")
 
     @app_commands.command(name = "prefix-blacklist", description = "blacklist prefixes used by other bots in opinion forming")
     async def PrefixBlacklist(self, interaction: discord.Interaction, prefix: str):
         await self.bot.execute("INSERT INTO prefixblacklist(guild, prefix) VALUES ($1, $2)", interaction.guild_id, prefix)
-        await interaction.response.send_message(f"messages starting with {prefix} will be ignored")
+        await interaction.response.send_message(f"messages starting with {prefix} will be ignored", ephemeral = True)
 
     @tasks.loop(hours=24, reconnect=True)
     async def DeleteOld(self):
@@ -43,6 +44,7 @@ class Opinion(commands.Cog):
     @DeleteOld.before_loop
     async def BeforeDeleteOld(self):
         await self.bot.wait_until_ready()
+        await sleep(3)
 
 
 
