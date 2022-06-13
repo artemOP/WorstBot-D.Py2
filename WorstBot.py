@@ -8,32 +8,29 @@ from aiohttp import ClientSession
 
 
 class WorstBot(commands.Bot):
-    def __init__ (self, command_prefix, activity, intents):
+    def __init__(self, command_prefix, activity, intents):
         super().__init__(command_prefix, intents = intents)
         self.pool = None
         self.session = None
         self.activity = activity
 
-    async def setup_hook (self) -> None:
+    async def setup_hook(self) -> None:
         for filename in listdir("cogs"):
             if filename.endswith(".py"):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 pass
-        bot.pool = await asyncpg.create_pool(database = "WorstDB", user = "WorstBot", password = environ.get("postgres"), command_timeout = 10, max_size = 100, min_size = 25)
+        bot.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
         bot.session = ClientSession()
         bot.post = self.post
         bot.get = self.get
+        bot.getstatus = self.getstatus
         bot.fetch = self.fetch
         bot.fetchrow = self.fetchrow
         bot.fetchval = self.fetchval
         bot.execute = self.execute
         bot.current = self.current
 
-    async def on_ready (self):
-        alpha = discord.Object(id = 700833272380522496)
-        bot.tree.clear_commands(guild = alpha)
-        bot.tree.copy_global_to(guild = alpha)
-        await bot.tree.sync(guild = alpha)
+    async def on_ready(self):
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
     @staticmethod
@@ -49,6 +46,11 @@ class WorstBot(commands.Bot):
             content = await response.json()
             content["status"] = response.status
             return content
+
+    @staticmethod
+    async def getstatus(*, url: str, params: dict = None, headers: dict = None):
+        async with bot.session.get(url = url, params = params, headers = headers) as response:
+            return response.status
 
     @staticmethod
     async def fetch(sql: str, *args):
