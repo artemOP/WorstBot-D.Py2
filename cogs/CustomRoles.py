@@ -1,91 +1,87 @@
-from typing import Optional
+from abc import ABC
 import discord
-from discord import app_commands
+from discord import app_commands, Interaction
 from discord.ext import commands
+from typing import Optional
 
-class CustomRoles(commands.GroupCog,name="role"):
+class hexTransformer(app_commands.Transformer, ABC):
+    @classmethod
+    async def transform(cls, interaction: Interaction, value: str) -> int:
+        return int(value, 16)
+
+    @classmethod
+    async def min_value(cls) -> int:
+        return 0
+
+    @classmethod
+    async def max_value(cls) -> int:
+        return 16777215
+
+class CustomRoles(commands.GroupCog, name = "role"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS CustomRoles(guild BIGINT, member BIGINT, role BIGINT UNIQUE )")
-        print("BaseEvents cog online")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS customroles(guild BIGINT, member BIGINT, role BIGINT UNIQUE, colour INT)")
+        print("CustomRoles cog online")
+
+    async def FetchRole(self, *, guild: discord.Guild, member: discord.Member) -> Optional[discord.Role]:
+
+        if (roleid := await self.bot.fetchval("SELECT role FROM customroles WHERE guild = $1 AND member = $2", guild.id, member.id)) is not None:
+            role = guild.get_role(roleid)
+        else:
+            role = discord.utils.get(guild.roles, name = str(member))
+        return role if not None else None
+
+    async def CreateRole(self, member: discord.Member, colour: int) -> None:
+        role = await member.guild.create_role(name = str(member), colour = discord.Colour(colour), hoist = False)
+        position = member.top_role.position if member.top_role.position > 0 else 1
+        await role.edit(position = position)
+        await member.add_roles(role)
+        await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role", member.guild.id, member.id, role.id, colour)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        role = await member.guild.create_role(name=str(member), colour=discord.Color(value=int("0xff00ff", 16)),hoist=False)
-        await role.edit(position=member.top_role.position - 1)
-        await member.add_roles(role)
+        if (colour := await self.bot.fetchval("SELECT colour FROM customroles WHERE guild = $1 AND member = $2", member.guild.id, member.id)) is None:
+            colour = int("0xff00ff", 16)
+        await self.CreateRole(member, colour)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        try:
-            role = discord.utils.get(member.guild.roles, name=str(member))
+        role = await self.FetchRole(guild = member.guild, member = member)
+        if role:
             await role.delete()
-        except:
-            return
 
     @commands.Cog.listener()
     async def on_user_update(self, before, after):
+        if before.bot or str(before) == str(after):
+            return
+        role_id = await self.bot.fetchval("SELECT role FROM customroles WHERE guild = $1 AND member = $2", before.guild.id, before.id)
         for guild in self.bot.guilds:
-            try:
-                if before.bot is False:
-                    role = discord.utils.get(guild.roles, name=str(before))
-                    if role is not None:
-                        await role.edit(name=str(after))
-            except:
-                raise
+            if (role := guild.get_role(role_id)) is not None:
+                await role.edit(name = str(after))
 
-    async def CreateRole(self,interaction:discord.Interaction,colour:discord.Colour):
-        role = await interaction.guild.create_role(name=str(interaction.user.name), colour=colour, hoist=False)
-        await role.edit(position=interaction.user.top_role.position - 1)
-        await interaction.user.add_roles(role)
-        await self.bot.execute("INSERT INTO CustomRoles(guild, member, role) VALUES($1,$2,$3) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role", interaction.guild.id, interaction.user.id, role.id)
+    @app_commands.command(name = "colour", description = "edits the colour of your custom role")
+    async def EditRole(self, interaction: Interaction, colour: app_commands.Transform[int, hexTransformer]):
+        role = await self.FetchRole(guild = interaction.guild, member = interaction.user)
+        if not role:
+            await self.CreateRole(interaction.user, colour)
+        else:
+            await role.edit(colour = colour)
+        await interaction.response.send_message(content = f'your role colour has now been set to {hex(colour)}', ephemeral = True)
 
-    @app_commands.command(name="colour")
-    async def EditRole(self, interaction:discord.Interaction, colour: str):
-        colour = discord.Colour(value=int(colour, 16))
-        role = await self.bot.fetchval("SELECT role FROM CustomRoles WHERE guild=$1 AND member=$2", interaction.guild.id,interaction.user.id)
-        if role:
-            try:
-                role = interaction.guild.get_role(role)
-                await role.edit(colour=colour)
-            except:
-                await self.CreateRole(interaction, colour)
+    @app_commands.command(name = "check")
+    async def colourCheck(self, interaction: Interaction, arg: Optional[discord.User] = None):
+        member = arg if arg else interaction.user
+        role = await self.FetchRole(guild = interaction.guild, member = member)
+        if role is None:
+            await interaction.response.send_message("This user does not have a custom role or it may be broken")
         else:
-            await self.CreateRole(interaction, colour)
-        await interaction.response.send_message(content=f'your colour has now been set to {colour}',ephemeral=True)
+            embed = discord.Embed(colour = role.colour, description = f"{member.name} Uses the role colour {role.colour}")
+            await interaction.response.send_message(embed = embed, ephemeral = True)
 
-    @app_commands.command(name="check")
-    async def colourCheck(self, interaction:discord.Interaction, arg: Optional[discord.User] = None):
-        if arg:
-            user = arg.id
-        else:
-            user = interaction.user.id
-        role = await self.bot.fetchval("SELECT role FROM CustomRoles WHERE guild=$1 AND member=$2", interaction.guild.id, user)
-        role = interaction.guild.get_role(role)
-        user = interaction.guild.get_member(user)
-        if role is not None:
-            embed = discord.Embed(colour=role.colour)
-            embed.add_field(name=f"{user.name}#{user.discriminator}", value=f"Uses the role colour: {role.colour}", inline=False)
-            await interaction.response.send_message(embed=embed,ephemeral=True)
-        else:
-            await interaction.response.send_message(content=f"{user.name}#{user.discriminator} has no custom role",ephemeral=True)
-
-    @EditRole.error
-    async def editrole_error(self,interaction:discord.Interaction, error:app_commands.AppCommandError):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await interaction.response.send_message(f'{interaction.user.mention} please include a hex colour such as "ff00ff"')
-        elif isinstance(error, commands.CommandInvokeError):
-            await interaction.response.send_message(f'{interaction.user.mention} please include a hex colour such as "ff00ff"')
-        elif isinstance(error, commands.BotMissingPermissions):
-            await interaction.response.send_message(f'{interaction.user.mention} the bot is missing permisions, please move higher up the hierarchy')
-        elif isinstance(error, commands.MissingPermissions):
-            await interaction.response.send_message(f'{interaction.user.mention} you are missing the required permissions to use this command')
-        else:
-            raise error#TODO:move into global handler
 
 async def setup(bot):
     await bot.add_cog(CustomRoles(bot))
