@@ -27,6 +27,7 @@ class BaseEvents(commands.Cog):
         print("BaseEvents cog online")
 
     @app_commands.command(name = "toggle", description = "toggle automatic events on a server level")
+    @app_commands.default_permissions()
     async def toggle(self, interaction: Interaction, event: str):
         if event not in self.events:
             return
