@@ -3,8 +3,6 @@ from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands, tasks
 from datetime import datetime as dt, timezone
-from asyncio import sleep
-
 
 class Reminder(commands.Cog):
     def __init__(self, bot: commands.Bot):
