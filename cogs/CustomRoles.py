@@ -44,6 +44,8 @@ class CustomRoles(commands.GroupCog, name = "role"):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        if await self.bot.fetchval("SELECT roles FROM events WHERE guild = $1", member.guild.id) is False:
+            return
         if (colour := await self.bot.fetchval("SELECT colour FROM customroles WHERE guild = $1 AND member = $2", member.guild.id, member.id)) is None:
             colour = int("0xff00ff", 16)
         await self.CreateRole(member, colour)

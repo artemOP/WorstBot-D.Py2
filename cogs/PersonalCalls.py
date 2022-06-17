@@ -18,6 +18,8 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
+        if await self.bot.fetchval("SELECT calls FROM events WHERE guild = $1", member.guild.id) is False:
+            return
         PersonalChannel = self.bot.get_channel(await self.bot.fetchval("SELECT channel FROM PersonalCall WHERE guild=$1", member.guild.id))
         if PersonalChannel is None:
             return

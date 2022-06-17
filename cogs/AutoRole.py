@@ -95,6 +95,8 @@ class AutoRole(commands.GroupCog, name = "autorole"):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        if await self.bot.fetchval("SELECT autorole FROM events WHERE guild = $1", member.guild.id) is False:
+            return
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", member.guild.id)
         for role in roles:
             role = member.guild.get_role(role["role"])
