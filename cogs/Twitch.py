@@ -82,17 +82,20 @@ class Twitch(commands.GroupCog, name = "twitch"):
         if not streams["data"]:
             return
         for user in self.streamersTable:
+            if await self.bot.fetchval("SELECT twitch FROM events WHERE guild = $1", user["guild"]) is False:
+                continue
             if not any(int(stream["user_id"]) == user["userid"] for stream in streams["data"]):
                 await self.bot.execute("UPDATE twitch SET live = FALSE WHERE userid = $1", user["userid"])
                 continue
             if await self.bot.fetchval("SELECT live FROM twitch WHERE userid=$1", user["userid"]) is True:
                 continue
+
             await self.bot.execute("UPDATE twitch SET live = TRUE WHERE userid=$1", user["userid"])
             stream = [dictionary for dictionary in streams["data"] if int(dictionary["user_id"]) == user["userid"]][0]
             channel = self.bot.get_channel(user["channel"])
             embed = discord.Embed(colour = discord.Colour.random(), title = stream["user_name"])
             embed.description = f"""{stream["user_name"]} just went live on twitch!\n{stream["title"]}\nfind them at https://www.twitch.tv/{stream["user_name"]}"""
-            embed.set_thumbnail(url = stream["thumbnail_url"])
+            embed.set_image(url = stream["thumbnail_url"].replace("-{width}x{height}", ""))
             embed.set_footer(text = stream["started_at"].split("T")[1].split("Z")[0])
             await channel.send(embed=embed, content = "@everyone")
 

@@ -21,10 +21,14 @@ class Opinion(commands.Cog):
             return
         if any((message.author.bot, message.channel.is_nsfw(), message.attachments)):
             return
+        if await self.bot.fetchval("SELECT opinion FROM events WHERE guild = $1", message.guild.id) is False:
+            return
         prefixes = await self.bot.fetch("SELECT prefix FROM PrefixBlacklist WHERE guild = $1", message.guild.id)
         if any(message.content.startswith(prefix["prefix"]) for prefix in prefixes):
             return
+
         content = sub(r"http\S+", "", message.clean_content)
+        content = sub(r"<(?P<animated>a?):(?P<name>\w{2,32}):(?P<id>\d{18,22})>", "", content)
         await self.bot.execute("INSERT INTO opinion(guild, timestamp, content) VALUES ($1, $2, $3)", message.guild.id, message.created_at, content)
 
     @app_commands.command(name="opinion", description="Ask worst bot for its opinion on your super important questions")

@@ -3,8 +3,6 @@ from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands, tasks
 from datetime import datetime as dt, timezone
-from asyncio import sleep
-
 
 class Reminder(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -18,8 +16,12 @@ class Reminder(commands.Cog):
 
     @app_commands.command(name = "remindme", description = "Set a DM reminder for all your important things (all fields are optional)")
     @app_commands.describe(year = "YYYY", month = "MM", day = "DD", hour = "HH", minute = "MM", second = "SS", message = "reminder message")
-    async def ReminderCreate(self, interaction: discord.Interaction, year: Range[int, dt.now().year, 2030] = None, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None, hour: Range[int, 1, 60] = None, minute: Range[int, 1, 60] = None, second: Range[int, 1, 60] = None, message: str = "..."):
-        expiretime = dt(year or dt.now().year, month or dt.now().month, day or dt.now().day, hour or dt.now().hour, minute or dt.now().minute, second or dt.now().second)
+    async def ReminderCreate(self, interaction: discord.Interaction, year: Range[int, dt.now().year, 2030] = None, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None, hour: Range[int, 0, 60] = 0, minute: Range[int, 0, 60] = 0, second: Range[int, 0, 60] = 0, message: str = "..."):
+        try:
+            expiretime = dt(year or dt.now().year, month or dt.now().month, day or dt.now().day, hour, minute, second)
+        except ValueError:
+            await interaction.response.send_message("that isnt how days work")
+            return
         await interaction.response.send_message(f"""Reminding you about "{message}" at {str(expiretime).split("+")[0]} """, ephemeral = True)
         response = await interaction.original_message()
         await self.bot.execute("INSERT INTO reminder(guild, member, creationtime, expiretime,message, jumplink) VALUES($1, $2, $3, $4, $5, $6)", interaction.guild.id, interaction.user.id, interaction.created_at, expiretime, message, response.jump_url)
