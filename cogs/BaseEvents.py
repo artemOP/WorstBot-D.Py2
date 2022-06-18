@@ -34,7 +34,7 @@ class BaseEvents(commands.Cog):
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM events WHERE guild = $1)", interaction.guild_id):
             await self.on_guild_join(interaction.guild)
         toggle = await self.bot.execute(f"UPDATE events SET {event} = NOT {event} WHERE guild = $1 RETURNING {event}", interaction.guild_id)
-        await interaction.response.send_message(f"{event} set to: {toggle}")
+        await interaction.response.send_message(f"{event} set to: {toggle}", ephemeral = True)
 
     @toggle.autocomplete("event")
     async def ToggleAutocomplete(self, interaction: Interaction, current):

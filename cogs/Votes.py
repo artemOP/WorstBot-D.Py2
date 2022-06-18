@@ -99,14 +99,15 @@ class Votes(commands.GroupCog, name = "poll"):
 
     @app_commands.command(name = "start", description = "Start a serverwide poll (max of 20 answers)")
     async def VoteStart(self, interaction: Interaction):
-        if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM votes WHERE author = $1)", interaction.user.id):
-            await interaction.response.send_message("Poll belonging to this user already exists, please end the previous poll first", ephemeral=True)
-            return
+        if interaction.user.guild_permissions.administrator is False:
+            if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM votes WHERE author = $1)", interaction.user.id):
+                await interaction.response.send_message("Poll belonging to this user already exists, please end the previous poll first", ephemeral=True)
+                return
         await interaction.response.send_modal(StartPollModal(bot = self.bot))
 
     @app_commands.command(name = "response", description = "respond to a poll")
     async def VoteResponse(self, interaction: Interaction, poll: str, answer: str):
-        poll, answer = await self.bot.to_int(poll), await self.bot.to_int(poll)
+        poll, answer = await self.bot.to_int(poll), await self.bot.to_int(answer)
         await self.bot.execute("INSERT INTO voters(voteid, answerid, member) VALUES($1, $2, $3) ON CONFLICT (voteid, member) DO UPDATE SET answerid=$2", poll, answer, interaction.user.id)
         await interaction.response.send_message("vote recorded", ephemeral = True)
 
