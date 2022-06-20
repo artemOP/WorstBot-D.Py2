@@ -12,7 +12,7 @@ class Template(commands.GroupCog, name = "template"):
     async def on_ready(self):
         print("Template cog online")
 
-    @app_commands.command(name = "Template")
+    @app_commands.command(name = "template")
     async def template(self, interaction: Interaction):
         ...
 
