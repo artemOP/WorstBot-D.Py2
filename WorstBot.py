@@ -16,7 +16,7 @@ class WorstBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         for filename in listdir("cogs"):
-            if filename.endswith(".py"):
+            if filename.endswith(".py") and not filename.startswith("-"):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 pass
         bot.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
