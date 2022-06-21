@@ -54,10 +54,10 @@ class SelfAssignableRoles(commands.Cog):
         roles = await self.bot.fetch("SELECT role FROM selfroles WHERE guild = $1", interaction.guild_id)
         embed = discord.Embed(title = "giveme roles", colour = discord.Colour.random())
         for index, value in enumerate(roles):
-            roles[index] = interaction.user.get_role(value["role"])
+            roles[index] = interaction.guild.get_role(value["role"])
         if roles:
             embed.description = "\n\n".join(f"`{role.name}`" for role in roles)
-        await interaction.response.send_message(embed = embed)
+        await interaction.response.send_message(embed = embed, ephemeral = True)
 
 
 async def setup(bot):
