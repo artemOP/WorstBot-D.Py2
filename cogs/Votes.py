@@ -1,8 +1,6 @@
 import discord
 from discord import Interaction, app_commands, ui
 from discord.ext import commands
-from typing import Any
-
 
 async def EmbedGen(*, bot, poll):
     AnswerTable = {answerid: answer for answerid, answer in await bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1", poll)}
@@ -67,7 +65,7 @@ class Dropdown(ui.Select):
             max_values = 1
         )
 
-    async def callback(self, interaction: Interaction) -> Any:
+    async def callback(self, interaction: Interaction) -> None:
         embed = await EmbedGen(bot = self.bot, poll = int(self.values[0]))
         await interaction.response.edit_message(embed = embed)
 
@@ -81,7 +79,7 @@ class PollResultsView(ui.View):
     async def on_timeout(self) -> None:
         await self.response.edit(view = None)
 
-    async def on_error(self, interaction: Interaction, error: Exception, item: ui.Item[Any]) -> None:
+    async def on_error(self, interaction: Interaction, error: Exception, item: ui.Select) -> None:
         raise
 
 
