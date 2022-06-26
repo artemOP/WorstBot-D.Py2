@@ -75,6 +75,11 @@ class Profile(commands.GroupCog, name = "profile"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.ContextMenu = app_commands.ContextMenu(
+            name = "Profile",
+            callback = self.ProfileContextMenu
+        )
+        self.bot.tree.add_command(self.ContextMenu)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -96,12 +101,15 @@ class Profile(commands.GroupCog, name = "profile"):
         view.response = await interaction.original_message()
 
     @app_commands.command(name = "view", description = "Look at a users profile")
-    async def Profile(self, interaction: Interaction, user: discord.User):
+    async def ProfileCommand(self, interaction: Interaction, user: discord.User):
+        await self.ProfileContextMenu(interaction, user)
+
+    async def ProfileContextMenu(self, interaction: Interaction, user: discord.User):
         embed = await self.FetchProfile(user.id)
         await interaction.response.send_message(embed = embed, ephemeral = True)
 
     @app_commands.command(name = "remove", description = "admin command to remove problematic profiles")
-    @app_commands.default_permissions()
+    @app_commands.default_permissions()  # todo: group refactor to allow this permission to work
     async def ProfileRemove(self, interaction: Interaction, user: discord.User, reason: str = None):
         await self.bot.execute("DELETE FROM profile WHERE member = $1", user.id)
         await interaction.response.send_message(f"{user.name}'s profile has been removed")

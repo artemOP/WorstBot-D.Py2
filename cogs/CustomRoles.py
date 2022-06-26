@@ -21,6 +21,11 @@ class CustomRoles(commands.GroupCog, name = "role"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
+        self.ContextMenu = app_commands.ContextMenu(
+            name = "Colour Check",
+            callback = self.colourCheck
+        )
+        self.bot.tree.add_command(self.ContextMenu)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -75,7 +80,10 @@ class CustomRoles(commands.GroupCog, name = "role"):
         await interaction.response.send_message(content = f'your role colour has now been set to {hex(colour)}', ephemeral = True)
 
     @app_commands.command(name = "check")
-    async def colourCheck(self, interaction: Interaction, arg: Optional[discord.User] = None):
+    async def colourCheckCommand(self, interaction: Interaction, arg: Optional[discord.User] = None):
+        await self.colourCheck(interaction, arg)
+
+    async def colourCheck(self, interaction: Interaction, arg: discord.User = None):
         member = arg if arg else interaction.user
         role = await self.FetchRole(guild = interaction.guild, member = member)
         if role is None:
