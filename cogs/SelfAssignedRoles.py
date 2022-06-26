@@ -29,15 +29,14 @@ class SelfAssignableRoles(commands.Cog):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS selfroles(guild BIGINT NOT NULL, role BIGINT PRIMARY KEY)")
         print("SelfAssignableRoles Cog online")
 
-    @AdminGroup.command(name = "add")
-    async def AddRole(self, interaction: Interaction, role: discord.Role):
-        await self.bot.execute("INSERT INTO selfroles(guild, role) VALUES ($1, $2) ON CONFLICT DO NOTHING", interaction.guild_id, role.id)
-        await interaction.response.send_message(f"{role.name} added as a self assignable role", ephemeral = True)
-
-    @AdminGroup.command(name = "remove")
-    async def RemoveRole(self, interaction: Interaction, role: Transform[discord.Role, RoleTransformer]):
-        await self.bot.execute("DELETE FROM selfroles WHERE role = $1", role.id)
-        await interaction.response.send_message(f"{role.name} removed as a self assignable role", ephemeral = True)
+    @AdminGroup.command(name = "role", description = "add or remove self assignable roles")
+    async def ToggleRole(self, interaction: Interaction, role: discord.Role):
+        if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM selfroles WHERE guild = $1 AND role = $2)", interaction.guild_id, role.id):
+            await self.bot.execute("INSERT INTO selfroles(guild, role) VALUES ($1, $2) ON CONFLICT DO NOTHING", interaction.guild_id, role.id)
+            await interaction.response.send_message(f"{role.name} added as a self assignable role", ephemeral = True)
+        else:
+            await self.bot.execute("DELETE FROM selfroles WHERE role = $1", role.id)
+            await interaction.response.send_message(f"{role.name} removed as a self assignable role", ephemeral = True)
 
     @UserGroup.command(name = "role")
     async def ToggleRole(self, interaction: Interaction, role: Transform[discord.Role, RoleTransformer]):
