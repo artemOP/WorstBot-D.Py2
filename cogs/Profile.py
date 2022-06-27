@@ -108,15 +108,5 @@ class Profile(commands.GroupCog, name = "profile"):
         embed = await self.FetchProfile(user.id)
         await interaction.response.send_message(embed = embed, ephemeral = True)
 
-    @app_commands.command(name = "remove", description = "admin command to remove problematic profiles")
-    @app_commands.default_permissions()  # todo: group refactor to allow this permission to work
-    async def ProfileRemove(self, interaction: Interaction, user: discord.User, reason: str = None):
-        await self.bot.execute("DELETE FROM profile WHERE member = $1", user.id)
-        await interaction.response.send_message(f"{user.name}'s profile has been removed")
-        try:
-            await user.send(f"Your profile has been deleted by an administrator for reason:\n\n {reason}")
-        except discord.Forbidden:
-            pass
-
 async def setup(bot):
     await bot.add_cog(Profile(bot))

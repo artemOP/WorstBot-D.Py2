@@ -17,10 +17,7 @@ class RoleTransformer(Transformer):
             return [Choice(name = item[1], value = str(item[0])) for item in roles.items()]
         return [Choice(name = item[1], value = str(item[0])) for item in roles.items() if current in item[1]]
 
-class SelfAssignableRoles(commands.Cog):
-    AdminGroup = app_commands.Group(name = "giveme-setup", description = "add or remove self assignable roles", default_permissions = discord.Permissions(administrator = True))
-    UserGroup = app_commands.Group(name = "giveme", description = "Toggle a self assignable role")
-
+class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Toggle a self assignable role"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -29,26 +26,18 @@ class SelfAssignableRoles(commands.Cog):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS selfroles(guild BIGINT NOT NULL, role BIGINT PRIMARY KEY)")
         print("SelfAssignableRoles Cog online")
 
-    @AdminGroup.command(name = "role", description = "add or remove self assignable roles")
-    async def ToggleRole(self, interaction: Interaction, role: discord.Role):
-        if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM selfroles WHERE guild = $1 AND role = $2)", interaction.guild_id, role.id):
-            await self.bot.execute("INSERT INTO selfroles(guild, role) VALUES ($1, $2) ON CONFLICT DO NOTHING", interaction.guild_id, role.id)
-            await interaction.response.send_message(f"{role.name} added as a self assignable role", ephemeral = True)
-        else:
-            await self.bot.execute("DELETE FROM selfroles WHERE role = $1", role.id)
-            await interaction.response.send_message(f"{role.name} removed as a self assignable role", ephemeral = True)
-
-    @UserGroup.command(name = "role")
+    @app_commands.command(name = "role")
     async def ToggleRole(self, interaction: Interaction, role: Transform[discord.Role, RoleTransformer]):
         if not role:
             return
         if role in interaction.user.roles:
             await interaction.user.remove_roles(role)
-            return await interaction.response.send_message(f"You have removed the {role.name} role", ephemeral = True)
-        await interaction.user.add_roles(role)
-        await interaction.response.send_message(f"You have added the {role.name} role", ephemeral = True)
+            await interaction.response.send_message(f"You have removed the {role.name} role", ephemeral = True)
+        else:
+            await interaction.user.add_roles(role)
+            await interaction.response.send_message(f"You have added the {role.name} role", ephemeral = True)
 
-    @UserGroup.command(name = "list")
+    @app_commands.command(name = "list")
     async def ListRole(self, interaction: Interaction):
         roles = await self.bot.fetch("SELECT role FROM selfroles WHERE guild = $1", interaction.guild_id)
         embed = discord.Embed(title = "giveme roles", colour = discord.Colour.random())
