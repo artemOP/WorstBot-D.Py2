@@ -24,9 +24,9 @@ class BaseCommands(commands.Cog):
     @app_commands.command(name = "purge")
     @app_commands.default_permissions(manage_messages = True)
     async def purge(self, interaction: discord.Interaction, amount: int = 1):
+        await interaction.response.defer()
         await interaction.channel.purge(limit = amount)
-        # await interaction.response.defer()#TODO:ADD DEFER SO RESPONSE DOESNT TIME OUT ON LARGE REQUESTS
-        await interaction.response.send_message(ephemeral = True, content = f"attempted to delete {amount} messages")
+        await interaction.followup.send(ephemeral = True, content = f"attempted to delete {amount} messages")
 
     @app_commands.command(name = "kick")
     @app_commands.default_permissions(kick_members = True)
