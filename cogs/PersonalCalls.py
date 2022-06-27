@@ -1,5 +1,5 @@
 import discord
-from discord import app_commands
+from discord import app_commands, Interaction
 from discord.ext import commands
 
 @app_commands.default_permissions(manage_channels = True, ban_members=True)
@@ -12,8 +12,8 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
     @commands.Cog.listener()
     async def on_ready(self):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS personalcall(guild BIGINT UNIQUE, channel BIGINT UNIQUE)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS callblacklist(guild BIGINT, channel BIGINT)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS userblacklist(member BIGINT UNIQUE)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS callblacklist(guild BIGINT NOT NULL, channel BIGINT UNIQUE)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS userblacklist(guild BIGINT NOT NULL, member BIGINT NOT NULL)")
         print("Personal call cog online")
 
     @commands.Cog.listener()
@@ -23,7 +23,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         PersonalChannel = self.bot.get_channel(await self.bot.fetchval("SELECT channel FROM PersonalCall WHERE guild=$1", member.guild.id))
         if PersonalChannel is None:
             return
-        if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE member=$1)", member.id) is True and after.channel is not None:
+        if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", member.guild.id, member.id) is True and after.channel is not None:
             # if after.channel.id == PersonalChannel.id:
             await member.edit(voice_channel = None)
             return
@@ -38,44 +38,37 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
             await member.edit(voice_channel = None)
 
     @app_commands.command(name = "setup")
-    async def PersonalCallSetup(self, interaction: discord.Interaction, channel: discord.VoiceChannel):
+    async def PersonalCallSetup(self, interaction: Interaction, channel: discord.VoiceChannel = None):
+        if not channel:
+            await self.bot.execute("DELETE FROM personalcall WHERE channel = $1", channel.id)
         await self.bot.execute("INSERT INTO PersonalCall(guild, channel) VALUES($1, $2) ON CONFLICT (guild) DO UPDATE SET channel = EXCLUDED.channel", interaction.guild.id, channel.id)
         await interaction.response.send_message(f"the new base voice call is {channel}", ephemeral = True)
 
-    @app_commands.command(name = "add-protect", description = "stops a channel being deleted when empty")
-    async def CallBlacklistAdd(self, interaction: discord.Interaction, channel: discord.VoiceChannel):
-        await self.bot.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)", interaction.guild.id, channel.id)
-        await interaction.response.send_message(f"{channel} is now protected", ephemeral = True)
-
-    @app_commands.command(name = "remove-protection", description = "allows a channel to be deleted when empty")
-    async def CallBlacklistRemove(self, interaction: discord.Interaction, channel: str):
-        channel = await self.bot.to_int(channel)
-        await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel)
-        await interaction.response.send_message("channel is no longer protected", ephemeral = True)
-
-    @CallBlacklistRemove.autocomplete("channel")
-    async def CallBlacklistRemoveAutocomplete(self, interaction: discord.Interaction, current):
-        channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
-        return [app_commands.Choice(name = self.bot.get_channel(channel["channel"]).name, value = str(channel["channel"])) for channel in channels]
+    @app_commands.command(name = "protect", description = "toggles if channel will be deleted when empty")
+    async def CallBlacklistToggle(self, interaction: Interaction, channel: discord.VoiceChannel):
+        if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", interaction.guild_id, channel.id):
+            await self.bot.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)", interaction.guild.id, channel.id)
+            await interaction.response.send_message(f"{channel} is now protected", ephemeral = True)
+        else:
+            await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel)
+            await interaction.response.send_message(f"{channel} is no longer protected", ephemeral = True)
 
     @app_commands.command(name="protection-list", description = "Lists out channels blocked from deletion")
-    async def CallBlacklistList(self, interaction: discord.Interaction):
+    async def CallBlacklistList(self, interaction: Interaction):
         embed = discord.Embed(colour=discord.Colour.random(), title="Protected channels")
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
         for channel in channels:
             embed.add_field(name=self.bot.get_channel(channel["channel"]), value="\u200b")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name="blacklist-add", description = "blocks user from joining voice calls")
-    async def UserBlacklistAdd(self, interaction: discord.Interaction, member: discord.Member):
-        await self.bot.execute("INSERT INTO UserBlacklist(member) VALUES($1) ON CONFLICT DO NOTHING", member.id)
-        await interaction.response.send_message(f"{member.name} has been blacklisted from calls", ephemeral=True)
-
-    @app_commands.command(name="blacklist-remove", description = "Removes user from call blacklist")
-    @app_commands.default_permissions(ban_members=True)
-    async def UserBlacklistRemove(self, interaction: discord.Interaction, member: discord.Member):
-        await self.bot.execute("DELETE FROM UserBlacklist WHERE member=$1", member.id)
-        await interaction.response.send_message(f"{member.name} is no longer blacklisted from calls", ephemeral=True)
+    @app_commands.command(name = "blacklist", description = "toggle a user ban on voice calls")
+    async def UserBlacklist(self, interaction: Interaction, member: discord.Member):
+        if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", interaction.guild_id, member.id):
+            await self.bot.execute("INSERT INTO UserBlacklist(guild, member) VALUES($1, $2) ON CONFLICT DO NOTHING", interaction.guild_id, member.id)
+            await interaction.response.send_message(f"{str(member)} has been added to the blacklist")
+        else:
+            await self.bot.execute("DELETE FROM UserBlacklist WHERE guild = $1 AND member = $2", interaction.guild_id, member.id)
+            await interaction.response.send_message(f"{str(member)} has been removed from the blacklist")
 
 
 async def setup(bot):
