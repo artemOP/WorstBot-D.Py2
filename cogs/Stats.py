@@ -20,7 +20,7 @@ class Cog:
         return round((number / self.total) * 100)
 
 
-class Stats(commands.Cog):
+class Stats(commands.GroupCog, name = "stats"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -29,7 +29,7 @@ class Stats(commands.Cog):
     async def on_ready(self):
         print("Stats cog online")
 
-    @app_commands.command(name = "stats")
+    @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
         embed = discord.Embed(title = "stats", colour = discord.Colour.random())
         cogs = {}
@@ -66,6 +66,9 @@ class Stats(commands.Cog):
                 """
             )
         await interaction.response.send_message(embed = embed, ephemeral = True)
+
+
+# todo:more stats(server count, command count etc etc)
 
 
 async def setup(bot):
