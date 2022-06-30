@@ -10,7 +10,7 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS tags(guild BIGINT NOT NULL, name VARCHAR(256) NOT NULL, value VARCHAR(1024) NOT NULL, PRIMARY KEY(guild, name))")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS tags(guild BIGINT NOT NULL, owner BIGINT NOT NULL, name VARCHAR(256) NOT NULL, value VARCHAR(1024) NOT NULL, PRIMARY KEY(guild, name))")
         print("Tag cog online")
 
     @app_commands.command(name = "create", description = "create a tag to recall later by name")
