@@ -1,3 +1,4 @@
+import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
@@ -27,6 +28,8 @@ class Sync(commands.Cog):
     async def sync_error(self, ctx: Context, error):
         if isinstance(error, commands.NotOwner):
             await ctx.send(str(error), ephemeral = True)
+        else:
+            print(error)
 
 async def setup(bot):
     await bot.add_cog(Sync(bot))
