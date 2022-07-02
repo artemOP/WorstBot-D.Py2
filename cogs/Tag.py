@@ -92,7 +92,7 @@ class Tag(commands.GroupCog, name = "tag"):
         await interaction.response.send_modal(TagModal())
 
     @app_commands.command(name = "edit", description = "edit a pre-exifg by name")
-    async def Edit(self, interaction: Interaction, tag: str):  # todo: Create / Edit modal
+    async def Edit(self, interaction: Interaction, tag: str):
         tag = await self.bot.to_int(tag)
         select = await self.bot.fetchrow("SELECT name, value, nsfw, private, public, invisible FROM tags WHERE tagid = $1", tag)
         if not select:
