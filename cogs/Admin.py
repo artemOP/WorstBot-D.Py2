@@ -70,5 +70,10 @@ class Admin(commands.GroupCog, name = "admin"):
             await self.bot.execute("DELETE FROM selfroles WHERE role = $1", role.id)
             await interaction.response.send_message(f"{role.name} removed as a self assignable role", ephemeral = True)
 
+    @app_commands.command(name="tags", description = "delete all tags in the guild")
+    async def DeleteAll(self, interaction: Interaction):
+        await self.bot.execute("DELETE FROM tags WHERE guild = $1", interaction.guild_id)
+        await interaction.response.send_message(f"Deleted all tags", ephemeral = True)
+
 async def setup(bot):
     await bot.add_cog(Admin(bot))

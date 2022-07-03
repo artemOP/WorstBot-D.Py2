@@ -24,10 +24,18 @@ class Stats(commands.GroupCog, name = "stats"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.source = 0
+        self.comment = 0
+        self.blank = 0
+        self.total = 0
 
     @commands.Cog.listener()
     async def on_ready(self):
         print("Stats cog online")
+
+
+    def to_percent(self, number: int) -> int:
+        return round((number / self.total) * 100)
 
     @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
@@ -43,11 +51,14 @@ class Stats(commands.GroupCog, name = "stats"):
             for line in cog.lines:
                 if line == "\n":
                     cog.blank += 1
+                    self.blank += 1
                 elif "#" in line:
                     cog.comment += 1
+                    self.comment += 1
                 elif '"""' in line:
                     if blocksize != 0 or line.count('"""') % 2 == 0:
                         cog.comment += blocksize + 1
+                        self.comment += blocksize + 1
                         blocksize = 0
                     else:
                         blocksize += 1
@@ -56,13 +67,21 @@ class Stats(commands.GroupCog, name = "stats"):
                         blocksize += 1
                     else:
                         cog.source += 1
+                        self.source += 1
+                self.total += 1
+            embed.description = f"""
+                source code: {self.source} ({self.to_percent(self.source)}%)\n
+                comments: {self.comment} ({self.to_percent(self.comment)}%)\n
+                blank: {self.blank} ({self.to_percent(self.blank)}%)\n
+                total: {self.total}\n\u200b
+                """
             embed.add_field(
                 name = [k for k, v in cogs.items() if v == cog][0][:-3],
                 value = f"""
-                source code lines: {cog.source} ({cog.to_percent(cog.source)}%)\n
-                comment lines: {cog.comment} ({cog.to_percent(cog.comment)}%)\n
-                blank lines: {cog.blank} ({cog.to_percent(cog.blank)}%)\n
-                total lines: {cog.total}\n\u200b
+                source code: {cog.source} ({cog.to_percent(cog.source)}%)\n
+                comments: {cog.comment} ({cog.to_percent(cog.comment)}%)\n
+                blank: {cog.blank} ({cog.to_percent(cog.blank)}%)\n
+                total: {cog.total}\n\u200b
                 """
             )
         await interaction.response.send_message(embed = embed, ephemeral = True)

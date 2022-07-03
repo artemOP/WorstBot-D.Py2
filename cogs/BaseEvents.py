@@ -7,7 +7,7 @@ class BaseEvents(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.events = ["autorole", "roles", "opinion", "calls", "twitch"]
+        self.events = ["autorole", "roles", "opinion", "calls", "textarchive", "twitch"]
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -20,7 +20,8 @@ class BaseEvents(commands.Cog):
             roles BOOLEAN DEFAULT TRUE, 
             opinion BOOLEAN DEFAULT TRUE,
             calls BOOLEAN DEFAULT TRUE,
-            twitch BOOLEAN DEFAULT TRUE       
+            twitch BOOLEAN DEFAULT TRUE,
+            textarchive BOOLEAN DEFAULT TRUE      
             )
             """
         )
