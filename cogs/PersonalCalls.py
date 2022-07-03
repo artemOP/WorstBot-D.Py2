@@ -1,6 +1,8 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
+from datetime import datetime
+from os import remove
 
 @app_commands.default_permissions(manage_channels = True, ban_members=True)
 class PersonalCalls(commands.GroupCog, name = "personal-call"):
@@ -32,8 +34,19 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
                 channel = await after.channel.category.create_voice_channel(name = member.name, user_limit = 99, bitrate = member.guild.bitrate_limit)
                 await member.move_to(channel)
         elif before.channel is not None and before.channel.id != PersonalChannel.id:
-            if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM CallBlacklist WHERE channel=$1)", before.channel.id) is False and before.channel.members == []:
-                await before.channel.delete()
+            if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM CallBlacklist WHERE channel=$1)", before.channel.id) is True or before.channel.members:
+                return
+            if not await self.bot.fetchval("SELECT textarchive FROM events WHERE guild = $1", member.guild.id):
+                return await before.channel.delete()
+            if not [message async for message in before.channel.history(limit=1)]:
+                return await before.channel.delete()
+            file = f"{member.name}-{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+            with open(file, "w+") as f:
+                f.writelines([f"{message.created_at.strftime('%Y-%m-%d %H:%M:%S')} | {message.author} : {message.content}\n" async for message in before.channel.history(limit = None)])
+            await PersonalChannel.send(file = discord.File(filename = file, description = "Text archive for Personal Calls", fp = file))
+            remove(file)
+            await before.channel.delete()
+
         if after.channel is not None and after.channel.id == PersonalChannel.id:
             await member.edit(voice_channel = None)
 
@@ -46,11 +59,11 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
 
     @app_commands.command(name = "protect", description = "toggles if channel will be deleted when empty")
     async def CallBlacklistToggle(self, interaction: Interaction, channel: discord.VoiceChannel):
-        if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", interaction.guild_id, channel.id):
-            await self.bot.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)", interaction.guild.id, channel.id)
+        if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM callblacklist WHERE guild = $1 AND channel = $2)", interaction.guild_id, channel.id):
+            await self.bot.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)", interaction.guild_id, channel.id)
             await interaction.response.send_message(f"{channel} is now protected", ephemeral = True)
         else:
-            await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel)
+            await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel.id)
             await interaction.response.send_message(f"{channel} is no longer protected", ephemeral = True)
 
     @app_commands.command(name="protection-list", description = "Lists out channels blocked from deletion")
@@ -65,10 +78,10 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
     async def UserBlacklist(self, interaction: Interaction, member: discord.Member):
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", interaction.guild_id, member.id):
             await self.bot.execute("INSERT INTO UserBlacklist(guild, member) VALUES($1, $2) ON CONFLICT DO NOTHING", interaction.guild_id, member.id)
-            await interaction.response.send_message(f"{str(member)} has been added to the blacklist")
+            await interaction.response.send_message(f"{str(member)} has been added to the blacklist", ephemeral = True)
         else:
             await self.bot.execute("DELETE FROM UserBlacklist WHERE guild = $1 AND member = $2", interaction.guild_id, member.id)
-            await interaction.response.send_message(f"{str(member)} has been removed from the blacklist")
+            await interaction.response.send_message(f"{str(member)} has been removed from the blacklist", ephemeral = True)
 
 
 async def setup(bot):
