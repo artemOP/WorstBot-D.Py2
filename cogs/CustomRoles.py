@@ -84,13 +84,14 @@ class CustomRoles(commands.GroupCog, name = "role"):
         await self.colourCheck(interaction, arg)
 
     async def colourCheck(self, interaction: Interaction, arg: discord.User = None):
+        await interaction.response.defer(ephemeral = True)
         member = arg if arg else interaction.user
         role = await self.FetchRole(guild = interaction.guild, member = member)
         if role is None:
-            await interaction.response.send_message("This user does not have a custom role or it may be broken")
+            await interaction.followup.send("This user does not have a custom role or it may be broken")
         else:
             embed = discord.Embed(colour = role.colour, description = f"{member.name} Uses the role colour {role.colour}")
-            await interaction.response.send_message(embed = embed, ephemeral = True)
+            await interaction.followup.send(embed = embed, ephemeral = True)
 
 
 async def setup(bot):
