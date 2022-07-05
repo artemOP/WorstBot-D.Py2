@@ -1,13 +1,14 @@
 import discord
 from discord import app_commands, Interaction
+from discord.app_commands import Choice
 from discord.ext import commands
 
+events = ["autorole", "roles", "opinion", "calls", "textarchive", "twitch"]
 
 class BaseEvents(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.events = ["autorole", "roles", "opinion", "calls", "textarchive", "twitch"]
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -27,21 +28,18 @@ class BaseEvents(commands.Cog):
         )
         print("BaseEvents cog online")
 
+    @staticmethod
+    def Choices() -> list[Choice[str]]:
+        return [app_commands.Choice(name = event, value = event) for event in events]
+
     @app_commands.command(name = "toggle", description = "toggle automatic events on a server level")
     @app_commands.default_permissions()
-    async def toggle(self, interaction: Interaction, event: str):
-        if event not in self.events:
-            return
+    @app_commands.choices(event = Choices())
+    async def toggle(self, interaction: Interaction, event: Choice[str]):
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM events WHERE guild = $1)", interaction.guild_id):
             await self.on_guild_join(interaction.guild)
-        toggle = await self.bot.execute(f"UPDATE events SET {event} = NOT {event} WHERE guild = $1 RETURNING {event}", interaction.guild_id)
-        await interaction.response.send_message(f"{event} set to: {toggle}", ephemeral = True)
-
-    @toggle.autocomplete("event")
-    async def ToggleAutocomplete(self, interaction: Interaction, current):
-        if current:
-            return [app_commands.Choice(name = event, value = event) for event in self.events if current in event]
-        return [app_commands.Choice(name = event, value = event) for event in self.events]
+        toggle = await self.bot.execute(f"UPDATE events SET {event.value} = NOT {event.value} WHERE guild = $1 RETURNING {event.value}", interaction.guild_id)
+        await interaction.response.send_message(f"{event.value} set to: {toggle}", ephemeral = True)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
