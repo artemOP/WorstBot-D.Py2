@@ -86,8 +86,8 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
     @app_commands.command(name = "list")
     async def BirthdayList(self, interaction: Interaction):
-        table: list[Record] = await self.bot.fetch("SELECT member, birthdays FROM birthdays WHERE guild = $1", interaction.guild_id)
-        birthdays: dict[discord.Member: date] = {interaction.guild.get_member(member): date.today() + interval for member, interval in table}
+        table: list[Record] = await self.bot.fetch("SELECT member, birthday FROM birthdays WHERE guild = $1", interaction.guild_id)
+        birthdays: dict[discord.Member: date] = {interaction.guild.get_member(member): birthday for member, birthday in table}
         embedlist: list[discord.Embed] = await self.EmbedFormer(birthdays)
         view = BirthdayView(timeout = 30, embedlist = embedlist)
         await interaction.response.send_message(view = view, embed = embedlist[0], ephemeral = True)
