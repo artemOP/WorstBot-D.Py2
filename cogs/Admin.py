@@ -1,9 +1,8 @@
 from os import listdir
-
 import discord
 from discord import app_commands, Interaction
+from discord.app_commands import Choice
 from discord.ext import commands
-
 
 @app_commands.default_permissions()
 class Admin(commands.GroupCog, name = "admin"):
@@ -19,32 +18,35 @@ class Admin(commands.GroupCog, name = "admin"):
     async def owner_only(interaction: Interaction):
         return await interaction.client.is_owner(interaction.user)
 
+    @staticmethod
+    def Choices() -> list[Choice[str]]:
+        return [
+            Choice(name = cog[:-3], value = cog[:-3]) for cog in listdir("cogs") if
+            cog.endswith(".py") and not cog.startswith("-")
+        ]
+
     @app_commands.command(name = "load")
     @app_commands.check(owner_only)
-    async def CogLoad(self, interaction: Interaction, cog: str):
-        await self.bot.load_extension(f"cogs.{cog}")
-        await interaction.response.send_message(f"{cog} has been loaded", ephemeral = True)
+    @app_commands.choices(cog = Choices())
+    async def CogLoad(self, interaction: Interaction, cog: Choice[str]):
+        await self.bot.load_extension(f"cogs.{cog.value}")
+        await interaction.response.send_message(f"{cog.value} has been loaded", ephemeral = True)
 
     @app_commands.command(name = "unload")
     @app_commands.check(owner_only)
-    async def CogUnload(self, interaction: Interaction, cog: str):
-        await self.bot.unload_extension(f"cogs.{cog}")
-        await interaction.response.send_message(f"{cog} has been unloaded", ephemeral = True)
+    @app_commands.choices(cog = Choices())
+    async def CogUnload(self, interaction: Interaction, cog: Choice[str]):
+        await self.bot.unload_extension(f"cogs.{cog.value}")
+        await interaction.response.send_message(f"{cog.value} has been unloaded", ephemeral = True)
 
     @app_commands.command(name = "reload")
-    async def CogReload(self, interaction: Interaction, cog: str):
+    @app_commands.choices(cog = Choices())
+    async def CogReload(self, interaction: Interaction, cog: Choice[str]):
         try:
-            await self.bot.reload_extension(f"cogs.{cog}")
-            await interaction.response.send_message(f"{cog} has been reloaded", ephemeral = True)
+            await self.bot.reload_extension(f"cogs.{cog.value}")
+            await interaction.response.send_message(f"{cog.value} has been reloaded", ephemeral = True)
         except:
-            await interaction.response.send_message(f"{cog} is not a valid input", ephemeral = True)
-
-    @CogLoad.autocomplete("cog")
-    @CogUnload.autocomplete("cog")
-    @CogReload.autocomplete("cog")
-    async def CogAutocomplete(self, interaction: Interaction, current):
-        return [app_commands.Choice(name = cog[:-3], value = cog[:-3]) for cog in listdir("cogs") if
-                cog.endswith(".py") and not cog.startswith("-") and current.lower() in cog.lower()]
+            await interaction.response.send_message(f"{cog.value} is not a valid input", ephemeral = True)
 
     @app_commands.command(name = "nickname", description = "Change WorstBot's nickname")
     @app_commands.check(owner_only)
@@ -74,6 +76,14 @@ class Admin(commands.GroupCog, name = "admin"):
     async def DeleteAll(self, interaction: Interaction):
         await self.bot.execute("DELETE FROM tags WHERE guild = $1", interaction.guild_id)
         await interaction.response.send_message(f"Deleted all tags", ephemeral = True)
+
+    @app_commands.command(name = "birthdays", description = "Set or remove Birthday alerts channel")
+    async def BirthdayChannel(self, interaction: Interaction, channel: discord.TextChannel = None):
+        if not channel:
+            await self.bot.execute("DELETE FROM birthdaychannel WHERE guild = $1", interaction.guild_id)
+            return await interaction.response.send_message("Birthday channel has been removed", ephemeral = True)
+        await self.bot.execute("INSERT INTO birthdaychannel(guild, channel) VALUES($1, $2)", interaction.guild_id, channel.id)
+        await interaction.response.send_message(f"Birthday channel is now {channel.mention}", ephemeral = True)
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))

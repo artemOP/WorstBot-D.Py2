@@ -2,7 +2,8 @@ import discord
 from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands, tasks
-from datetime import datetime as dt, timezone
+from datetime import datetime as dt, timezone, time
+
 
 class Reminder(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -30,7 +31,6 @@ class Reminder(commands.Cog):
         else:
             self.ReminderTask.start()
 
-
     @tasks.loop(seconds = 30, reconnect = True)
     async def ReminderTask(self):
         reminder = await self.bot.fetchrow("SELECT * FROM reminder WHERE expiretime = (SELECT MIN(expiretime) FROM reminder)")
@@ -46,11 +46,16 @@ class Reminder(commands.Cog):
             user = self.bot.get_user(reminder["member"])
             embed = discord.Embed(colour = discord.Color.random(), title = "**Reminder**", description = f"""You asked to be reminded of: "{reminder["message"]}" """)
             embed.add_field(name = "**original message:**", value = reminder["jumplink"])
-            await user.send(embed=embed)
-            await self.bot.execute("DELETE FROM reminder WHERE expiretime<=now()")
+            await user.send(embed = embed)
+            await self.bot.execute("DELETE FROM reminder WHERE expiretime<=NOW()")
 
+    @tasks.loop(time = time(), reconnect = True)
+    async def RestartTask(self):
+        if not self.ReminderTask.is_running():
+            self.ReminderTask.start()
 
     @ReminderTask.before_loop
+    @RestartTask.before_loop
     async def BeforeReminder(self):
         await self.bot.wait_until_ready()
 
