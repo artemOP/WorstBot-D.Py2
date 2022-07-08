@@ -33,7 +33,6 @@ class Stats(commands.GroupCog, name = "stats"):
     async def on_ready(self):
         print("Stats cog online")
 
-
     def to_percent(self, number: int) -> int:
         return round((number / self.total) * 100)
 
