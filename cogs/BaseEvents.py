@@ -3,7 +3,7 @@ from discord import app_commands, Interaction
 from discord.app_commands import Choice
 from discord.ext import commands
 
-events = ["autorole", "roles", "opinion", "calls", "textarchive", "twitch"]
+events = ["autorole", "birthdays", "roles", "opinion", "calls", "textarchive", "twitch"]
 
 class BaseEvents(commands.Cog):
 
@@ -18,6 +18,7 @@ class BaseEvents(commands.Cog):
             events(
             guild BIGINT PRIMARY KEY,
             autorole BOOLEAN DEFAULT TRUE, 
+            birthdays BOOLEAN DEFAULT TRUE,
             roles BOOLEAN DEFAULT TRUE, 
             opinion BOOLEAN DEFAULT TRUE,
             calls BOOLEAN DEFAULT TRUE,

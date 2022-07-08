@@ -77,5 +77,13 @@ class Admin(commands.GroupCog, name = "admin"):
         await self.bot.execute("DELETE FROM tags WHERE guild = $1", interaction.guild_id)
         await interaction.response.send_message(f"Deleted all tags", ephemeral = True)
 
+    @app_commands.command(name = "birthdays", description = "Set or remove Birthday alerts channel")
+    async def BirthdayChannel(self, interaction: Interaction, channel: discord.TextChannel = None):
+        if not channel:
+            await self.bot.execute("DELETE FROM birthdaychannel WHERE guild = $1", interaction.guild_id)
+            return await interaction.response.send_message("Birthday channel has been removed", ephemeral = True)
+        await self.bot.execute("INSERT INTO birthdaychannel(guild, channel) VALUES($1, $2)", interaction.guild_id, channel.id)
+        await interaction.response.send_message(f"Birthday channel is now {channel.mention}", ephemeral = True)
+
 async def setup(bot):
     await bot.add_cog(Admin(bot))
