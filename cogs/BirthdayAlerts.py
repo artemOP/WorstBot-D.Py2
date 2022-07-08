@@ -73,7 +73,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdays(guild BIGINT, member BIGINT, birthday DATE, PRIMARY KEY(guild, member))")
         print("BirthdayAlert cog online")
 
-    @app_commands.command(name = "toggle", description = "Add or remove your Birthday")
+    @app_commands.command(name = "alert", description = "Add or remove your Birthday")
     async def BirthdayAdd(self, interaction: Interaction, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None):
         if not (month or day):
             await self.bot.execute("DELETE FROM birthdays WHERE member = $1", interaction.user.id)
