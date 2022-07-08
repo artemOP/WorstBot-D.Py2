@@ -12,74 +12,107 @@ class BaseCommands(commands.Cog):
     async def on_ready(self):
         print("BaseCommands cog online")
 
-    @app_commands.command(name = "ping")
+    @app_commands.command(name="ping")
     async def ping(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f"Pong!{round(self.bot.latency * 1000)}ms", ephemeral = True)
+        await interaction.response.send_message(
+            f"Pong!{round(self.bot.latency * 1000)}ms", ephemeral=True
+        )
 
-    @app_commands.command(name = "say")
-    @app_commands.default_permissions(manage_messages = True)
+    @app_commands.command(name="say")
+    @app_commands.default_permissions(manage_messages=True)
     async def say(self, interaction: discord.Interaction, *, arg: str = "what?"):
-        await interaction.response.send_message(ephemeral = True, content = "\u200b")
-        await interaction.channel.send(content = arg)
+        await interaction.response.send_message(ephemeral=True, content="\u200b")
+        await interaction.channel.send(content=arg)
 
     def is_me(self, message: discord.Message) -> bool:
-        return not message.author == self.bot.user or message.created_at < datetime.now(timezone.utc) - timedelta(seconds = 10)
+        return not message.author == self.bot.user or message.created_at < datetime.now(
+            timezone.utc
+        ) - timedelta(seconds=10)
 
-    @app_commands.command(name = "purge")
-    @app_commands.default_permissions(manage_messages = True)
-    async def purge(self, interaction: discord.Interaction, amount: app_commands.Range[int, 1, 100] = 1):
-        await interaction.response.defer(ephemeral = True)
-        deleted = await interaction.channel.purge(limit = amount, check = self.is_me, bulk = True if amount > 1 else False, after = interaction.created_at - timedelta(weeks = 2))
-        await interaction.followup.send(content = f"deleted {len(deleted)} messages")
+    @app_commands.command(name="purge")
+    @app_commands.default_permissions(manage_messages=True)
+    async def purge(
+        self,
+        interaction: discord.Interaction,
+        amount: app_commands.Range[int, 1, 100] = 1,
+    ):
+        await interaction.response.defer(ephemeral=True)
+        deleted = await interaction.channel.purge(
+            limit=amount,
+            check=self.is_me,
+            bulk=True if amount > 1 else False,
+            after=interaction.created_at - timedelta(weeks=2),
+        )
+        await interaction.followup.send(content=f"deleted {len(deleted)} messages")
 
-    @app_commands.command(name = "kick")
-    @app_commands.default_permissions(kick_members = True)
-    async def kick(self, interaction: discord.Interaction, member: discord.Member, *, reason: str = None):
-        await member.kick(reason = reason)
+    @app_commands.command(name="kick")
+    @app_commands.default_permissions(kick_members=True)
+    async def kick(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        *,
+        reason: str = None,
+    ):
+        await member.kick(reason=reason)
         await interaction.response.send_message(f"kicked {member.name} for: `{reason}`")
 
-    @app_commands.command(name = "ban")
-    @app_commands.default_permissions(ban_members = True)
-    async def ban(self, interaction: discord.Interaction, member: discord.Member, *, reason: str = None):
-        await member.ban(reason = reason)
+    @app_commands.command(name="ban")
+    @app_commands.default_permissions(ban_members=True)
+    async def ban(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        *,
+        reason: str = None,
+    ):
+        await member.ban(reason=reason)
         await interaction.response.send_message(f"banned {member.name} for: `{reason}`")
 
-    @app_commands.command(name = "unban")
-    @app_commands.default_permissions(ban_members = True)
+    @app_commands.command(name="unban")
+    @app_commands.default_permissions(ban_members=True)
     async def unban(self, interaction: discord.Interaction, member: str):
         try:
             await interaction.guild.unban(discord.Object(int(member)))
             await interaction.response.send_message(f"Unban succeeded")
         except discord.NotFound:
-            await interaction.response.send_message(f"User not found", ephemeral = True)
+            await interaction.response.send_message(f"User not found", ephemeral=True)
 
     ############################
     # error clearing
     ############################
 
     @purge.error
-    async def purge_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def purge_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
         if isinstance(error, app_commands.MissingPermissions):
             await MissingPermissions(interaction, "purge")
         else:
             raise
 
     @kick.error
-    async def purge_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def purge_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
         if isinstance(error, app_commands.MissingPermissions):
             await MissingPermissions(interaction, "kick")
         else:
             raise
 
     @ban.error
-    async def purge_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def purge_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
         if isinstance(error, app_commands.MissingPermissions):
             await MissingPermissions(interaction, "ban/unban")
         else:
             raise
 
     @unban.error
-    async def purge_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def purge_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
         if isinstance(error, app_commands.MissingPermissions):
             await MissingPermissions(interaction, "ban/unban")
         else:
@@ -87,7 +120,9 @@ class BaseCommands(commands.Cog):
 
 
 async def MissingPermissions(interaction: discord.Interaction, permission: str):
-    await interaction.response.send_message(f"You are missing the {permission} permission")
+    await interaction.response.send_message(
+        f"You are missing the {permission} permission"
+    )
 
 
 async def setup(bot):

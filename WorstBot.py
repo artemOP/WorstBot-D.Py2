@@ -9,7 +9,7 @@ from aiohttp import ClientSession
 
 class WorstBot(commands.Bot):
     def __init__(self, command_prefix, activity, intents):
-        super().__init__(command_prefix, intents = intents)
+        super().__init__(command_prefix, intents=intents)
         self.pool = None
         self.session = None
         self.activity = activity
@@ -17,9 +17,16 @@ class WorstBot(commands.Bot):
     async def setup_hook(self) -> None:
         for filename in listdir("cogs"):
             if filename.endswith(".py") and not filename.startswith("-"):
-                await bot.load_extension(f'cogs.{filename[:-3]}')
+                await bot.load_extension(f"cogs.{filename[:-3]}")
                 pass
-        bot.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
+        bot.pool = await asyncpg.create_pool(
+            database=environ.get("postgresdb"),
+            user=environ.get("postgresuser"),
+            password=environ.get("postgrespassword"),
+            command_timeout=10,
+            max_size=100,
+            min_size=25,
+        )
         bot.session = ClientSession()
         bot.post = self.post
         bot.get = self.get
@@ -32,25 +39,29 @@ class WorstBot(commands.Bot):
         bot.to_int = self.to_int
 
     async def on_ready(self):
-        print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
+        print(
+            f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}"
+        )
 
     @staticmethod
     async def post(*, url: str, params: dict = None, headers: dict = None):
-        async with bot.session.post(url = url, params = params, headers = headers) as response:
+        async with bot.session.post(
+            url=url, params=params, headers=headers
+        ) as response:
             content = await response.json()
             content["status"] = response.status
             return content
 
     @staticmethod
     async def get(*, url: str, params: dict = None, headers: dict = None):
-        async with bot.session.get(url = url, params = params, headers = headers) as response:
+        async with bot.session.get(url=url, params=params, headers=headers) as response:
             content = await response.json()
             content["status"] = response.status
             return content
 
     @staticmethod
     async def getstatus(*, url: str, params: dict = None, headers: dict = None):
-        async with bot.session.get(url = url, params = params, headers = headers) as response:
+        async with bot.session.get(url=url, params=params, headers=headers) as response:
             return response.status
 
     @staticmethod
@@ -91,7 +102,11 @@ class WorstBot(commands.Bot):
 
 load_dotenv()
 intents = discord.Intents.all()
-bot = WorstBot(command_prefix = commands.when_mentioned_or('.'),
-               activity = discord.Game(name = "With ones and zeros"),
-               intents = intents)
+bot = WorstBot(
+    command_prefix=commands.when_mentioned_or("."),
+    activity=discord.Game(name="With ones and zeros"),
+    intents=intents,
+)
 bot.run(environ.get("discord"))
+
+# todo: remove bot from modals/views/anything else with an interaction

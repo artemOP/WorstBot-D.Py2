@@ -10,7 +10,7 @@ IGNORE_EXTENSIONS = ["-template"]
 
 
 def path_from_extension(extension: str) -> pathlib.Path:
-    return pathlib.Path(extension.replace('.', os.sep) + '.py')
+    return pathlib.Path(extension.replace(".", os.sep) + ".py")
 
 
 class HotReload(commands.Cog):
@@ -25,7 +25,7 @@ class HotReload(commands.Cog):
     def cog_unload(self):
         self.hot_reload_loop.stop()
 
-    @tasks.loop(seconds = 3)
+    @tasks.loop(seconds=3)
     async def hot_reload_loop(self):
         for extension in list(self.bot.extensions.keys()):
             if extension in IGNORE_EXTENSIONS:

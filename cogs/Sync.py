@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 
+
 class Sync(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -11,25 +12,26 @@ class Sync(commands.Cog):
     async def on_ready(self):
         print("Sync cog online")
 
-    @commands.hybrid_command(name = "sync", description = "Sync command")
+    @commands.hybrid_command(name="sync", description="Sync command")
     @commands.is_owner()
     @app_commands.default_permissions()
     async def sync(self, ctx: Context) -> None:
         guilds = []
         for guild in self.bot.guilds:
-            self.bot.tree.clear_commands(guild = guild)
-            self.bot.tree.copy_global_to(guild = guild)
-            await self.bot.tree.sync(guild = guild)
+            self.bot.tree.clear_commands(guild=guild)
+            self.bot.tree.copy_global_to(guild=guild)
+            await self.bot.tree.sync(guild=guild)
             guilds.append(guild.name)
         guilds = "\n".join(guilds)
-        await ctx.send(f"Successfully synced to:\n{guilds}", ephemeral = True)
+        await ctx.send(f"Successfully synced to:\n{guilds}", ephemeral=True)
 
     @sync.error
     async def sync_error(self, ctx: Context, error):
         if isinstance(error, commands.NotOwner):
-            await ctx.send(str(error), ephemeral = True)
+            await ctx.send(str(error), ephemeral=True)
         else:
             print(error)
+
 
 async def setup(bot):
     await bot.add_cog(Sync(bot))
