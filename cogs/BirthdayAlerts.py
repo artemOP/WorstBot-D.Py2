@@ -73,7 +73,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdays(guild BIGINT, member BIGINT, birthday DATE, PRIMARY KEY(guild, member))")
         print("BirthdayAlert cog online")
 
-    @app_commands.command(name = "toggle", description = "Add or remove your Birthday")
+    @app_commands.command(name = "alert", description = "Add or remove your Birthday")
     async def BirthdayAdd(self, interaction: Interaction, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None):
         if not (month or day):
             await self.bot.execute("DELETE FROM birthdays WHERE member = $1", interaction.user.id)
@@ -86,8 +86,8 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
     @app_commands.command(name = "list")
     async def BirthdayList(self, interaction: Interaction):
-        table: list[Record] = await self.bot.fetch("SELECT member, birthdays FROM birthdays WHERE guild = $1", interaction.guild_id)
-        birthdays: dict[discord.Member: date] = {interaction.guild.get_member(member): date.today() + interval for member, interval in table}
+        table: list[Record] = await self.bot.fetch("SELECT member, birthday FROM birthdays WHERE guild = $1", interaction.guild_id)
+        birthdays: dict[discord.Member: date] = {interaction.guild.get_member(member): birthday for member, birthday in table}
         embedlist: list[discord.Embed] = await self.EmbedFormer(birthdays)
         view = BirthdayView(timeout = 30, embedlist = embedlist)
         await interaction.response.send_message(view = view, embed = embedlist[0], ephemeral = True)
