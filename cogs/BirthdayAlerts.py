@@ -60,7 +60,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         description = ""
         for item in Birthday.items():
             if len(description + str(item[0]) + item[1].strftime("%d/%m")) < 4000:
-                description += f"{item[0].mention}: {item[1].strftime('%d/%m')}"
+                description += f"{item[0].mention}: {item[1].strftime('%d/%m')}\n"
                 continue
             EmbedList.append(discord.Embed(title = "Birthdays", colour = discord.Colour.random(), description = description))
             description = ""
