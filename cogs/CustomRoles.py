@@ -9,14 +9,6 @@ class hexTransformer(app_commands.Transformer, ABC):
     async def transform(cls, interaction: Interaction, value: str) -> int:
         return int(value, 16)
 
-    @classmethod
-    async def min_value(cls) -> int:
-        return 0
-
-    @classmethod
-    async def max_value(cls) -> int:
-        return 16777215
-
 class CustomRoles(commands.GroupCog, name = "role"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
