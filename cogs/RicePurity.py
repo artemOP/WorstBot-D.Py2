@@ -136,7 +136,7 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
                 users[member.id] = score
         users = {key: value for key, value in sorted(users.items(), key = lambda item: item[1])}
         view.embedlist = await self.embedforming(users)
-        await interaction.response.send_message(view = view, embed = view.embedlist[0])
+        await interaction.response.send_message(view = view, embed = view.embedlist[0], ephemeral = True)
         view.response = await interaction.original_message()
 
 
