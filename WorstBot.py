@@ -5,6 +5,7 @@ import asyncpg
 import datetime
 from dotenv import load_dotenv
 from aiohttp import ClientSession
+from logging import DEBUG, WARN
 
 
 class WorstBot(commands.Bot):
@@ -90,8 +91,7 @@ class WorstBot(commands.Bot):
 
 
 load_dotenv()
-intents = discord.Intents.all()
 bot = WorstBot(command_prefix = commands.when_mentioned_or('.'),
                activity = discord.Game(name = "With ones and zeros"),
-               intents = intents)
-bot.run(environ.get("discord"))
+               intents = discord.Intents.all())
+bot.run(environ.get("discord"), log_level = WARN)
