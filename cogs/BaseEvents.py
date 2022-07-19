@@ -19,6 +19,7 @@ class BaseEvents(commands.Cog):
             guild BIGINT PRIMARY KEY,
             autorole BOOLEAN DEFAULT TRUE, 
             birthdays BOOLEAN DEFAULT TRUE,
+            autoevent BOOLEAN DEFAULT TRUE,
             roles BOOLEAN DEFAULT TRUE, 
             opinion BOOLEAN DEFAULT TRUE,
             calls BOOLEAN DEFAULT TRUE,
