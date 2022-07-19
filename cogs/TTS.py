@@ -73,7 +73,8 @@ class TTS(commands.GroupCog, name = "tts"):
             return
         await aiogTTS().save(text = message, filename = str(interaction.id), tld = accent)
         vc.play(discord.FFmpegPCMAudio(source = str(interaction.id), executable = self.exe))
-        await interaction.response.send_message(f'"{message}" is playing', ephemeral = True)
+        if interaction.response.is_done() is False:
+            await interaction.response.send_message(f'"{message}" is playing', ephemeral = True)
         while vc.is_playing():
             await sleep(1)
         remove(str(interaction.id))
