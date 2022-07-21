@@ -45,12 +45,21 @@ class Events(commands.GroupCog, name = "events"):
             event: discord.ScheduledEvent = await guild.fetch_scheduled_event(event["event"])
             baseCall: discord.VoiceChannel = self.bot.get_channel(await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", event.guild_id))
             category: discord.CategoryChannel = baseCall.category
-            overwrites = {
-                member: discord.PermissionOverwrite(view_channel = True) for member in guild.members
-            }
-            overwrites[guild.default_role] = discord.PermissionOverwrite(view_channel = False)
 
-            channel = await category.create_voice_channel(name = event.name, user_limit = 99, bitrate = event.guild.bitrate_limit, overwrites = overwrites)
+            overwrites = {
+                             member: discord.PermissionOverwrite(view_channel = True)
+                             for member in guild.members
+                         } | {
+                             guild.self_role: discord.PermissionOverwrite(view_channel = True),
+                             guild.default_role: discord.PermissionOverwrite(view_channel = False),
+                         }
+            channel = await category.create_voice_channel(
+                name = event.name,
+                user_limit = 99,
+                bitrate = event.guild.bitrate_limit,
+                overwrites = overwrites,
+            )
+
             await event.edit(channel = channel, reason = "WorstBot AutoEvent Startup")
 
             await self.bot.execute("DELETE FROM scheduled_events WHERE event = $1", event.id)
