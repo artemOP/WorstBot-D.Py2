@@ -13,7 +13,11 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.token = None
         self.streamersTable = None
 
+    def cog_load(self) -> None:
         self.request.start()
+
+    def cog_unload(self) -> None:
+        self.request.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):

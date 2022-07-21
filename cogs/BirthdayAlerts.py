@@ -52,7 +52,12 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
+
+    def cog_load(self) -> None:
         self.BirthdayCheck.start()
+
+    def cog_unload(self) -> None:
+        self.BirthdayCheck.stop()
 
     @staticmethod
     async def EmbedFormer(Birthday: dict) -> list[discord.Embed]:

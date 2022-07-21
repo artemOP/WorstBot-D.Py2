@@ -8,7 +8,12 @@ from datetime import datetime as dt, timezone, time
 class Reminder(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    def cog_load(self) -> None:
         self.ReminderTask.start()
+
+    def cog_unload(self) -> None:
+        self.ReminderTask.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):

@@ -8,7 +8,12 @@ class Events(commands.GroupCog, name = "events"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    def cog_load(self) -> None:
         self.Channel_Create.start()
+
+    def cog_unload(self) -> None:
+        self.Channel_Create.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
