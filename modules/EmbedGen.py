@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Optional
 from math import ceil
 
+
 @dataclass
 class EmbedField:
     name: str = MISSING
@@ -110,10 +111,11 @@ def EmbedFieldList(
             embed.set_footer(text = footers.get("text"), icon_url = footers.get("icon_url"))
     return embed_list
 
+
 def SimpleEmbedList(author: Optional[dict[str, str]] = None,
                     title: list[str] | str = MISSING,
                     descriptions: list[str] | str = MISSING,
-                    colour: Optional[Colour] = Colour.random(),) -> list[Embed]:
+                    colour: Optional[Colour] = Colour.random(), ) -> list[Embed]:
     """
     Generates a list of embeds with only the description field filled
 
@@ -136,4 +138,4 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
         for embed in embed_list:
             embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
     return embed_list
-  # todo: migrate on to these functions
+# todo: migrate on to these functions
