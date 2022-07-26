@@ -3,7 +3,7 @@ from discord import app_commands, Interaction
 from discord.app_commands import Choice
 from discord.ext import commands
 
-events = ["autorole", "birthdays", "roles", "opinion", "calls", "textarchive", "twitch"]
+events = ["autorole", "autoevent", "birthdays", "roles", "opinion", "calls", "textarchive", "twitch"]
 
 class BaseEvents(commands.Cog):
 
