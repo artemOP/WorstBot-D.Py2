@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 from datetime import date, time
 from dateutil.relativedelta import relativedelta
 from asyncpg import Record
-
+from modules.EmbedGen import SimpleEmbedList
 
 class BirthdayView(ui.View):
     def __init__(self, timeout: int, embedlist: list[discord.Embed]):
@@ -52,20 +52,12 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
+
+    def cog_load(self) -> None:
         self.BirthdayCheck.start()
 
-    @staticmethod
-    async def EmbedFormer(Birthday: dict) -> list[discord.Embed]:
-        EmbedList: list[discord.Embed] = []
-        description = ""
-        for item in Birthday.items():
-            if len(description + str(item[0]) + item[1].strftime("%d/%m")) < 4000:
-                description += f"{item[0].mention}: {item[1].strftime('%d/%m')}\n"
-                continue
-            EmbedList.append(discord.Embed(title = "Birthdays", colour = discord.Colour.random(), description = description))
-            description = ""
-        EmbedList.append(discord.Embed(title = "Birthdays", colour = discord.Colour.random(), description = description))
-        return EmbedList
+    def cog_unload(self) -> None:
+        self.BirthdayCheck.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -87,10 +79,19 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
     @app_commands.command(name = "list")
     async def BirthdayList(self, interaction: Interaction):
         table: list[Record] = await self.bot.fetch("SELECT member, birthday FROM birthdays WHERE guild = $1 ORDER BY birthday", interaction.guild_id)
-        birthdays: dict[discord.Member: date] = {interaction.guild.get_member(member): birthday for member, birthday in table}
-        embedlist: list[discord.Embed] = await self.EmbedFormer(birthdays)
-        view = BirthdayView(timeout = 30, embedlist = embedlist)
-        await interaction.response.send_message(view = view, embed = embedlist[0], ephemeral = True)
+        descriptions: list[str] = [""]
+        for member, birthday in table:
+            member = interaction.guild.get_member(member)
+            birthday = birthday.strftime("%d/%m")
+            if len(descriptions[-1] + str(member) + birthday) < 4000:
+                descriptions[-1] += f"{member.mention}: {birthday}\n"
+            else:
+                descriptions.append(f"{member.mention}: {birthday}\n")
+        print(descriptions)
+        embed_list = SimpleEmbedList(title = "Birthdays", descriptions = descriptions)
+
+        view = BirthdayView(timeout = 30, embedlist = embed_list)
+        await interaction.response.send_message(view = view, embed = embed_list[0], ephemeral = True)
         view.response = await interaction.original_message()
 
     @tasks.loop(time = time(1, 0), reconnect = True)
@@ -98,7 +99,6 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         birthdays = await self.bot.fetch("SELECT * FROM birthdays WHERE birthday = NOW()::DATE")
         if not birthdays:
             return
-        print(birthdays)
         for birthday in birthdays:
             if await self.bot.fetchval("SELECT birthdays FROM events WHERE guild = $1", birthday["guild"]):
                 return

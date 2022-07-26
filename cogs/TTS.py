@@ -70,9 +70,9 @@ class TTS(commands.GroupCog, name = "tts"):
         else:
             accent = "com"
         if vc.is_playing():
-            return
+            return await interaction.response.send_message("bot is currently playing a message, please try again", ephemeral = True)
         await aiogTTS().save(text = message, filename = str(interaction.id), tld = accent)
-        vc.play(discord.FFmpegPCMAudio(source = str(interaction.id), executable = self.exe))
+        vc.play(discord.FFmpegPCMAudio(source = str(interaction.id), executable = self.exe, options="-loglevel quiet"))
         if interaction.response.is_done() is False:
             await interaction.response.send_message(f'"{message}" is playing', ephemeral = True)
         while vc.is_playing():

@@ -16,10 +16,6 @@ class WorstBot(commands.Bot):
         self.activity = activity
 
     async def setup_hook(self) -> None:
-        for filename in listdir("cogs"):
-            if filename.endswith(".py") and not filename.startswith("-"):
-                await bot.load_extension(f'cogs.{filename[:-3]}')
-                pass
         bot.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
         bot.session = ClientSession()
         bot.post = self.post
@@ -31,6 +27,11 @@ class WorstBot(commands.Bot):
         bot.execute = self.execute
         bot.current = self.current
         bot.to_int = self.to_int
+
+        for filename in listdir("cogs"):
+            if filename.endswith(".py") and not filename.startswith("-"):
+                await bot.load_extension(f'cogs.{filename[:-3]}')
+                pass
 
     async def on_ready(self):
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")

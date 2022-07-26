@@ -4,6 +4,8 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 
+from modules.EmbedGen import EmbedField, EmbedFieldList
+
 
 class AutoRoleList(discord.ui.View):
     def __init__(self, timeout):
@@ -31,7 +33,6 @@ class AutoRoleList(discord.ui.View):
 
     @discord.ui.button(label = 'Stop', style = discord.ButtonStyle.grey)
     async def exit(self, interaction: Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(embed = None)
         await self.on_timeout()
 
     @discord.ui.button(label = 'Next Page', style = discord.ButtonStyle.green)
@@ -47,21 +48,6 @@ class AutoRoleList(discord.ui.View):
         await interaction.response.edit_message(embed = self.embedlist[self.page])
 
 
-async def embedforming(role):
-    embedlist = []
-    totalcount = 0
-    while totalcount < len(role):
-        fieldcount = 0
-        embed = discord.Embed(colour = discord.Colour.dark_purple(), title = "Automatically applied roles")
-        while fieldcount < 24 and totalcount < len(role):
-            embed.add_field(name = "Role:", value = role[totalcount].mention)
-            fieldcount += 1
-            totalcount += 1
-        embed.set_footer(text = f"Page {ceil(totalcount / 25)} of {ceil(len(role) / 25)}")
-        embedlist.append(embed)
-    return embedlist
-
-
 @app_commands.default_permissions(manage_roles = True)
 class AutoRole(commands.GroupCog, name = "autorole"):
     def __init__(self, bot: commands.Bot):
@@ -72,15 +58,15 @@ class AutoRole(commands.GroupCog, name = "autorole"):
     async def on_ready(self):
         print("AutoRole cog online")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS autorole(guild BIGINT, role BIGINT UNIQUE )")
-        
+
     @app_commands.command(name = "setup", description = "add or remove role from autorole")
     async def AutoRole(self, interaction: Interaction, role: discord.Role):
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM autorole WHERE guild = $1 AND role = $2)", interaction.guild_id, role.id):
             await self.bot.execute("INSERT INTO autorole(guild, role) VALUES($1, $2) ON CONFLICT (role) DO NOTHING", interaction.guild.id, role.id)
-            await interaction.response.send_message(f"{role.name} successfully added to the AutoRole")
+            await interaction.response.send_message(f"{role.name} successfully added to the AutoRole", ephemeral = True)
         else:
             await self.bot.execute("DELETE FROM autorole WHERE guild = $1 AND role = $2", interaction.guild.id, role.id)
-            await interaction.response.send_message(content = f"{role.name} successfully removed to the AutoRole")
+            await interaction.response.send_message(content = f"{role.name} successfully removed to the AutoRole", ephemeral = True)
 
     @app_commands.command(name = "list")
     async def AutoRoleList(self, interaction: Interaction):
@@ -88,8 +74,12 @@ class AutoRole(commands.GroupCog, name = "autorole"):
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", interaction.guild.id)
         for role in roles:
             roles[roles.index(role)] = interaction.guild.get_role(role["role"])
-        view.embedlist = await embedforming(roles)
-        await interaction.response.send_message(view = view, embed = view.embedlist[0])
+        view.embedlist = EmbedFieldList(
+            title = "Automatically applied roles",
+            fields = [EmbedField(name = "Role", value = role.mention) for role in roles],
+            max_fields = 9
+        )
+        await interaction.response.send_message(view = view, embed = view.embedlist[0], ephemeral = True)
         view.response = await interaction.original_message()
 
     @commands.Cog.listener()

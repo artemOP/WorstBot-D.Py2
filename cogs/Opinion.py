@@ -7,7 +7,12 @@ from asyncio import sleep
 class Opinion(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    def cog_load(self) -> None:
         self.DeleteOld.start()
+
+    def cog_unload(self) -> None:
+        self.DeleteOld.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
