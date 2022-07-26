@@ -13,17 +13,17 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.token = None
         self.streamersTable = None
 
-    def cog_load(self) -> None:
+    async def cog_load(self) -> None:
+        await self.TokenGen()
+        await self.streamers()
         self.request.start()
 
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         self.request.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
-        await self.TokenGen()
-        await self.streamers()
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT NOT NULL, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
         print("Twitch cog online")
 
     async def streamers(self):
@@ -46,9 +46,13 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.token = token["access_token"]
 
     @app_commands.command(name = "add", description = "Get live alerts for your selected twitch channel")
-    async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str):
+    async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str, alert_role: discord.Role = None):
         twitch_user = await self.bot.to_int(twitch_user)
-        await self.bot.execute("INSERT INTO twitch(guild, channel, userid) VALUES($1, $2, $3) ON CONFLICT (guild, userid) DO NOTHING", interaction.guild_id, channel.id, twitch_user)
+        if alert_role:
+            alert_role = alert_role.id
+        else:
+            alert_role = 0
+        await self.bot.execute("INSERT INTO twitch(guild, channel, userid, role) VALUES($1, $2, $3, $4) ON CONFLICT (guild, userid) DO UPDATE SET channel = excluded.channel, role = excluded.role", interaction.guild_id, channel.id, twitch_user, alert_role)
         await self.streamers()
         await interaction.response.send_message("Streamer has been added to the Tracking list", ephemeral = True)
 
@@ -97,11 +101,12 @@ class Twitch(commands.GroupCog, name = "twitch"):
             await self.bot.execute("UPDATE twitch SET live = TRUE WHERE userid=$1", user["userid"])
             stream = [dictionary for dictionary in streams["data"] if int(dictionary["user_id"]) == user["userid"]][0]
             channel = self.bot.get_channel(user["channel"])
+            role = channel.guild.get_role(user["role"])
             embed = discord.Embed(colour = discord.Colour.random(), title = stream["user_name"])
             embed.description = f"""{stream["user_name"]} just went live on twitch!\n{stream["title"]}\nfind them at https://www.twitch.tv/{stream["user_name"]}"""
             embed.set_image(url = stream["thumbnail_url"].replace("-{width}x{height}", ""))
             embed.set_footer(text = stream["started_at"].split("T")[1].split("Z")[0])
-            await channel.send(embed=embed, content = "@everyone")
+            await channel.send(embed=embed, content = "@everyone" if not role else role.mention)
 
     @request.before_loop
     async def before_my_task(self):
@@ -110,3 +115,4 @@ class Twitch(commands.GroupCog, name = "twitch"):
 
 async def setup(bot):
     await bot.add_cog(Twitch(bot))
+
