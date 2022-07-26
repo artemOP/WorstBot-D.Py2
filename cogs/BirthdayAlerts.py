@@ -84,9 +84,10 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
             member = interaction.guild.get_member(member)
             birthday = birthday.strftime("%d/%m")
             if len(descriptions[-1] + str(member) + birthday) < 4000:
-                descriptions[-1].join(f"{member.mention}: {birthday}\n")
+                descriptions[-1] += f"{member.mention}: {birthday}\n"
             else:
                 descriptions.append(f"{member.mention}: {birthday}\n")
+        print(descriptions)
         embed_list = SimpleEmbedList(title = "Birthdays", descriptions = descriptions)
 
         view = BirthdayView(timeout = 30, embedlist = embed_list)
