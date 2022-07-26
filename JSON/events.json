@@ -22,5 +22,10 @@
   "on_member_ban": ["guild, user"],
   "on_member_unban": ["guild, user"],
   "on_invite_create": ["invite"],
-  "on_invite_delete": ["invite"]
+  "on_invite_delete": ["invite"],
+  "on_raw_app_command_permissions_update": ["playload"],
+  "on_automod_rule_create": ["rule"],
+  "on_automod_rule_update": ["rule"],
+  "on_automod_rule_delete": ["rule"],
+  "on_automod_action": ["execution"]
 }
