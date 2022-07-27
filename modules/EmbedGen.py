@@ -6,16 +6,44 @@ from typing import Optional
 from math import ceil
 from pydantic import BaseModel, conint, constr, Field
 
+
 class EmbedField(BaseModel):
     index: conint(ge = 1, le = 25) = Field(default = None)
     name: constr(min_length = 1, curtail_length = 256)
     value: constr(min_length = 1, curtail_length = 1024)
     inline: bool = Field(default = True)
 
+
+def set_author(embed: discord.Embed, author: dict[str, str]) -> discord.Embed:
+    if isinstance(author, dict):
+        embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
+    return embed
+
+
+def set_footer(embed: discord.Embed, footer: dict[str, str]) -> discord.Embed:
+    if isinstance(footer, dict):
+        embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
+    return embed
+
+
+def set_image(embed: discord.Embed, image: dict[str, str]) -> discord.Embed:
+    if isinstance(image, dict):
+        embed.set_image(url = image.get("url"))
+    return embed
+
+
+def set_thumbnail(embed: discord.Embed, image: dict[str, str]) -> discord.Embed:
+    if isinstance(image, dict):
+        embed.set_thumbnail(url = image.get("url"))
+    return embed
+
+
 def SimpleEmbed(author: Optional[dict[str, str]] = None,
                 title: Optional[str] = None,
                 text: str = None,
-                colour: Colour = Colour.random(),
+                image: Optional[dict[str, str]] = None,
+                thumbnail: Optional[dict[str, str]] = None,
+                colour: Optional[Colour] = Colour.random(),
                 footer: Optional[dict[str, str]] = None) -> Embed:
     """
     Generates a simple embed with only the description field
@@ -23,15 +51,21 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
     :param author: Embed author
     :param title: Embed Title
     :param text: Embed Description
+    :param image: Embed Image
+    :param thumbnail: Embed Thumbnail
     :param colour: Embed Colour
     :param footer: Embed footer
     :return: Discord Embed
     """
     embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
-    if isinstance(author, dict):
-        embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
-    if isinstance(footer, dict):
-        embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
+    if author:
+        set_author(embed, author)
+    if footer:
+        set_footer(embed, footer)
+    if image:
+        set_image(embed, image)
+    if thumbnail:
+        set_thumbnail(embed, thumbnail)
     return embed
 
 
@@ -40,6 +74,8 @@ def FullEmbed(
         title: Optional[str] = None,
         fields: list[EmbedField] = MISSING,
         description: Optional[str] = None,
+        image: Optional[dict[str, str]] = None,
+        thumbnail: Optional[dict[str, str]] = None,
         colour: Optional[Colour] = Colour.random(),
         footer: Optional[dict[str, str]] = None) -> Embed:
     """
@@ -49,6 +85,8 @@ def FullEmbed(
     :param title: Embed Title
     :param fields: list of embed fields
     :keyword field: Object containing mandatory name, value. Optional inline, index
+    :param image: Embed Image
+    :param thumbnail: Embed Thumbnail
     :param description: Embed description
     :param colour: Embed colour
     :param footer: Embed Footer
@@ -60,11 +98,14 @@ def FullEmbed(
             embed.insert_field_at(index = field.index, name = field.name, value = field.value, inline = field.inline)
         else:
             embed.add_field(name = field.name, value = field.value, inline = field.inline)
-    if isinstance(author, dict):
-        embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
-    if isinstance(footer, dict):
-        embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
-
+    if author:
+        set_author(embed, author)
+    if footer:
+        set_footer(embed, footer)
+    if image:
+        set_image(embed, image)
+    if thumbnail:
+        set_thumbnail(embed, thumbnail)
     return embed
 
 
