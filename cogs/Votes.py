@@ -1,17 +1,15 @@
 import discord
 from discord import Interaction, app_commands, ui
 from discord.ext import commands
+from modules.EmbedGen import FullEmbed, EmbedField
 
 async def EmbedGen(*, bot, poll):
     AnswerTable = {answerid: answer for answerid, answer in await bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1", poll)}
     counters = {}
     for row in AnswerTable:
         counters[row] = await bot.fetchval("SELECT COUNT(*) FROM voters WHERE answerid=$1", row)
-    answers = {answer: count for answer, count in zip(AnswerTable.values(), counters.values())}
-    embed = discord.Embed(colour = discord.Colour.random(), title = "Poll results")
-    for item in answers.items():
-        embed.add_field(name = item[0], value = item[1], inline = True)
-    return embed
+    return FullEmbed(title = "Poll results",
+                     fields = [EmbedField(name = answer, value = count) for answer, count in zip(AnswerTable.values(), counters.values())])
 
 class StartPollModal(ui.Modal, title = "Poll"):
     def __init__(self, *, bot: commands.Bot, voteid = None, question = None, answers = None, ):
