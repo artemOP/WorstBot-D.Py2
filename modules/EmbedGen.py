@@ -2,33 +2,15 @@ import discord
 from discord import Embed, Colour
 from discord.utils import MISSING, utcnow
 from itertools import islice
-from dataclasses import dataclass
 from typing import Optional
 from math import ceil
+from pydantic import BaseModel, conint, constr, Field
 
-
-@dataclass
-class EmbedField:
-    name: str = MISSING
-    value: str = MISSING
-    inline: bool = True
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name[:256]
-
-    @property
-    def value(self) -> str:
-        return self._value
-
-    @value.setter
-    def value(self, value: str) -> None:
-        self._value = value[:1024]
-
+class EmbedField(BaseModel):
+    index: conint(ge = 1, le = 25) = Field(default = None)
+    name: constr(min_length = 1, curtail_length = 256)
+    value: constr(min_length = 1, curtail_length = 1024)
+    inline: bool = Field(default = True)
 
 def SimpleEmbed(title: Optional[str] = None, text: str = None, colour: Colour = Colour.random()) -> Embed:
     """
@@ -54,7 +36,8 @@ def FullEmbed(
 
     :param author: Embed Author
     :param title: Embed Title
-    :param fields: list of embed fields with name, value and inline
+    :param fields: list of embed fields
+    :keyword field: Object containing mandatory name, value. Optional inline, index
     :param description: Embed description
     :param colour: Embed colour
     :param footer: Embed Footer
@@ -62,9 +45,15 @@ def FullEmbed(
     """
     embed = Embed(title = title, colour = colour, description = description, timestamp = utcnow())
     for field in islice(fields, 25):
-        embed.add_field(name = field.name, value = field.value, inline = field.inline)
-    embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
-    embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
+        if field.index:
+            embed.insert_field_at(index = field.index, name = field.name, value = field.value, inline = field.inline)
+        else:
+            embed.add_field(name = field.name, value = field.value, inline = field.inline)
+    if isinstance(author, dict):
+        embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
+    if isinstance(footer, dict):
+        embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
+
     return embed
 
 
@@ -99,7 +88,10 @@ def EmbedFieldList(
     for index, embed in enumerate(embed_list):
         while len(embed.fields) < min(len(fields), max_fields) and field_index < len(fields):
             field = fields[field_index]
-            embed.add_field(name = field.name, value = field.value, inline = field.inline)
+            if field.index:
+                embed.insert_field_at(index = field.index, name = field.name, value = field.value, inline = field.inline)
+            else:
+                embed.add_field(name = field.name, value = field.value, inline = field.inline)
             field_index += 1
         if author:
             embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
