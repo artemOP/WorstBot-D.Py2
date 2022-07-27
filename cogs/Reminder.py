@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands, tasks
 from datetime import datetime as dt, timezone, time
-
+from modules.EmbedGen import FullEmbed, EmbedField
 
 class Reminder(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -49,8 +49,9 @@ class Reminder(commands.Cog):
         else:
             await discord.utils.sleep_until(reminder["expiretime"])
             user = self.bot.get_user(reminder["member"])
-            embed = discord.Embed(colour = discord.Color.random(), title = "**Reminder**", description = f"""You asked to be reminded of: "{reminder["message"]}" """)
-            embed.add_field(name = "**original message:**", value = reminder["jumplink"])
+            embed = FullEmbed(title = "**Reminder**",
+                              fields = [EmbedField(name = "**original message:**", value = reminder["jumplink"])],
+                              description = f"""You asked to be reminded of: "{reminder["message"]}" """)
             await user.send(embed = embed)
             await self.bot.execute("DELETE FROM reminder WHERE expiretime<=NOW()")
 

@@ -1,6 +1,8 @@
 import discord
 from discord import Interaction, app_commands, ui, SelectOption
 from discord.ext import commands
+from modules.EmbedGen import SimpleEmbed, SimpleEmbedList
+
 
 class TagModal(ui.Modal, title = "tag"):
     def __init__(self, tagid = None, TagName: str = None, TagValue: str = None, nsfw: bool = False, private: bool = False, public: bool = False, invisible: bool = False):
@@ -57,6 +59,7 @@ class TagModal(ui.Modal, title = "tag"):
                 interaction.guild_id, interaction.user.id, self.TagName.value, self.TagValue.value, *Metadata.values()
             )
         await interaction.followup.send(f"{self.TagName.value} has been created", ephemeral = True)
+
 
 class Tag(commands.GroupCog, name = "tag"):
 
@@ -127,8 +130,10 @@ class Tag(commands.GroupCog, name = "tag"):
             return await interaction.followup.send("Tag is private", ephemeral = True)
         if tag["nsfw"] and not interaction.channel.nsfw:
             return await interaction.followup.send("Tag is NSFW", ephemeral = True)
-        embed = discord.Embed(title = tag["name"], description = tag["value"] if not raw else f"```txt\n{tag['value']}\n```", colour = discord.Colour.random())
-        embed.set_author(name = self.bot.get_user(tag["owner"]))
+        owner = self.bot.get_user(tag["owner"])
+        embed = SimpleEmbed(author = {"name": str(owner), "icon_url": owner.display_avatar},
+                            title = tag["name"],
+                            text = tag["value"] if not raw else f"```txt\n{tag['value']}\n```")
         if tag["invisible"]:
             await interaction.followup.send("message sent", ephemeral = True)
             await interaction.channel.send(embed = embed)
@@ -149,25 +154,29 @@ class Tag(commands.GroupCog, name = "tag"):
     @app_commands.describe(tag = "randomly select from tags containing name")
     async def Random(self, interaction: Interaction, tag: str = None):
         tag = self.bot.current(tag)
-        tag = await self.bot.fetchrow("SELECT owner, name, value FROM tags WHERE guild = $1 AND nsfw = FALSE AND private = FALSE AND name LIKE $2 ORDER BY random() LIMIT 1", interaction.guild_id, f"%{tag}%")
-        if tag:
-            embed = discord.Embed(title = tag["name"], description = tag["value"], colour = discord.Colour.random())
-            embed.set_author(name = tag["owner"])
-            await interaction.response.send_message(embed = embed)
+        tag = await self.bot.fetchrow("SELECT owner, name, value FROM tags WHERE guild = $1 AND nsfw = FALSE AND private = FALSE AND name LIKE $2 ORDER BY RANDOM() LIMIT 1", interaction.guild_id, f"%{tag}%")
+        if not tag:
+            return
+        owner = self.bot.get_user(tag["owner"])
+        await interaction.response.send_message(
+            embed = SimpleEmbed(
+                author = {"name": str(owner), "icon_url": owner.display_avatar},
+                title = tag["name"],
+                text = tag["value"]))
 
     @app_commands.command(name = "list", description = "View all tags by a set user")
     @app_commands.describe(user = "leave Blank to search your own tags")
     async def List(self, interaction: Interaction, user: discord.Member = None):
         user = user or interaction.user
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND owner = $2 AND private = FALSE", interaction.guild_id, user.id)
-        embed = discord.Embed(title = f"{user.name}'s tags", description = "\n".join(tag["name"] for tag in tags)[:4000], colour = discord.Colour.random())
-        await interaction.response.send_message(embed = embed, ephemeral = True)
+        embeds = SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(tag["name"] for tag in tags))
+        await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "list-all", description = "View all tags on the server")
     async def ListAll(self, interaction: Interaction):
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND private = FALSE", interaction.guild_id)
-        embed = discord.Embed(title = "Server tags", description = "\n".join(tag["name"] for tag in tags), colour = discord.Colour.random())
-        await interaction.response.send_message(embed = embed, ephemeral = True)
+        embeds = SimpleEmbedList(title = "Server tags", descriptions = "\n".join(tag["name"] for tag in tags))
+        await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "transfer", description = "Transfer ownership of tag to someone else")
     async def Transfer(self, interaction: Interaction, tag: str, user: discord.Member):
@@ -190,7 +199,8 @@ class Tag(commands.GroupCog, name = "tag"):
     @Rename.autocomplete("tag")
     @Delete.autocomplete("tag")
     @Transfer.autocomplete("tag")
-    async def PrivilegedTagAutocomplete(self, interaction: Interaction, current: None | int | str = "%") -> list[app_commands.Choice]:
+    async def PrivilegedTagAutocomplete(self, interaction: Interaction, current: None | int | str = "%") -> list[
+        app_commands.Choice]:
         current = self.bot.current(current)
         tags = await self.bot.fetch("SELECT tagid, name FROM tags WHERE guild = $1 AND (owner = $2 OR public = TRUE) AND name LIKE $3", interaction.guild_id, interaction.user.id, current)
         return [app_commands.Choice(name = name, value = str(tagid)) for tagid, name in tags]
@@ -200,8 +210,9 @@ class Tag(commands.GroupCog, name = "tag"):
     @Claim.autocomplete("tag")
     async def TagViewAutocomplete(self, interaction: Interaction, current: None | str) -> list[app_commands.Choice]:
         current = self.bot.current(current)
-        tags = await self.bot.fetch("SELECT tagid, name FROM tags WHERE guild = $1 AND name like $2", interaction.guild_id, current)
+        tags = await self.bot.fetch("SELECT tagid, name FROM tags WHERE guild = $1 AND name LIKE $2", interaction.guild_id, current)
         return [app_commands.Choice(name = name, value = str(tagid)) for tagid, name in tags]
+
 
 async def setup(bot):
     await bot.add_cog(Tag(bot))

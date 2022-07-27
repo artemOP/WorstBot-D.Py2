@@ -3,6 +3,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from typing import Optional
+from modules.EmbedGen import SimpleEmbed
 
 class hexTransformer(app_commands.Transformer, ABC):
     @classmethod
@@ -82,8 +83,11 @@ class CustomRoles(commands.GroupCog, name = "role"):
         if role is None:
             await interaction.followup.send("This user does not have a custom role or it may be broken")
         else:
-            embed = discord.Embed(colour = role.colour, description = f"{member.name} Uses the role colour {role.colour}")
-            await interaction.followup.send(embed = embed, ephemeral = True)
+            await interaction.followup.send(
+                embed = SimpleEmbed(
+                    colour = role.colour,
+                    text = f"{member.name} Uses the role colour {role.colour}"),
+                ephemeral = True)
 
 
 async def setup(bot):

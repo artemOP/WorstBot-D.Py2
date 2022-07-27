@@ -2,6 +2,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from discord.app_commands import Choice, Transform, Transformer
+from modules.EmbedGen import SimpleEmbedList
 
 class RoleTransformer(Transformer):
 
@@ -40,13 +41,14 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
     @app_commands.command(name = "list")
     async def ListRole(self, interaction: Interaction):
         roles = await self.bot.fetch("SELECT role FROM selfroles WHERE guild = $1", interaction.guild_id)
-        embed = discord.Embed(title = "giveme roles", colour = discord.Colour.random())
+        if not roles:
+            return await interaction.response.send_message("no roles", ephemeral = True)
         for index, value in enumerate(roles):
             roles[index] = interaction.guild.get_role(value["role"])
-        if roles:
-            embed.description = "\n\n".join(f"`{role.name}`" for role in roles)
-        await interaction.response.send_message(embed = embed, ephemeral = True)
-
+        embed_list = SimpleEmbedList(
+            title = "giveme roles",
+            descriptions = "\n\n".join(f"`{i + 1}: {role.name}`" for i, role in enumerate(roles)))
+        await interaction.response.send_message(embeds = embed_list, ephemeral = True)
 
 async def setup(bot):
     await bot.add_cog(SelfAssignableRoles(bot))

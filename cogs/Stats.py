@@ -1,8 +1,9 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
-from os import path, listdir
+from os import listdir
 from dataclasses import dataclass, field, MISSING
+from modules.EmbedGen import FullEmbed, EmbedField
 
 
 @dataclass
@@ -38,7 +39,7 @@ class Stats(commands.GroupCog, name = "stats"):
 
     @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
-        embed = discord.Embed(title = "stats", colour = discord.Colour.random())
+        fields: list[EmbedField] = []
         cogs = {}
         blocksize = 0
         for cog in listdir("cogs"):
@@ -68,21 +69,22 @@ class Stats(commands.GroupCog, name = "stats"):
                         cog.source += 1
                         self.source += 1
                 self.total += 1
-            embed.description = f"""
-                source code: {self.source} ({self.to_percent(self.source)}%)\n
-                comments: {self.comment} ({self.to_percent(self.comment)}%)\n
-                blank: {self.blank} ({self.to_percent(self.blank)}%)\n
-                total: {self.total}\n\u200b
-                """
-            embed.add_field(
-                name = [k for k, v in cogs.items() if v == cog][0][:-3],
-                value = f"""
-                source code: {cog.source} ({cog.to_percent(cog.source)}%)\n
-                comments: {cog.comment} ({cog.to_percent(cog.comment)}%)\n
-                blank: {cog.blank} ({cog.to_percent(cog.blank)}%)\n
-                total: {cog.total}\n\u200b
-                """
+            fields.append(
+                EmbedField(name = [k for k, v in cogs.items() if v == cog][0][:-3],
+                           value = f"""
+                           source code: {cog.source} ({cog.to_percent(cog.source)}%)\n
+                           comments: {cog.comment} ({cog.to_percent(cog.comment)}%)\n
+                           blank: {cog.blank} ({cog.to_percent(cog.blank)}%)\n
+                           total: {cog.total}\n\u200b
+                           """
+                           )
             )
+        description = f"""
+        source code: {self.source} ({self.to_percent(self.source)}%)\n
+        comments: {self.comment} ({self.to_percent(self.comment)}%)\n
+        blank: {self.blank} ({self.to_percent(self.blank)}%)\n
+        total: {self.total}\n\u200b"""
+        embed = FullEmbed(title = "stats", fields = fields, description = description)
         await interaction.response.send_message(embed = embed, ephemeral = True)
 
 

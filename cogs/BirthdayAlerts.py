@@ -87,7 +87,6 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
                 descriptions[-1] += f"{member.mention}: {birthday}\n"
             else:
                 descriptions.append(f"{member.mention}: {birthday}\n")
-        print(descriptions)
         embed_list = SimpleEmbedList(title = "Birthdays", descriptions = descriptions)
 
         view = BirthdayView(timeout = 30, embedlist = embed_list)

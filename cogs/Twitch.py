@@ -3,6 +3,7 @@ from discord import Interaction, app_commands
 from discord.ext import commands, tasks
 from os import environ
 from asyncio import sleep
+from modules.EmbedGen import SimpleEmbed
 
 @app_commands.default_permissions()
 class Twitch(commands.GroupCog, name = "twitch"):
@@ -102,10 +103,16 @@ class Twitch(commands.GroupCog, name = "twitch"):
             stream = [dictionary for dictionary in streams["data"] if int(dictionary["user_id"]) == user["userid"]][0]
             channel = self.bot.get_channel(user["channel"])
             role = channel.guild.get_role(user["role"])
-            embed = discord.Embed(colour = discord.Colour.random(), title = stream["user_name"])
-            embed.description = f"""{stream["user_name"]} just went live on twitch!\n{stream["title"]}\nfind them at https://www.twitch.tv/{stream["user_name"]}"""
-            embed.set_image(url = stream["thumbnail_url"].replace("-{width}x{height}", ""))
-            embed.set_footer(text = stream["started_at"].split("T")[1].split("Z")[0])
+            embed = SimpleEmbed(
+                author = {
+                    "name": stream["user_name"],
+                    "url": f"https://www.twitch.tv/{stream['user_name']}"
+                },
+                title = stream["user_name"],
+                text = f"{stream['user_name']} just went live on twitch!\n{stream['title']}\nfind them at https://www.twitch.tv/{stream['user_name']}",
+                footer = {"text": stream["started_at"].split("T")[1].split("Z")[0]},
+                image = {"url": stream["thumbnail_url"].replace("-{width}x{height}", "")}
+            )
             await channel.send(embed=embed, content = "@everyone" if not role else role.mention)
 
     @request.before_loop
