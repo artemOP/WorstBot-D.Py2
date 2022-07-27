@@ -30,7 +30,7 @@ class EmbedField:
         self._value = value[:1024]
 
 
-def SimpleEmbed(title: str = MISSING, text: str = None, colour: Colour = Colour.random()) -> Embed:
+def SimpleEmbed(title: Optional[str] = None, text: str = None, colour: Colour = Colour.random()) -> Embed:
     """
     Generates a simple embed with only the description field
 
@@ -44,7 +44,7 @@ def SimpleEmbed(title: str = MISSING, text: str = None, colour: Colour = Colour.
 
 def FullEmbed(
         author: Optional[dict[str, str]] = None,
-        title: str = MISSING,
+        title: Optional[str] = None,
         fields: list[EmbedField] = MISSING,
         description: Optional[str] = None,
         colour: Optional[Colour] = Colour.random(),
@@ -70,7 +70,7 @@ def FullEmbed(
 
 def EmbedFieldList(
         author: Optional[dict[str, str]] = None,
-        title: list[str] | str = MISSING,
+        title: Optional[list[str] | str] = None,
         fields: list[EmbedField] = MISSING,
         max_fields: Optional[int] = 25,
         description: Optional[list[str]] = None,
@@ -89,7 +89,7 @@ def EmbedFieldList(
     :return: List of embeds
     """
     embed_list: list[Embed] = [
-        Embed(title = title if isinstance(title, str) else title[i],
+        Embed(title = title if isinstance(title, str | None) else title[i],
               colour = colour,
               description = None if not description else description[i],
               timestamp = utcnow())
@@ -113,7 +113,7 @@ def EmbedFieldList(
 
 
 def SimpleEmbedList(author: Optional[dict[str, str]] = None,
-                    title: list[str] | str = MISSING,
+                    title: Optional[list[str] | str] = None,
                     descriptions: list[str] | str = MISSING,
                     colour: Optional[Colour] = Colour.random(), ) -> list[Embed]:
     """
@@ -129,7 +129,7 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
         descriptions = [descriptions[i: i + 4000] for i in range(0, len(descriptions), 4000)]
     embed_list: list[Embed] = [
         Embed(
-            title = title if isinstance(title, str) else title[index],
+            title = title if isinstance(title, str | None) else title[index],
             description = description[:4000],
             colour = colour
         ) for index, description in enumerate(descriptions)
