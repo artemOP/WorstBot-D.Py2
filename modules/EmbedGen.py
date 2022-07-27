@@ -12,16 +12,23 @@ class EmbedField(BaseModel):
     value: constr(min_length = 1, curtail_length = 1024)
     inline: bool = Field(default = True)
 
-def SimpleEmbed(title: Optional[str] = None, text: str = None, colour: Colour = Colour.random()) -> Embed:
+def SimpleEmbed(author: Optional[dict[str, str]] = None,
+                title: Optional[str] = None,
+                text: str = None,
+                colour: Colour = Colour.random()) -> Embed:
     """
     Generates a simple embed with only the description field
 
+    :param author: Embed author
     :param title: Embed Title
     :param text: Embed Description
     :param colour: Embed Colour
     :return: Discord Embed
     """
-    return Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
+    embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
+    if author:
+        embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
+    return embed
 
 
 def FullEmbed(
