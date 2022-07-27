@@ -28,8 +28,10 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
     :return: Discord Embed
     """
     embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
-    if author:
+    if isinstance(author, dict):
         embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
+    if isinstance(footer, dict):
+        embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
     return embed
 
 
