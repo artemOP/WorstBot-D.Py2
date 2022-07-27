@@ -1,10 +1,13 @@
 from json import load
 from math import ceil
+
 import discord
 from discord import app_commands, Interaction
 from discord.ui import Item, Button, button
 from discord.ext import commands
 from typing import Any
+
+from modules.EmbedGen import EmbedFieldList, EmbedField
 
 
 def generator():
@@ -12,6 +15,7 @@ def generator():
         questions = load(f)
     for i in range(0, len(questions)):
         yield str(i + 1), questions[i]
+
 
 class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives output
     def __init__(self, timeout, bot: commands.Bot):
@@ -24,7 +28,7 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
 
     async def on_timeout(self) -> None:
         await self.response.edit(view = None)
-    
+
     async def on_error(self, interaction: Interaction, error: Exception, item: Item[Any]) -> None:
         await interaction.response.edit_message(content = error)
 
@@ -106,36 +110,30 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
         await self.bot.execute("CREATE TABLE IF NOT EXISTS ricepurity(id BIGINT PRIMARY KEY, score INT)")
         print("RicePurity cog online")
 
-    async def embedforming(self, users):
-        embedlist = []
-        totalcount = 0
-        while totalcount < len(users):
-            fieldcount = 0
-            embed = discord.Embed(colour = discord.Colour.dark_purple(), title = "Rice Purity Scores")
-            while fieldcount < 24 and totalcount < len(users):
-                embed.add_field(name = self.bot.get_user(list(users.keys())[totalcount]), value = list(users.values())[
-                    totalcount])
-                fieldcount += 1
-                totalcount += 1
-            embed.set_footer(text = f"Page {ceil(totalcount / 25)} of {ceil(len(users) / 25)}")
-            embedlist.append(embed)
-        return embedlist
-
     @app_commands.command(name = "test")
     async def test(self, interaction: Interaction):
-        view = PurityButtons(timeout = 60, bot = self.bot)
+        view = PurityButtons(timeout = 30, bot = self.bot)
         await interaction.response.send_message('Are you ready to begin your rice purity test?', view = view, ephemeral = True)
         view.response = await interaction.original_message()
 
     @app_commands.command(name = "leaderboard")
     async def leaderboard(self, interaction: Interaction):
-        view = PurityLeaderboard(timeout = 300)
+        view = PurityLeaderboard(timeout = 30)
         users = {}
         for member in interaction.guild.members:
             if (score := await self.bot.fetchval("SELECT score FROM ricepurity WHERE id=$1", member.id)) is not None:
                 users[member.id] = score
-        users = {key: value for key, value in sorted(users.items(), key = lambda item: item[1])}
-        view.embedlist = await self.embedforming(users)
+        view.embedlist = EmbedFieldList(
+            title = "Rice Purity Scores",
+            fields = [
+                EmbedField(
+                    name = str(self.bot.get_user(userid)),
+                    value = str(userscore))
+                for userid, userscore in sorted(users.items(), key = lambda item: item[1])
+            ],
+            max_fields = 9,
+            colour = discord.Colour.dark_purple()
+        )
         await interaction.response.send_message(view = view, embed = view.embedlist[0], ephemeral = True)
         view.response = await interaction.original_message()
 
