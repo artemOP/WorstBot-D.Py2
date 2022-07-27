@@ -15,7 +15,8 @@ class EmbedField(BaseModel):
 def SimpleEmbed(author: Optional[dict[str, str]] = None,
                 title: Optional[str] = None,
                 text: str = None,
-                colour: Colour = Colour.random()) -> Embed:
+                colour: Colour = Colour.random(),
+                footer: Optional[dict[str, str]] = None) -> Embed:
     """
     Generates a simple embed with only the description field
 
@@ -23,6 +24,7 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
     :param title: Embed Title
     :param text: Embed Description
     :param colour: Embed Colour
+    :param footer: Embed footer
     :return: Discord Embed
     """
     embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
