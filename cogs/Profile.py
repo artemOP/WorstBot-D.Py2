@@ -2,7 +2,7 @@ import discord
 from discord import Interaction, app_commands
 from discord.ext import commands
 from discord.ui import Button, View, Modal, TextInput
-
+from modules.EmbedGen import FullEmbed, EmbedField
 
 class ProfileFill(Modal, title = "Profile field"):
     def __init__(self, *, label, name = None, value = None):
@@ -34,8 +34,7 @@ class ProfileFill(Modal, title = "Profile field"):
             ON CONFLICT(member, index) DO UPDATE SET name = excluded.name, value = excluded.value
             """,
             interaction.user.id, self.name.value, self.value.value, self.label)
-        embed = discord.Embed(colour = discord.Colour.random(), title = f"Profile Field {self.label}")
-        embed.add_field(name = self.name.value, value = self.value.value)
+        embed = FullEmbed(title = f"Profile Field {self.label}", fields = [EmbedField(name = self.name.value, value = self.value.value)])
         await interaction.response.send_message(embed = embed, ephemeral = True)
 
     async def on_error(self, interaction: Interaction, error: Exception) -> None:
@@ -88,9 +87,7 @@ class Profile(commands.GroupCog, name = "profile"):
 
     async def FetchProfile(self, user: int) -> discord.Embed:
         rows = await self.bot.fetch("SELECT name, value, index FROM profile WHERE member = $1", user)
-        embed = discord.Embed(title = "Profile", colour = discord.Colour.random())
-        for row in rows:
-            embed.insert_field_at(row["index"], name = row["name"], value = row["value"])
+        embed = FullEmbed(title = "Profile", fields = [EmbedField(index = row["index"], name = row["name"], value = row["value"]) for row in rows])
         return embed
 
     @app_commands.command(name = "setup", description = "Make a profile for others to see")
