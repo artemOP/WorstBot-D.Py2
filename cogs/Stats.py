@@ -4,7 +4,7 @@ from discord.ext import commands
 from os import listdir
 from dataclasses import dataclass, field, MISSING
 from modules.EmbedGen import FullEmbed, EmbedField
-
+from datetime import date
 
 @dataclass
 class Cog:
@@ -36,6 +36,7 @@ class Stats(commands.GroupCog, name = "stats"):
 
     def to_percent(self, number: int) -> int:
         return round((number / self.total) * 100)
+
 
     @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
@@ -87,6 +88,27 @@ class Stats(commands.GroupCog, name = "stats"):
         embed = FullEmbed(title = "stats", fields = fields, description = description)
         await interaction.response.send_message(embed = embed, ephemeral = True)
 
+    @app_commands.command(name = "github", description = "Various stats about WorstBot's GitHub Repo")
+    async def github(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral = True)
+        contributors: dict | None = await self.bot.get(
+            url = "https://api.github.com/repos/artemOP/WorstBot-D.Py2/stats/contributors",
+            headers = {"accept": "application/vnd.github+json"})
+        if not contributors:
+            return
+        data, author = contributors.get("data").get("weeks") or {}, contributors.get("data").get("author") or {}
+        embed = FullEmbed(
+            author = {"name": author.get("login"), "url": author.get("html_url"), "icon_url": author.get("avatar_url")},
+            fields = [
+                EmbedField(
+                    name = date.fromtimestamp(week.get("w")).strftime("%d/%m/%Y"),
+                    value = f"""Additions: {week.get("a")}\nDeletions: {week.get("d")}\n Commits:{week.get("c")}\n"""
+                ) for week in data
+            ],
+            footer = {"text": f"Total commits: {contributors.get('data').get('total')}", "icon_url": author.get("avatar_url")},
+            thumbnail = {"url": author.get("avatar_url")}
+        )
+        await interaction.followup.send(embed = embed, ephemeral = True)
 
 # todo:more stats(server count, command count etc etc)
 
