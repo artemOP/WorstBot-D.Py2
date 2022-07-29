@@ -95,7 +95,7 @@ class Stats(commands.GroupCog, name = "stats"):
             url = "https://api.github.com/repos/artemOP/WorstBot-D.Py2/stats/contributors",
             headers = {"accept": "application/vnd.github+json"})
         if not contributors:
-            return
+            return await interaction.followup.send("no content", ephemeral = True)
         data, author = contributors.get("data").get("weeks") or {}, contributors.get("data").get("author") or {}
         embed = FullEmbed(
             author = {"name": author.get("login"), "url": author.get("html_url"), "icon_url": author.get("avatar_url")},
