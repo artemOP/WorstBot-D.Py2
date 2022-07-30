@@ -84,6 +84,7 @@ def FullEmbed(
     :param author: Embed Author: Optional dict{name: ..., url: ..., icon_url: ...}
     :param title: Embed Title: Optional str
     :param fields: list of embed fields: list[ EmbedField(Index = Optional[int], Name = str, Value = str, Inline = Optional[Bool]) ]
+    :param description: Embed description: Optional str
     :param image: Embed Image: Optional str
     :param thumbnail: Embed Thumbnail: Optional str
     :param colour: Embed Colour: Optional colour
