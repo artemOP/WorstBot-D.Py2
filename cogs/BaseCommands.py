@@ -29,7 +29,7 @@ class BaseCommands(commands.Cog):
     @app_commands.default_permissions(manage_messages = True)
     async def purge(self, interaction: discord.Interaction, amount: app_commands.Range[int, 1, 100] = 1):
         await interaction.response.defer(ephemeral = True)
-        deleted = await interaction.channel.purge(limit = amount, check = self.is_me, bulk = True if amount > 1 else False, after = interaction.created_at - timedelta(weeks = 2))
+        deleted = await interaction.channel.purge(limit = amount, check = self.is_me, bulk = True if amount > 1 else False, after = interaction.created_at - timedelta(weeks = 2), oldest_first = False)
         await interaction.followup.send(content = f"deleted {len(deleted)} messages")
 
     @app_commands.command(name = "kick")

@@ -26,35 +26,35 @@ def set_footer(embed: discord.Embed, footer: dict[str, str]) -> discord.Embed:
     return embed
 
 
-def set_image(embed: discord.Embed, image: dict[str, str]) -> discord.Embed:
-    if isinstance(image, dict):
-        embed.set_image(url = image.get("url"))
+def set_image(embed: discord.Embed, image: str) -> discord.Embed:
+    if isinstance(image, str):
+        embed.set_image(url = image)
     return embed
 
 
-def set_thumbnail(embed: discord.Embed, image: dict[str, str]) -> discord.Embed:
-    if isinstance(image, dict):
-        embed.set_thumbnail(url = image.get("url"))
+def set_thumbnail(embed: discord.Embed, image: str) -> discord.Embed:
+    if isinstance(image, str):
+        embed.set_thumbnail(url = image)
     return embed
 
 
 def SimpleEmbed(author: Optional[dict[str, str]] = None,
                 title: Optional[str] = None,
                 text: str = None,
-                image: Optional[dict[str, str]] = None,
-                thumbnail: Optional[dict[str, str]] = None,
+                image: Optional[str] = None,
+                thumbnail: Optional[str] = None,
                 colour: Optional[Colour] = Colour.random(),
                 footer: Optional[dict[str, str]] = None) -> Embed:
     """
     Generates a simple embed with only the description field
 
-    :param author: Embed author
-    :param title: Embed Title
-    :param text: Embed Description
-    :param image: Embed Image
-    :param thumbnail: Embed Thumbnail
-    :param colour: Embed Colour
-    :param footer: Embed footer
+    :param author: Embed Author: Optional dict{name: ..., url: ..., icon_url: ...}
+    :param title: Embed Title: Str
+    :param text: Embed Description: Str
+    :param image: Embed Image: Optional str
+    :param thumbnail: Embed Thumbnail: Optional str
+    :param colour: Embed Colour: Optional colour
+    :param footer: Embed footer: Optional dict{text: ..., icon_url: ...}
     :return: Discord Embed
     """
     embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
@@ -74,22 +74,21 @@ def FullEmbed(
         title: Optional[str] = None,
         fields: list[EmbedField] = MISSING,
         description: Optional[str] = None,
-        image: Optional[dict[str, str]] = None,
-        thumbnail: Optional[dict[str, str]] = None,
+        image: Optional[str] = None,
+        thumbnail: Optional[str] = None,
         colour: Optional[Colour] = Colour.random(),
         footer: Optional[dict[str, str]] = None) -> Embed:
     """
     Generates an embed with up to 25 title: value fields plus description field.
 
-    :param author: Embed Author
-    :param title: Embed Title
-    :param fields: list of embed fields
-    :keyword field: Object containing mandatory name, value. Optional inline, index
-    :param image: Embed Image
-    :param thumbnail: Embed Thumbnail
-    :param description: Embed description
-    :param colour: Embed colour
-    :param footer: Embed Footer
+    :param author: Embed Author: Optional dict{name: ..., url: ..., icon_url: ...}
+    :param title: Embed Title: Optional str
+    :param fields: list of embed fields: list[ EmbedField(Index = Optional[int], Name = str, Value = str, Inline = Optional[Bool]) ]
+    :param description: Embed description: Optional str
+    :param image: Embed Image: Optional str
+    :param thumbnail: Embed Thumbnail: Optional str
+    :param colour: Embed Colour: Optional colour
+    :param footer: Embed footer: Optional dict{text: ..., icon_url: ...}
     :return: Discord Embed
     """
     embed = Embed(title = title, colour = colour, description = description, timestamp = utcnow())
