@@ -106,7 +106,7 @@ class Stats(commands.GroupCog, name = "stats"):
                 ) for week in data
             ],
             footer = {"text": f"Total commits: {contributors.get('data').get('total')}", "icon_url": author.get("avatar_url")},
-            thumbnail = {"url": author.get("avatar_url")}
+            thumbnail = author.get("avatar_url")
         )
         await interaction.followup.send(embed = embed, ephemeral = True)
 

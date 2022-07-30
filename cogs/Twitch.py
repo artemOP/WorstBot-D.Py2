@@ -111,7 +111,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
                 title = stream["user_name"],
                 text = f"{stream['user_name']} just went live on twitch!\n{stream['title']}\nfind them at https://www.twitch.tv/{stream['user_name']}",
                 footer = {"text": stream["started_at"].split("T")[1].split("Z")[0]},
-                image = {"url": stream["thumbnail_url"].replace("-{width}x{height}", "")}
+                image = stream["thumbnail_url"].replace("-{width}x{height}", "")
             )
             await channel.send(embed=embed, content = "@everyone" if not role else role.mention)
 
