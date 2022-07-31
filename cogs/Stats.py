@@ -6,6 +6,7 @@ from dataclasses import dataclass, field, MISSING
 from modules.EmbedGen import FullEmbed, EmbedField
 from datetime import date
 
+
 @dataclass
 class Cog:
     lines: list = MISSING
@@ -36,7 +37,6 @@ class Stats(commands.GroupCog, name = "stats"):
 
     def to_percent(self, number: int) -> int:
         return round((number / self.total) * 100)
-
 
     @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
@@ -111,6 +111,7 @@ class Stats(commands.GroupCog, name = "stats"):
             thumbnail = author.get("avatar_url")
         )
         await interaction.followup.send(embed = embed, ephemeral = True)
+
 
 # todo:more stats(server count, command count etc etc)
 
