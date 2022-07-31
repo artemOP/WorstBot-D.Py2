@@ -6,6 +6,7 @@ from dataclasses import dataclass, field, MISSING
 from modules.EmbedGen import FullEmbed, EmbedField
 from datetime import date
 
+
 @dataclass
 class Cog:
     lines: list = MISSING
@@ -36,7 +37,6 @@ class Stats(commands.GroupCog, name = "stats"):
 
     def to_percent(self, number: int) -> int:
         return round((number / self.total) * 100)
-
 
     @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
@@ -95,6 +95,8 @@ class Stats(commands.GroupCog, name = "stats"):
             url = "https://api.github.com/repos/artemOP/WorstBot-D.Py2/stats/contributors",
             headers = {"accept": "application/vnd.github+json"})
         if not contributors:
+            return await interaction.followup.send("no api response", ephemeral = True)
+        elif not contributors.get("data"):
             return await interaction.followup.send("no content", ephemeral = True)
         data, author = contributors.get("data").get("weeks") or {}, contributors.get("data").get("author") or {}
         embed = FullEmbed(
@@ -109,6 +111,7 @@ class Stats(commands.GroupCog, name = "stats"):
             thumbnail = author.get("avatar_url")
         )
         await interaction.followup.send(embed = embed, ephemeral = True)
+
 
 # todo:more stats(server count, command count etc etc)
 
