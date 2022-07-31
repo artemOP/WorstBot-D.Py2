@@ -88,8 +88,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
         if not await self.validate(self.token):
             return
         streams = await self.bot.get(url = "https://api.twitch.tv/helix/streams", params = {"user_id": [user["userid"] for user in self.streamersTable]}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
-        if not streams["data"]:
-            return
+
         for user in self.streamersTable:
             if await self.bot.fetchval("SELECT twitch FROM events WHERE guild = $1", user["guild"]) is False:
                 continue
