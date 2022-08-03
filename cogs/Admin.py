@@ -82,7 +82,7 @@ class Admin(commands.GroupCog, name = "admin"):
         if not channel:
             await self.bot.execute("DELETE FROM birthdaychannel WHERE guild = $1", interaction.guild_id)
             return await interaction.response.send_message("Birthday channel has been removed", ephemeral = True)
-        await self.bot.execute("INSERT INTO birthdaychannel(guild, channel) VALUES($1, $2) ON CONFLICT DO UPDATE SET channel = $2", interaction.guild_id, channel.id)
+        await self.bot.execute("INSERT INTO birthdaychannel(guild, channel) VALUES($1, $2) ON CONFLICT(guild) DO UPDATE SET channel = $2", interaction.guild_id, channel.id)
         await interaction.response.send_message(f"Birthday channel is now {channel.mention}", ephemeral = True)
 
 async def setup(bot):
