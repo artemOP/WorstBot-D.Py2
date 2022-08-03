@@ -3,9 +3,10 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 from os import listdir
 from dataclasses import dataclass, field, MISSING
-from modules.EmbedGen import FullEmbed, EmbedField
-from datetime import date
-
+from modules.EmbedGen import FullEmbed, EmbedField, SimpleEmbedList
+from datetime import date, datetime as dt
+from io import BytesIO
+import matplotlib.pyplot as plt
 
 @dataclass
 class Cog:
@@ -33,10 +34,33 @@ class Stats(commands.GroupCog, name = "stats"):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS globalUsage(command TEXT PRIMARY KEY, usages INT DEFAULT 1, lastusage timestamptz)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS serverUsage(guild BIGINT, command TEXT, lastusage timestamptz)")
         print("Stats cog online")
 
     def to_percent(self, number: int) -> int:
         return round((number / self.total) * 100)
+
+    @staticmethod
+    def to_datetime(date_str: str) -> dt | None:
+        try:
+            return dt.strptime(date_str, "%Y/%m/%d")
+        except ValueError:
+            return None
+
+    @staticmethod
+    def pie_gen(data: dict[str, int]) -> BytesIO:
+        fig, ax = plt.subplots()
+        ax.pie(
+            x = list(data.values()),
+            labels = list(data.keys()), autopct = "%1.0f%%",
+            textprops = {"color": "w", "size": "large", "weight": "heavy"},
+            pctdistance = 0.85)
+        b = BytesIO()
+        plt.savefig(b, format="png", transparent = True)
+        plt.close()
+        b.seek(0)
+        return b
 
     @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
@@ -112,8 +136,36 @@ class Stats(commands.GroupCog, name = "stats"):
         )
         await interaction.followup.send(embed = embed, ephemeral = True)
 
+    @app_commands.command(name = "server-usage", description = "WorstBot usage on this server")
+    @app_commands.describe(before = "YYYY/MM/DD", after="YYYY/MM/DD")
+    async def GuildUsage(self, interaction: Interaction, before: str = None, after: str = None):
+        await interaction.response.defer(ephemeral = True)
+        before, after = self.to_datetime("2100/01/01" if not before else before), self.to_datetime("1970/01/01" if not after else after)
+        usage = await self.bot.fetch("SELECT command, count(*) as count FROM serverusage WHERE guild = $1 AND lastusage BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
+        chartIO = await self.bot.loop.run_in_executor(None, self.pie_gen, {row["command"]: row["count"] for row in usage})
+        embeds = SimpleEmbedList(title = "Guild command usage",
+                                 descriptions = "\n".join(f"{row['command']}: {row['count']}" for row in usage),
+                                 image = "attachment://image.png")
+        await interaction.followup.send(embeds = embeds, file = discord.File(fp = chartIO, filename = "image.png"))
 
-# todo:more stats(server count, command count etc etc)
+    @app_commands.command(name = "global-usage", description = "Global WorstBot usage")
+    async def GloablUsage(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral = True)
+        usage = await self.bot.fetch("SELECT command, usages, lastusage FROM globalusage ORDER BY usages DESC")
+        chartIO = await self.bot.loop.run_in_executor(None, self.pie_gen, {row["command"]: row["usages"] for row in usage})
+        embeds = SimpleEmbedList(title = "Global command usage",
+                                 descriptions = "\n".join(f"{row['command']}: {row['usages']} (Last used: {row['lastusage'].strftime('%Y/%m/%d')})" for row in usage),
+                                 image = "attachment://image.png")
+        await interaction.followup.send(embeds = embeds, file = discord.File(fp = chartIO, filename = "image.png"))
+
+    @commands.Cog.listener(name = "on_interaction")
+    async def CommandUsage(self, interaction: Interaction) -> None:
+        if not interaction.command:
+            return
+        if await self.bot.fetchval("SELECT usage FROM events WHERE guild = $1", interaction.guild_id) is False:
+            return
+        await self.bot.execute("INSERT INTO globalUsage(command, lastusage) VALUES($1, $2) ON CONFLICT(command) DO UPDATE SET usages = globalusage.usages + 1, lastusage = excluded.lastusage", interaction.command.qualified_name, interaction.created_at)
+        await self.bot.execute("INSERT INTO serverusage(guild, command, lastusage) VALUES($1, $2, $3)", interaction.guild_id, interaction.command.qualified_name, interaction.created_at)
 
 
 async def setup(bot):
