@@ -158,14 +158,20 @@ def EmbedFieldList(
 def SimpleEmbedList(author: Optional[dict[str, str]] = None,
                     title: Optional[list[str] | str] = None,
                     descriptions: list[str] | str = MISSING,
-                    colour: Optional[Colour] = Colour.random(), ) -> list[Embed]:
+                    image: Optional[list[str] | str] = None,
+                    thumbnail: Optional[list[str] | str] = None,
+                    colour: Optional[Colour] = Colour.random(),
+                    footer: Optional[list[dict[str, str]] | dict[str, str]] = None) -> list[Embed]:
     """
     Generates a list of embeds with only the description field filled
 
-    :param author: Embed Author
-    :param title: Embed title/titles
+    :param author: Embed Author: Optional dict{name: ..., url: ..., icon_url: ...}
+    :param title: Embed title/titles: list[str] | str
     :param descriptions: List of descriptions, up to 4k characters each or string that will be split automatically
-    :param colour: Colour of embed
+    :param image: image url(s): list[str] | str
+    :param thumbnail: image thumbnail(s): list[str] | str
+    :param colour: Colour of embed: discord.Colour
+    :param footer: Embed footer(s): Optional list[dict] | dict{name: ..., url: ..., icon_url: ...}
     :return: List of embeds
     """
     if isinstance(descriptions, str):
@@ -179,6 +185,28 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
     ]
     if author:
         for embed in embed_list:
-            embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
+            set_author(embed, author)
+    if image:
+        if isinstance(image, list):
+            for embed, img in zip(embed_list, image):
+                set_image(embed, img)
+        else:
+            for embed in embed_list:
+                set_image(embed, image)
+    if thumbnail:
+        if isinstance(thumbnail, list):
+            for embed, img in zip(embed_list, thumbnail):
+                set_thumbnail(embed, img)
+        else:
+            for embed in embed_list:
+                set_thumbnail(embed, thumbnail)
+    if footer:
+        if isinstance(footer, list):
+            for embed, ftr in zip(embed_list, footer):
+                set_footer(embed, ftr)
+        else:
+            for embed in embed_list:
+                set_footer(embed, footer)
+
     return embed_list
 # todo: migrate on to these functions
