@@ -3,14 +3,8 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 from os import listdir
 from dataclasses import dataclass, field, MISSING
-# from modules.EmbedGen import FullEmbed, EmbedField, SimpleEmbedList
-from modules import EmbedGen, Convertors
+from modules import EmbedGen, Convertors, Graphs
 from datetime import date
-from io import BytesIO
-import matplotlib
-from matplotlib import pyplot as plt
-
-matplotlib.use('Agg')  # must set before other imports to ensure correct backend
 
 
 @dataclass
@@ -39,20 +33,6 @@ class Stats(commands.GroupCog, name = "stats"):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS globalusage(command TEXT PRIMARY KEY, usages INT DEFAULT 1, lastusage timestamptz)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS serverusage(guild BIGINT, command TEXT, lastusage timestamptz)")
         print("Stats cog online")
-
-    @staticmethod
-    def pie_gen(data: dict[str, int]) -> BytesIO:
-        fig, ax = plt.subplots()
-        ax.pie(
-            x = list(data.values()),
-            labels = list(data.keys()), autopct = "%1.0f%%",
-            textprops = {"color": "w", "size": "large", "weight": "heavy"},
-            pctdistance = 0.85)
-        b = BytesIO()
-        plt.savefig(b, format = "png", transparent = True)
-        plt.close()
-        b.seek(0)
-        return b
 
     @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
     async def stats(self, interaction: Interaction):
@@ -135,8 +115,7 @@ class Stats(commands.GroupCog, name = "stats"):
         before = Convertors.to_datetime("2100/01/01" if not before else before, "%Y/%m/%d")
         after = Convertors.to_datetime("1970/01/01" if not after else after, "%Y/%m/%d")
         usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM serverusage WHERE guild = $1 AND lastusage BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
-        chartIO = await self.bot.loop.run_in_executor(None, self.pie_gen, {row["command"]: row["count"] for row in
-                                                                           usage})
+        chartIO = await Graphs.graph("pie", {row["command"]: row["count"] for row in usage})
         embeds = EmbedGen.SimpleEmbedList(title = "Guild command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']}" for row in usage),
@@ -147,8 +126,7 @@ class Stats(commands.GroupCog, name = "stats"):
     async def GloablUsage(self, interaction: Interaction):
         await interaction.response.defer(ephemeral = True)
         usage = await self.bot.fetch("SELECT command, usages, lastusage FROM globalusage ORDER BY usages DESC")
-        chartIO = await self.bot.loop.run_in_executor(None, self.pie_gen, {row["command"]: row["usages"] for row in
-                                                                           usage})
+        chartIO = await Graphs.graph("pie", {row["command"]: row["usages"] for row in usage})
         embeds = EmbedGen.SimpleEmbedList(title = "Global command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['usages']} (Last used: {row['lastusage'].strftime('%Y/%m/%d')})"
