@@ -6,7 +6,9 @@ from dataclasses import dataclass, field, MISSING
 from modules.EmbedGen import FullEmbed, EmbedField, SimpleEmbedList
 from datetime import date, datetime as dt
 from io import BytesIO
-import matplotlib.pyplot as plt
+import matplotlib
+from matplotlib import pyplot as plt
+matplotlib.use('Agg')  # must set before other imports to ensure correct backend
 
 @dataclass
 class Cog:
