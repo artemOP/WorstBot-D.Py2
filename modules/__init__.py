@@ -1,1 +1,1 @@
-__all__ = ["EmbedGen"]
+__all__ = ["EmbedGen", "Convertors"]

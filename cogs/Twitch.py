@@ -3,7 +3,7 @@ from discord import Interaction, app_commands
 from discord.ext import commands, tasks
 from os import environ
 from asyncio import sleep
-from modules.EmbedGen import SimpleEmbed
+from modules import Convertors, EmbedGen
 
 @app_commands.default_permissions()
 class Twitch(commands.GroupCog, name = "twitch"):
@@ -48,7 +48,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
 
     @app_commands.command(name = "add", description = "Get live alerts for your selected twitch channel")
     async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str, alert_role: discord.Role = None):
-        twitch_user = await self.bot.to_int(twitch_user)
+        twitch_user = Convertors.to_int(twitch_user)
         if alert_role:
             alert_role = alert_role.id
         else:
@@ -59,7 +59,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
 
     @app_commands.command(name = "remove", description = "Remove live alerts from your selected channel")
     async def LiveTrackingRemove(self, interaction: Interaction, twitch_user: str):
-        twitch_user = await self.bot.to_int(twitch_user)
+        twitch_user = Convertors.to_int(twitch_user)
         await self.bot.execute("DELETE FROM twitch WHERE userid=$1", twitch_user)
         await self.streamers()
         await interaction.response.send_message("Streamer has been removed from the Tracking list", ephemeral = True)
@@ -102,7 +102,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
             stream = [dictionary for dictionary in streams["data"] if int(dictionary["user_id"]) == user["userid"]][0]
             channel = self.bot.get_channel(user["channel"])
             role = channel.guild.get_role(user["role"])
-            embed = SimpleEmbed(
+            embed = EmbedGen.SimpleEmbed(
                 author = {
                     "name": stream["user_name"],
                     "url": f"https://www.twitch.tv/{stream['user_name']}"
