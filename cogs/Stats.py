@@ -76,13 +76,16 @@ class Stats(commands.GroupCog, name = "stats"):
                            """
                                     )
             )
-        description = f"""
-        source code: {self.source} ({Convertors.to_percent(self.source, self.total)}%)\n
-        comments: {self.comment} ({Convertors.to_percent(self.comment, self.total)}%)\n
-        blank: {self.blank} ({Convertors.to_percent(self.blank, self.total)}%)\n
-        total: {self.total}\n\u200b"""
-        embed = EmbedGen.FullEmbed(title = "stats", fields = fields, description = description)
-        await interaction.response.send_message(embed = embed, ephemeral = True)
+        embeds = EmbedGen.EmbedFieldList(title = "stats", fields = fields, max_fields = 12)
+        embeds.insert(0,
+                      EmbedGen.SimpleEmbed(
+                          title = "Project total",
+                          text = f"""
+                          source code: {self.source} ({Convertors.to_percent(self.source, self.total)}%)\n
+                          comments: {self.comment} ({Convertors.to_percent(self.comment, self.total)}%)\n
+                          blank: {self.blank} ({Convertors.to_percent(self.blank, self.total)}%)\n
+                          total: {self.total}\n\u200b"""))
+        await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "github", description = "Various stats about WorstBot's GitHub Repo")
     async def github(self, interaction: Interaction):
