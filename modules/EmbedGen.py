@@ -60,7 +60,7 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
     embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
     _, _, _, values = getargvalues(currentframe())
     for arg, value in values.items():
-        if arg in any(OPTIONAL_FIELDS) and value:
+        if any(arg in field for field in OPTIONAL_FIELDS) and value:
             OPTIONAL_FIELDS[arg](embed, value)
     return embed
 
@@ -95,7 +95,7 @@ def FullEmbed(
             embed.add_field(name = field.name, value = field.value, inline = field.inline)
     _, _, _, values = getargvalues(currentframe())
     for arg, value in values.items():
-        if arg in any(OPTIONAL_FIELDS) and value:
+        if any(arg in field for field in OPTIONAL_FIELDS) and value:
             OPTIONAL_FIELDS[arg](embed, value)
     return embed
 
