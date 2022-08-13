@@ -55,7 +55,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
             await role.delete()
 
     @commands.Cog.listener()
-    async def on_user_update(self, before, after):
+    async def on_member_update(self, before, after):
         if before.bot or str(before) == str(after):
             return
         role_id = await self.bot.fetchval("SELECT role FROM customroles WHERE guild = $1 AND member = $2", before.guild.id, before.id)
