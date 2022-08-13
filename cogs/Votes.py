@@ -2,6 +2,7 @@ import discord
 from discord import Interaction, app_commands, ui
 from discord.ext import commands
 from modules.EmbedGen import FullEmbed, EmbedField
+from modules import Convertors
 
 async def EmbedGen(*, bot, poll):
     AnswerTable = {answerid: answer for answerid, answer in await bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1", poll)}
@@ -103,13 +104,13 @@ class Votes(commands.GroupCog, name = "poll"):
 
     @app_commands.command(name = "response", description = "respond to a poll")
     async def VoteResponse(self, interaction: Interaction, poll: str, answer: str):
-        poll, answer = await self.bot.to_int(poll), await self.bot.to_int(answer)
+        poll, answer = Convertors.to_int(poll), Convertors.to_int(answer)
         await self.bot.execute("INSERT INTO voters(voteid, answerid, member) VALUES($1, $2, $3) ON CONFLICT (voteid, member) DO UPDATE SET answerid=$2", poll, answer, interaction.user.id)
         await interaction.response.send_message("vote recorded", ephemeral = True)
 
     @app_commands.command(name = "edit", description = "Edit a currently active poll")
     async def VoteEdit(self, interaction: Interaction, poll: str):
-        poll = await self.bot.to_int(poll)
+        poll = Convertors.to_int(poll)
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM votes WHERE author=$1 AND voteid=$2)", interaction.user.id, poll):
             await interaction.response.send_message("This poll does not belong to you", ephemeral=True)
             return
@@ -118,7 +119,7 @@ class Votes(commands.GroupCog, name = "poll"):
         answers = "\n".join([answer["answer"] for answer in answers])
         await interaction.response.send_modal(StartPollModal(bot = self.bot, question = question, answers = answers, voteid = poll))
 
-    async def Results(self, interaction: Interaction, poll: str):
+    async def Results(self, interaction: Interaction, poll: int):
         QuestionTable = [discord.SelectOption(label = item["question"], value = item["voteid"]) for item in await self.bot.fetch("SELECT voteid, question FROM votes WHERE guild=$1", interaction.guild_id)]
         view = PollResultsView(timeout = 15, bot = self.bot, options = QuestionTable)
         await interaction.response.send_message(view = view, embed = await EmbedGen(bot = self.bot, poll = poll), ephemeral = True)
@@ -127,12 +128,12 @@ class Votes(commands.GroupCog, name = "poll"):
 
     @app_commands.command(name = "results", description = "Show the current results of a poll")
     async def VoteResults(self, interaction: Interaction, poll: str):
-        poll = await self.bot.to_int(poll)
+        poll = Convertors.to_int(poll)
         await self.Results(interaction, poll)
 
     @app_commands.command(name = "end", description = "End a poll")
     async def VoteEnd(self, interaction: Interaction, poll: str):
-        poll = await self.bot.to_int(poll)
+        poll = Convertors.to_int(poll)
         if interaction.user.guild_permissions.administrator is False:
             if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM votes WHERE author=$1 AND voteid=$2)", interaction.user.id, poll):
                 await interaction.response.send_message("This poll does not belong to you", ephemeral=True)
@@ -152,7 +153,7 @@ class Votes(commands.GroupCog, name = "poll"):
 
     @VoteResponse.autocomplete("answer")
     async def ResponseAnswerAutocomplete(self, interaction: Interaction, current):
-        poll = await self.bot.to_int(interaction.namespace.poll)
+        poll = Convertors.to_int(interaction.namespace.poll)
         current = self.bot.current(current)
         responses = await self.bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1 AND answer LIKE $2", poll, current)
         return [app_commands.Choice(name = answer, value = str(answerid)) for answerid, answer in responses]

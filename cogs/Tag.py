@@ -1,8 +1,7 @@
 import discord
 from discord import Interaction, app_commands, ui, SelectOption
 from discord.ext import commands
-from modules.EmbedGen import SimpleEmbed, SimpleEmbedList
-
+from modules import Convertors, EmbedGen
 
 class TagModal(ui.Modal, title = "tag"):
     def __init__(self, tagid = None, TagName: str = None, TagValue: str = None, nsfw: bool = False, private: bool = False, public: bool = False, invisible: bool = False):
@@ -94,9 +93,9 @@ class Tag(commands.GroupCog, name = "tag"):
     async def Create(self, interaction: Interaction):
         await interaction.response.send_modal(TagModal())
 
-    @app_commands.command(name = "edit", description = "edit a pre-exifg by name")
+    @app_commands.command(name = "edit", description = "edit a pre-existing tag by name")
     async def Edit(self, interaction: Interaction, tag: str):
-        tag = await self.bot.to_int(tag)
+        tag = Convertors.to_int(tag)
         select = await self.bot.fetchrow("SELECT name, value, nsfw, private, public, invisible FROM tags WHERE tagid = $1", tag)
         if not select:
             return
@@ -107,7 +106,7 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "rename", description = "Rename a tag")
     async def Rename(self, interaction: Interaction, tag: str, new_name: str):
-        tag = await self.bot.to_int(tag)
+        tag = Convertors.to_in(tag)
         if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.fetchval("SELECT name FROM tags WHERE tagid = $1", tag)
@@ -116,14 +115,14 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "delete", description = "Delete a tag by name")
     async def Delete(self, interaction: Interaction, tag: str):
-        tag = await self.bot.to_int(tag)
+        tag = Convertors.to_in(tag)
         if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.execute("DELETE FROM tags WHERE tagid = $1 RETURNING name", tag)
         await interaction.response.send_message(f"{name} has been Deleted", ephemeral = True)
 
     async def ViewHelper(self, tag: str, interaction: Interaction, raw: bool):
-        if not (tag := await self.bot.to_int(tag)):
+        if not (tag := Convertors.to_in(tag)):
             return
         tag = await self.bot.fetchrow("SELECT owner, name, value, nsfw, private, invisible FROM tags WHERE tagid = $1", tag)
         if tag["private"] and tag["owner"] != interaction.user.id:
@@ -131,7 +130,7 @@ class Tag(commands.GroupCog, name = "tag"):
         if tag["nsfw"] and not interaction.channel.nsfw:
             return await interaction.followup.send("Tag is NSFW", ephemeral = True)
         owner = self.bot.get_user(tag["owner"])
-        embed = SimpleEmbed(author = {"name": str(owner), "icon_url": owner.display_avatar},
+        embed = EmbedGen.SimpleEmbed(author = {"name": str(owner), "icon_url": owner.display_avatar},
                             title = tag["name"],
                             text = tag["value"] if not raw else f"```txt\n{tag['value']}\n```")
         if tag["invisible"]:
@@ -159,7 +158,7 @@ class Tag(commands.GroupCog, name = "tag"):
             return
         owner = self.bot.get_user(tag["owner"])
         await interaction.response.send_message(
-            embed = SimpleEmbed(
+            embed = EmbedGen.SimpleEmbed(
                 author = {"name": str(owner), "icon_url": owner.display_avatar},
                 title = tag["name"],
                 text = tag["value"]))
@@ -171,7 +170,7 @@ class Tag(commands.GroupCog, name = "tag"):
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND owner = $2 AND private = FALSE", interaction.guild_id, user.id)
         if not tags:
             return await interaction.response.send_message(f"{str(user)} has no tags")
-        embeds = SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(tag["name"] for tag in tags))
+        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "list-all", description = "View all tags on the server")
@@ -179,19 +178,19 @@ class Tag(commands.GroupCog, name = "tag"):
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND private = FALSE", interaction.guild_id)
         if not tags:
             return await interaction.response.send_message("No tags", ephemeral = True)
-        embeds = SimpleEmbedList(title = "Server tags", descriptions = "\n".join(tag["name"] for tag in tags))
+        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = "Server tags", descriptions = "\n".join(tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "transfer", description = "Transfer ownership of tag to someone else")
     async def Transfer(self, interaction: Interaction, tag: str, user: discord.Member):
-        if not ((tag := await self.bot.to_int(tag)) or await self.OwnerCheck(tag, interaction.user.id)):
+        if not ((tag := Convertors.to_in(tag)) or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.fetchval("UPDATE tags SET owner = $1 WHERE tagid = $2 RETURNING name", user.id, tag)
         await interaction.response.send_message(f"{user.mention} has become the owner of tag {name}")
 
     @app_commands.command(name = "claim", description = "Claim ownership of orphaned tags")
     async def Claim(self, interaction: Interaction, tag: str):
-        if not (tag := await self.bot.to_int(tag)):
+        if not (tag := Convertors.to_in(tag)):
             return
         owner = self.bot.get_user(await self.bot.fetchval("SELECT owner FROM tags WHERE tagid = $1", tag))
         if owner not in interaction.guild.members:

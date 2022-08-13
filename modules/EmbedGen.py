@@ -5,7 +5,7 @@ from itertools import islice
 from typing import Optional
 from math import ceil
 from pydantic import BaseModel, conint, constr, Field
-
+from inspect import currentframe, getargvalues
 
 class EmbedField(BaseModel):
     index: conint(ge = 1, le = 25) = Field(default = None)
@@ -58,14 +58,10 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
     :return: Discord Embed
     """
     embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
-    if author:
-        set_author(embed, author)
-    if footer:
-        set_footer(embed, footer)
-    if image:
-        set_image(embed, image)
-    if thumbnail:
-        set_thumbnail(embed, thumbnail)
+    _, _, _, values = getargvalues(currentframe())
+    for arg, value in values.items():
+        if any(arg in field for field in OPTIONAL_FIELDS) and value:
+            OPTIONAL_FIELDS[arg](embed, value)
     return embed
 
 
@@ -97,14 +93,10 @@ def FullEmbed(
             embed.insert_field_at(index = field.index, name = field.name, value = field.value, inline = field.inline)
         else:
             embed.add_field(name = field.name, value = field.value, inline = field.inline)
-    if author:
-        set_author(embed, author)
-    if footer:
-        set_footer(embed, footer)
-    if image:
-        set_image(embed, image)
-    if thumbnail:
-        set_thumbnail(embed, thumbnail)
+    _, _, _, values = getargvalues(currentframe())
+    for arg, value in values.items():
+        if any(arg in field for field in OPTIONAL_FIELDS) and value:
+            OPTIONAL_FIELDS[arg](embed, value)
     return embed
 
 
@@ -209,4 +201,10 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
                 set_footer(embed, footer)
 
     return embed_list
-# todo: migrate on to these functions
+
+
+OPTIONAL_FIELDS = {"author": set_author,
+                   "footer": set_footer,
+                   "image": set_image,
+                   "thumbnail": set_thumbnail
+                   }
