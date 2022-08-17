@@ -1,6 +1,7 @@
 import discord
 from discord import Interaction, app_commands, ui  # , SelectOption
 from discord.ext import commands
+from discord.app_commands import Choice
 from modules import Converters, EmbedGen
 
 
@@ -101,6 +102,15 @@ class Tag(commands.GroupCog, name = "tag"):
         owner, public = select.values()
         return True if owner == user or public else False
 
+    @staticmethod
+    def MetadataChoices() -> list[Choice[str]]:
+        return [
+            Choice(name = "NSFW: Marks tag as NSFW", value = "nsfw"),
+            Choice(name = "Private: Only allows tag to be used by owner", value = "private"),
+            Choice(name = "Public: Allows anyone to edit tag", value = "public"),
+            Choice(name = "Invisible: Hides tag user", value = "invisible"),
+        ]
+
     @app_commands.command(name = "create", description = "create a tag to recall later by name")
     async def Create(self, interaction: Interaction):
         await interaction.response.send_modal(TagModal())
@@ -115,6 +125,15 @@ class Tag(commands.GroupCog, name = "tag"):
         if not await self.OwnerCheck(tag, interaction.user.id):
             return
         await interaction.response.send_modal(TagModal(tag, name, value, nsfw, private, public, invisible))
+
+    @app_commands.command(name = "metadata", description = "Add metadata to tag")
+    @app_commands.choices(option = MetadataChoices())
+    async def Metadata(self, interaction: Interaction, tag: str, option: Choice[str], value: bool):
+        tag = Converters.to_int(tag)
+        if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
+            return
+        name = await self.bot.execute(f"UPDATE tags SET {option.value} = $2 WHERE tagid = $1 RETURNING name", tag, value)
+        await interaction.response.send_message(f"{name} has had its metadata tag: `{option.value.capitalize()}` set to {value}")
 
     @app_commands.command(name = "rename", description = "Rename a tag")
     async def Rename(self, interaction: Interaction, tag: str, new_name: str):
@@ -133,9 +152,11 @@ class Tag(commands.GroupCog, name = "tag"):
         name = await self.bot.execute("DELETE FROM tags WHERE tagid = $1 RETURNING name", tag)
         await interaction.response.send_message(f"{name} has been Deleted", ephemeral = True)
 
-    async def ViewHelper(self, tag: str, interaction: Interaction, raw: bool):
+    @app_commands.command(name = "view", description = "View a tag by name")
+    async def View(self, interaction: Interaction, tag: str, raw: bool = False):
+        await interaction.response.defer(ephemeral = True)
         if not (tag := Converters.to_int(tag)):
-            return
+            return await interaction.followup.send("Please ensure tag is selected from autocomplete options", ephemeral = True)
         tag = await self.bot.fetchrow("SELECT owner, name, value, nsfw, private, invisible FROM tags WHERE tagid = $1", tag)
         if tag["private"] and tag["owner"] != interaction.user.id:
             return await interaction.followup.send("Tag is private", ephemeral = True)
@@ -151,18 +172,8 @@ class Tag(commands.GroupCog, name = "tag"):
             await interaction.channel.send(embed = embed)
             await interaction.channel.send(content = text)
         else:
-            await interaction.followup.send(embed = embed)
-            await interaction.followup.send(content = text)
-
-    @app_commands.command(name = "view", description = "View a tag by name")
-    async def View(self, interaction: Interaction, tag: str):
-        await interaction.response.defer(ephemeral = True)
-        await self.ViewHelper(tag, interaction, raw = False)
-
-    @app_commands.command(name = "view-raw", description = "View the raw tag text by name")
-    async def ViewRaw(self, interaction: Interaction, tag: str):
-        await interaction.response.defer(ephemeral = True)
-        await self.ViewHelper(tag, interaction, raw = True)
+            await interaction.followup.send(embed = embed, ephemeral = True)
+            await interaction.followup.send(content = text, ephemeral = True)
 
     @app_commands.command(name = "random", description = "View a tag random tag")
     @app_commands.describe(tag = "randomly select from tags containing name")
@@ -184,9 +195,8 @@ class Tag(commands.GroupCog, name = "tag"):
         user = user or interaction.user
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND owner = $2 AND private = FALSE", interaction.guild_id, user.id)
         if not tags:
-            return await interaction.response.send_message(f"{str(user)} has no tags")
-        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(
-            tag["name"] for tag in tags))
+            return await interaction.response.send_message(f"{str(user)} has no tags", ephemeral = True)
+        embeds = EmbedGen.SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "list-all", description = "View all tags on the server")
@@ -194,8 +204,7 @@ class Tag(commands.GroupCog, name = "tag"):
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND private = FALSE", interaction.guild_id)
         if not tags:
             return await interaction.response.send_message("No tags", ephemeral = True)
-        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = "Server tags", descriptions = "\n".join(
-            tag["name"] for tag in tags))
+        embeds = EmbedGen.SimpleEmbedList(title = "Server tags", descriptions = "\n".join(tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "transfer", description = "Transfer ownership of tag to someone else")
@@ -216,6 +225,7 @@ class Tag(commands.GroupCog, name = "tag"):
         await interaction.response.send_message("cannot claim tag from a user still in the server", ephemeral = True)
 
     @Edit.autocomplete("tag")
+    @Metadata.autocomplete("tag")
     @Rename.autocomplete("tag")
     @Delete.autocomplete("tag")
     @Transfer.autocomplete("tag")
@@ -225,7 +235,6 @@ class Tag(commands.GroupCog, name = "tag"):
         return [app_commands.Choice(name = name, value = str(tagid)) for tagid, name in tags]
 
     @View.autocomplete("tag")
-    @ViewRaw.autocomplete("tag")
     @Claim.autocomplete("tag")
     async def TagViewAutocomplete(self, interaction: Interaction, current: None | str) -> list[app_commands.Choice]:
         current = self.bot.current(current)
