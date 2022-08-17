@@ -13,7 +13,8 @@ class EmbedField(BaseModel):
     value: constr(min_length = 1, curtail_length = 1024)
     inline: bool = Field(default = True)
 
-
+def set_colour(colour: Colour | None):
+    return Colour.random() if not colour else colour
 def set_author(embed: discord.Embed, author: dict[str, str]) -> discord.Embed:
     if isinstance(author, dict):
         embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
@@ -43,7 +44,7 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
                 text: str = None,
                 image: Optional[str] = None,
                 thumbnail: Optional[str] = None,
-                colour: Optional[Colour] = Colour.random(),
+                colour: Optional[Colour] = None,
                 footer: Optional[dict[str, str]] = None) -> Embed:
     """
     Generates a simple embed with only the description field
@@ -57,7 +58,7 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
     :param footer: Embed footer: Optional dict{text: ..., icon_url: ...}
     :return: Discord Embed
     """
-    embed = Embed(title = title, description = text[:4000], colour = colour, timestamp = utcnow())
+    embed = Embed(title = title, description = text[:4000], colour = set_colour(colour), timestamp = utcnow())
     _, _, _, values = getargvalues(currentframe())
     for arg, value in values.items():
         if any(arg in field for field in OPTIONAL_FIELDS) and value:
@@ -72,7 +73,7 @@ def FullEmbed(
         description: Optional[str] = None,
         image: Optional[str] = None,
         thumbnail: Optional[str] = None,
-        colour: Optional[Colour] = Colour.random(),
+        colour: Optional[Colour] = None,
         footer: Optional[dict[str, str]] = None) -> Embed:
     """
     Generates an embed with up to 25 title: value fields plus description field.
@@ -87,7 +88,7 @@ def FullEmbed(
     :param footer: Embed footer: Optional dict{text: ..., icon_url: ...}
     :return: Discord Embed
     """
-    embed = Embed(title = title, colour = colour, description = description, timestamp = utcnow())
+    embed = Embed(title = title, colour = set_colour(colour), description = description, timestamp = utcnow())
     for field in islice(fields, 25):
         if field.index:
             embed.insert_field_at(index = field.index, name = field.name, value = field.value, inline = field.inline)
@@ -106,7 +107,7 @@ def EmbedFieldList(
         fields: list[EmbedField] = MISSING,
         max_fields: Optional[int] = 25,
         description: Optional[list[str]] = None,
-        colour: Optional[Colour] = Colour.random(),
+        colour: Optional[Colour] = None,
         footers: Optional[list[dict[str, str]]] | dict[str, str] | None = None) -> list[Embed]:
     """
     Generates list of embed with {max_fields} number of fields per embed.
@@ -122,7 +123,7 @@ def EmbedFieldList(
     """
     embed_list: list[Embed] = [
         Embed(title = title if isinstance(title, str | None) else title[i],
-              colour = colour,
+              colour = set_colour(colour),
               description = None if not description else description[i],
               timestamp = utcnow())
         for i in range(0, max(ceil(len(fields) / max_fields), 1))
@@ -152,7 +153,7 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
                     descriptions: list[str] | str = MISSING,
                     image: Optional[list[str] | str] = None,
                     thumbnail: Optional[list[str] | str] = None,
-                    colour: Optional[Colour] = Colour.random(),
+                    colour: Optional[Colour] = None,
                     footer: Optional[list[dict[str, str]] | dict[str, str]] = None) -> list[Embed]:
     """
     Generates a list of embeds with only the description field filled
@@ -172,7 +173,7 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
         Embed(
             title = title if isinstance(title, str | None) else title[index],
             description = description[:4000],
-            colour = colour
+            colour = set_colour(colour)
         ) for index, description in enumerate(descriptions)
     ]
     if author:
