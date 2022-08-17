@@ -133,9 +133,11 @@ class Tag(commands.GroupCog, name = "tag"):
         name = await self.bot.execute("DELETE FROM tags WHERE tagid = $1 RETURNING name", tag)
         await interaction.response.send_message(f"{name} has been Deleted", ephemeral = True)
 
-    async def ViewHelper(self, tag: str, interaction: Interaction, raw: bool):
+    @app_commands.command(name = "view", description = "View a tag by name")
+    async def View(self, interaction: Interaction, tag: str, raw: bool = False):
+        await interaction.response.defer(ephemeral = True)
         if not (tag := Converters.to_int(tag)):
-            return
+            return await interaction.followup.send("Please ensure tag is selected from autocomplete options", ephemeral = True)
         tag = await self.bot.fetchrow("SELECT owner, name, value, nsfw, private, invisible FROM tags WHERE tagid = $1", tag)
         if tag["private"] and tag["owner"] != interaction.user.id:
             return await interaction.followup.send("Tag is private", ephemeral = True)
@@ -153,16 +155,6 @@ class Tag(commands.GroupCog, name = "tag"):
         else:
             await interaction.followup.send(embed = embed, ephemeral = True)
             await interaction.followup.send(content = text, ephemeral = True)
-
-    @app_commands.command(name = "view", description = "View a tag by name")
-    async def View(self, interaction: Interaction, tag: str):
-        await interaction.response.defer(ephemeral = True)
-        await self.ViewHelper(tag, interaction, raw = False)
-
-    @app_commands.command(name = "view-raw", description = "View the raw tag text by name")
-    async def ViewRaw(self, interaction: Interaction, tag: str):
-        await interaction.response.defer(ephemeral = True)
-        await self.ViewHelper(tag, interaction, raw = True)
 
     @app_commands.command(name = "random", description = "View a tag random tag")
     @app_commands.describe(tag = "randomly select from tags containing name")
@@ -225,7 +217,6 @@ class Tag(commands.GroupCog, name = "tag"):
         return [app_commands.Choice(name = name, value = str(tagid)) for tagid, name in tags]
 
     @View.autocomplete("tag")
-    @ViewRaw.autocomplete("tag")
     @Claim.autocomplete("tag")
     async def TagViewAutocomplete(self, interaction: Interaction, current: None | str) -> list[app_commands.Choice]:
         current = self.bot.current(current)
