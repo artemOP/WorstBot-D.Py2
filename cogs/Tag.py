@@ -1,7 +1,8 @@
 import discord
-from discord import Interaction, app_commands, ui, SelectOption
+from discord import Interaction, app_commands, ui  # , SelectOption
 from discord.ext import commands
 from modules import Convertors, EmbedGen
+
 
 class TagModal(ui.Modal, title = "tag"):
     def __init__(self, tagid = None, TagName: str = None, TagValue: str = None, nsfw: bool = False, private: bool = False, public: bool = False, invisible: bool = False):
@@ -24,40 +25,51 @@ class TagModal(ui.Modal, title = "tag"):
             style = discord.TextStyle.long,
             default = TagValue
         )
-        self.MetaData = ui.Select(
-            placeholder = "Select additional tag data",
-            min_values = 0,
-            max_values = 4,
-            options = [
-                SelectOption(label = "NSFW", description = "Marks tag as NSFW", default = nsfw),
-                SelectOption(label = "Private", description = "Only allows tag to be used by owner", default = private),
-                SelectOption(label = "Invisible", description = "Hides tag user", default = invisible),
-                SelectOption(label = "Public", description = "Allows anyone to edit tag", default = public),
-            ]
-        )
+        # self.MetaData = ui.Select(
+        #     placeholder = "Select additional tag data",
+        #     min_values = 0,
+        #     max_values = 4,
+        #     options = [
+        #         SelectOption(label = "NSFW", description = "Marks tag as NSFW", default = nsfw),
+        #         SelectOption(label = "Private", description = "Only allows tag to be used by owner", default = private),
+        #         SelectOption(label = "Invisible", description = "Hides tag user", default = invisible),
+        #         SelectOption(label = "Public", description = "Allows anyone to edit tag", default = public),
+        #     ]
+        # )
         self.add_item(self.TagName)
         self.add_item(self.TagValue)
-        self.add_item(self.MetaData)
+        # self.add_item(self.MetaData)
 
     async def on_submit(self, interaction: Interaction) -> None:
         await interaction.response.defer(ephemeral = True)
-        Metadata = {}
-        for item in self.MetaData.options:
-            if item.label in self.MetaData.values:
-                Metadata[item.label] = True
-            else:
-                Metadata[item.label] = False
+        # Metadata = {}
+        # for item in self.MetaData.options:
+        #     if item.label in self.MetaData.values:
+        #         Metadata[item.label] = True
+        #     else:
+        #         Metadata[item.label] = False
+        # if self.tagid:
+        #     await interaction.client.execute(
+        #         "UPDATE tags SET name = $1, value = $2, nsfw = $3, private = $4, invisible = $5, public = $6 WHERE tagid = $7",
+        #         self.TagName.value, self.TagValue.value, *Metadata.values(), self.tagid
+        #     )
+        # else:
+        #     self.tagid = await interaction.client.execute(
+        #         "INSERT INTO tags(guild, owner, name, value, nsfw, private, invisible, public) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING tagid",
+        #         interaction.guild_id, interaction.user.id, self.TagName.value, self.TagValue.value, *Metadata.values()
+        #     )
         if self.tagid:
             await interaction.client.execute(
-                "UPDATE tags SET name = $1, value = $2, nsfw = $3, private = $4, invisible = $5, public = $6 WHERE tagid = $7",
-                self.TagName.value, self.TagValue.value, *Metadata.values(), self.tagid
+                "UPDATE tags SET name = $1, value = $2 WHERE tagid = $7",
+                self.TagName.value, self.TagValue.value, self.tagid
             )
         else:
             self.tagid = await interaction.client.execute(
-                "INSERT INTO tags(guild, owner, name, value, nsfw, private, invisible, public) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING tagid",
-                interaction.guild_id, interaction.user.id, self.TagName.value, self.TagValue.value, *Metadata.values()
+                "INSERT INTO tags(guild, owner, name, value) VALUES($1, $2, $3, $4) RETURNING tagid",
+                interaction.guild_id, interaction.user.id, self.TagName.value, self.TagValue.value,
             )
         await interaction.followup.send(f"{self.TagName.value} has been created", ephemeral = True)
+        # todo: remove last db section and uncomment all code in callback once select modals are reintroduced
 
 
 class Tag(commands.GroupCog, name = "tag"):
@@ -106,7 +118,7 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "rename", description = "Rename a tag")
     async def Rename(self, interaction: Interaction, tag: str, new_name: str):
-        tag = Convertors.to_in(tag)
+        tag = Convertors.to_int(tag)
         if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.fetchval("SELECT name FROM tags WHERE tagid = $1", tag)
@@ -115,14 +127,14 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "delete", description = "Delete a tag by name")
     async def Delete(self, interaction: Interaction, tag: str):
-        tag = Convertors.to_in(tag)
+        tag = Convertors.to_int(tag)
         if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.execute("DELETE FROM tags WHERE tagid = $1 RETURNING name", tag)
         await interaction.response.send_message(f"{name} has been Deleted", ephemeral = True)
 
     async def ViewHelper(self, tag: str, interaction: Interaction, raw: bool):
-        if not (tag := Convertors.to_in(tag)):
+        if not (tag := Convertors.to_int(tag)):
             return
         tag = await self.bot.fetchrow("SELECT owner, name, value, nsfw, private, invisible FROM tags WHERE tagid = $1", tag)
         if tag["private"] and tag["owner"] != interaction.user.id:
@@ -131,13 +143,16 @@ class Tag(commands.GroupCog, name = "tag"):
             return await interaction.followup.send("Tag is NSFW", ephemeral = True)
         owner = self.bot.get_user(tag["owner"])
         embed = EmbedGen.SimpleEmbed(author = {"name": str(owner), "icon_url": owner.display_avatar},
-                            title = tag["name"],
-                            text = tag["value"] if not raw else f"```txt\n{tag['value']}\n```")
+                                     title = tag["name"]
+                                     )
+        text = tag["value"] if not raw else f"```txt\n{tag['value']}\n```"
         if tag["invisible"]:
             await interaction.followup.send("message sent", ephemeral = True)
             await interaction.channel.send(embed = embed)
+            await interaction.channel.send(content = text)
         else:
             await interaction.followup.send(embed = embed)
+            await interaction.followup.send(content = text)
 
     @app_commands.command(name = "view", description = "View a tag by name")
     async def View(self, interaction: Interaction, tag: str):
@@ -170,7 +185,8 @@ class Tag(commands.GroupCog, name = "tag"):
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND owner = $2 AND private = FALSE", interaction.guild_id, user.id)
         if not tags:
             return await interaction.response.send_message(f"{str(user)} has no tags")
-        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(tag["name"] for tag in tags))
+        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(
+            tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "list-all", description = "View all tags on the server")
@@ -178,19 +194,20 @@ class Tag(commands.GroupCog, name = "tag"):
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND private = FALSE", interaction.guild_id)
         if not tags:
             return await interaction.response.send_message("No tags", ephemeral = True)
-        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = "Server tags", descriptions = "\n".join(tag["name"] for tag in tags))
+        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = "Server tags", descriptions = "\n".join(
+            tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "transfer", description = "Transfer ownership of tag to someone else")
     async def Transfer(self, interaction: Interaction, tag: str, user: discord.Member):
-        if not ((tag := Convertors.to_in(tag)) or await self.OwnerCheck(tag, interaction.user.id)):
+        if not ((tag := Convertors.to_int(tag)) or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.fetchval("UPDATE tags SET owner = $1 WHERE tagid = $2 RETURNING name", user.id, tag)
         await interaction.response.send_message(f"{user.mention} has become the owner of tag {name}")
 
     @app_commands.command(name = "claim", description = "Claim ownership of orphaned tags")
     async def Claim(self, interaction: Interaction, tag: str):
-        if not (tag := Convertors.to_in(tag)):
+        if not (tag := Convertors.to_int(tag)):
             return
         owner = self.bot.get_user(await self.bot.fetchval("SELECT owner FROM tags WHERE tagid = $1", tag))
         if owner not in interaction.guild.members:
@@ -202,8 +219,7 @@ class Tag(commands.GroupCog, name = "tag"):
     @Rename.autocomplete("tag")
     @Delete.autocomplete("tag")
     @Transfer.autocomplete("tag")
-    async def PrivilegedTagAutocomplete(self, interaction: Interaction, current: None | int | str = "%") -> list[
-        app_commands.Choice]:
+    async def PrivilegedTagAutocomplete(self, interaction: Interaction, current: None | int | str = "%") -> list[app_commands.Choice]:
         current = self.bot.current(current)
         tags = await self.bot.fetch("SELECT tagid, name FROM tags WHERE guild = $1 AND (owner = $2 OR public = TRUE) AND name LIKE $3", interaction.guild_id, interaction.user.id, current)
         return [app_commands.Choice(name = name, value = str(tagid)) for tagid, name in tags]

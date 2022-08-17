@@ -34,8 +34,9 @@ class Stats(commands.GroupCog, name = "stats"):
         await self.bot.execute("CREATE TABLE IF NOT EXISTS serverusage(guild BIGINT, command TEXT, lastusage timestamptz)")
         print("Stats cog online")
 
-    @app_commands.command(name = "lines", description = "display the line count stats for worstbot")
-    async def stats(self, interaction: Interaction):
+    @app_commands.command(name = "line-count", description = "display the line count stats for worstbot")
+    async def LineCount(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral = True)
         fields: list[EmbedGen.EmbedField] = []
         cogs = {}
         blocksize = 0
@@ -85,7 +86,7 @@ class Stats(commands.GroupCog, name = "stats"):
                           comments: {self.comment} ({Convertors.to_percent(self.comment, self.total)}%)\n
                           blank: {self.blank} ({Convertors.to_percent(self.blank, self.total)}%)\n
                           total: {self.total}\n\u200b"""))
-        await interaction.response.send_message(embeds = embeds, ephemeral = True)
+        await interaction.followup.send(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "github", description = "Various stats about WorstBot's GitHub Repo")
     async def github(self, interaction: Interaction):
