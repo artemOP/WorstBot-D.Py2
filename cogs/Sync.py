@@ -15,6 +15,7 @@ class Sync(commands.Cog):
     @commands.is_owner()
     @app_commands.default_permissions()
     async def sync(self, ctx: Context) -> None:
+        await ctx.defer(ephemeral = True)
         guilds = []
         for guild in self.bot.guilds:
             self.bot.tree.clear_commands(guild = guild)
