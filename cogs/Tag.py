@@ -151,8 +151,8 @@ class Tag(commands.GroupCog, name = "tag"):
             await interaction.channel.send(embed = embed)
             await interaction.channel.send(content = text)
         else:
-            await interaction.followup.send(embed = embed)
-            await interaction.followup.send(content = text)
+            await interaction.followup.send(embed = embed, ephemeral = True)
+            await interaction.followup.send(content = text, ephemeral = True)
 
     @app_commands.command(name = "view", description = "View a tag by name")
     async def View(self, interaction: Interaction, tag: str):
