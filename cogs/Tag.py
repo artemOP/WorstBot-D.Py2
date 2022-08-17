@@ -1,6 +1,7 @@
 import discord
 from discord import Interaction, app_commands, ui  # , SelectOption
 from discord.ext import commands
+from discord.app_commands import Choice
 from modules import Converters, EmbedGen
 
 
@@ -101,6 +102,15 @@ class Tag(commands.GroupCog, name = "tag"):
         owner, public = select.values()
         return True if owner == user or public else False
 
+    @staticmethod
+    def MetadataChoices() -> list[Choice[str]]:
+        return [
+            Choice(name = "NSFW: Marks tag as NSFW", value = "nsfw"),
+            Choice(name = "Private: Only allows tag to be used by owner", value = "private"),
+            Choice(name = "Public: Allows anyone to edit tag", value = "public"),
+            Choice(name = "Invisible: Hides tag user", value = "invisible"),
+        ]
+
     @app_commands.command(name = "create", description = "create a tag to recall later by name")
     async def Create(self, interaction: Interaction):
         await interaction.response.send_modal(TagModal())
@@ -115,6 +125,15 @@ class Tag(commands.GroupCog, name = "tag"):
         if not await self.OwnerCheck(tag, interaction.user.id):
             return
         await interaction.response.send_modal(TagModal(tag, name, value, nsfw, private, public, invisible))
+
+    @app_commands.command(name = "metadata", description = "Add metadata to tag")
+    @app_commands.choices(option = MetadataChoices())
+    async def Metadata(self, interaction: Interaction, tag: str, option: Choice[str], value: bool):
+        tag = Converters.to_int(tag)
+        if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
+            return
+        name = await self.bot.execute(f"UPDATE tags SET {option.value} = $2 WHERE tagid = $1 RETURNING name", tag, value)
+        await interaction.response.send_message(f"{name} has had its metadata tag: `{option.value.capitalize()}` set to {value}")
 
     @app_commands.command(name = "rename", description = "Rename a tag")
     async def Rename(self, interaction: Interaction, tag: str, new_name: str):
@@ -206,6 +225,7 @@ class Tag(commands.GroupCog, name = "tag"):
         await interaction.response.send_message("cannot claim tag from a user still in the server", ephemeral = True)
 
     @Edit.autocomplete("tag")
+    @Metadata.autocomplete("tag")
     @Rename.autocomplete("tag")
     @Delete.autocomplete("tag")
     @Transfer.autocomplete("tag")
