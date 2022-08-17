@@ -3,7 +3,7 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 from os import listdir
 from dataclasses import dataclass, field, MISSING
-from modules import EmbedGen, Convertors, Graphs
+from modules import EmbedGen, Converters, Graphs
 from datetime import date
 
 
@@ -70,9 +70,9 @@ class Stats(commands.GroupCog, name = "stats"):
             fields.append(
                 EmbedGen.EmbedField(name = [k for k, v in cogs.items() if v == cog][0][:-3],
                                     value = f"""
-                           source code: {cog.source} ({Convertors.to_percent(cog.source, cog.total)}%)\n
-                           comments: {cog.comment} ({Convertors.to_percent(cog.comment, cog.total)}%)\n
-                           blank: {cog.blank} ({Convertors.to_percent(cog.blank, cog.total)}%)\n
+                           source code: {cog.source} ({Converters.to_percent(cog.source, cog.total)}%)\n
+                           comments: {cog.comment} ({Converters.to_percent(cog.comment, cog.total)}%)\n
+                           blank: {cog.blank} ({Converters.to_percent(cog.blank, cog.total)}%)\n
                            total: {cog.total}\n\u200b
                            """
                                     )
@@ -82,9 +82,9 @@ class Stats(commands.GroupCog, name = "stats"):
                       EmbedGen.SimpleEmbed(
                           title = "Project total",
                           text = f"""
-                          source code: {self.source} ({Convertors.to_percent(self.source, self.total)}%)\n
-                          comments: {self.comment} ({Convertors.to_percent(self.comment, self.total)}%)\n
-                          blank: {self.blank} ({Convertors.to_percent(self.blank, self.total)}%)\n
+                          source code: {self.source} ({Converters.to_percent(self.source, self.total)}%)\n
+                          comments: {self.comment} ({Converters.to_percent(self.comment, self.total)}%)\n
+                          blank: {self.blank} ({Converters.to_percent(self.blank, self.total)}%)\n
                           total: {self.total}\n\u200b"""))
         await interaction.followup.send(embeds = embeds, ephemeral = True)
 
@@ -116,8 +116,8 @@ class Stats(commands.GroupCog, name = "stats"):
     @app_commands.describe(before = "YYYY/MM/DD", after = "YYYY/MM/DD")
     async def GuildUsage(self, interaction: Interaction, before: str = None, after: str = None):
         await interaction.response.defer(ephemeral = True)
-        before = Convertors.to_datetime("2100/01/01" if not before else before, "%Y/%m/%d")
-        after = Convertors.to_datetime("1970/01/01" if not after else after, "%Y/%m/%d")
+        before = Converters.to_datetime("2100/01/01" if not before else before, "%Y/%m/%d")
+        after = Converters.to_datetime("1970/01/01" if not after else after, "%Y/%m/%d")
         usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM serverusage WHERE guild = $1 AND lastusage BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
         chartIO = await Graphs.graph("pie", {row["command"]: row["count"] for row in usage})
         embeds = EmbedGen.SimpleEmbedList(title = "Guild command usage",

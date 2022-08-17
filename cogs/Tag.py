@@ -1,7 +1,7 @@
 import discord
 from discord import Interaction, app_commands, ui  # , SelectOption
 from discord.ext import commands
-from modules import Convertors, EmbedGen
+from modules import Converters, EmbedGen
 
 
 class TagModal(ui.Modal, title = "tag"):
@@ -107,7 +107,7 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "edit", description = "edit a pre-existing tag by name")
     async def Edit(self, interaction: Interaction, tag: str):
-        tag = Convertors.to_int(tag)
+        tag = Converters.to_int(tag)
         select = await self.bot.fetchrow("SELECT name, value, nsfw, private, public, invisible FROM tags WHERE tagid = $1", tag)
         if not select:
             return
@@ -118,7 +118,7 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "rename", description = "Rename a tag")
     async def Rename(self, interaction: Interaction, tag: str, new_name: str):
-        tag = Convertors.to_int(tag)
+        tag = Converters.to_int(tag)
         if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.fetchval("SELECT name FROM tags WHERE tagid = $1", tag)
@@ -127,14 +127,14 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "delete", description = "Delete a tag by name")
     async def Delete(self, interaction: Interaction, tag: str):
-        tag = Convertors.to_int(tag)
+        tag = Converters.to_int(tag)
         if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.execute("DELETE FROM tags WHERE tagid = $1 RETURNING name", tag)
         await interaction.response.send_message(f"{name} has been Deleted", ephemeral = True)
 
     async def ViewHelper(self, tag: str, interaction: Interaction, raw: bool):
-        if not (tag := Convertors.to_int(tag)):
+        if not (tag := Converters.to_int(tag)):
             return
         tag = await self.bot.fetchrow("SELECT owner, name, value, nsfw, private, invisible FROM tags WHERE tagid = $1", tag)
         if tag["private"] and tag["owner"] != interaction.user.id:
@@ -200,14 +200,14 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @app_commands.command(name = "transfer", description = "Transfer ownership of tag to someone else")
     async def Transfer(self, interaction: Interaction, tag: str, user: discord.Member):
-        if not ((tag := Convertors.to_int(tag)) or await self.OwnerCheck(tag, interaction.user.id)):
+        if not ((tag := Converters.to_int(tag)) or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.fetchval("UPDATE tags SET owner = $1 WHERE tagid = $2 RETURNING name", user.id, tag)
         await interaction.response.send_message(f"{user.mention} has become the owner of tag {name}")
 
     @app_commands.command(name = "claim", description = "Claim ownership of orphaned tags")
     async def Claim(self, interaction: Interaction, tag: str):
-        if not (tag := Convertors.to_int(tag)):
+        if not (tag := Converters.to_int(tag)):
             return
         owner = self.bot.get_user(await self.bot.fetchval("SELECT owner FROM tags WHERE tagid = $1", tag))
         if owner not in interaction.guild.members:
