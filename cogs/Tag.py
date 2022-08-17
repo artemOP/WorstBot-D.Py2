@@ -143,13 +143,16 @@ class Tag(commands.GroupCog, name = "tag"):
             return await interaction.followup.send("Tag is NSFW", ephemeral = True)
         owner = self.bot.get_user(tag["owner"])
         embed = EmbedGen.SimpleEmbed(author = {"name": str(owner), "icon_url": owner.display_avatar},
-                            title = tag["name"],
-                            text = tag["value"] if not raw else f"```txt\n{tag['value']}\n```")
+                                     title = tag["name"]
+                                     )
+        text = tag["value"] if not raw else f"```txt\n{tag['value']}\n```"
         if tag["invisible"]:
             await interaction.followup.send("message sent", ephemeral = True)
             await interaction.channel.send(embed = embed)
+            await interaction.channel.send(content = text)
         else:
             await interaction.followup.send(embed = embed)
+            await interaction.followup.send(content = text)
 
     @app_commands.command(name = "view", description = "View a tag by name")
     async def View(self, interaction: Interaction, tag: str):
