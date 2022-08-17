@@ -133,7 +133,7 @@ class Tag(commands.GroupCog, name = "tag"):
         if not (tag or await self.OwnerCheck(tag, interaction.user.id)):
             return
         name = await self.bot.execute(f"UPDATE tags SET {option.value} = $2 WHERE tagid = $1 RETURNING name", tag, value)
-        await interaction.response.send_message(f"{name} has had its metadata tag: `{option.value.capitalize()}` set to {value}")
+        await interaction.response.send_message(f"{name} has had its metadata tag: `{option.value.capitalize()}` set to {value}", ephemeral = True)
 
     @app_commands.command(name = "rename", description = "Rename a tag")
     async def Rename(self, interaction: Interaction, tag: str, new_name: str):
