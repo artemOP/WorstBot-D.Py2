@@ -41,7 +41,7 @@ def set_thumbnail(embed: discord.Embed, image: str) -> discord.Embed:
 
 def SimpleEmbed(author: Optional[dict[str, str]] = None,
                 title: Optional[str] = None,
-                text: str = None,
+                text: str = "",
                 image: Optional[str] = None,
                 thumbnail: Optional[str] = None,
                 colour: Optional[Colour] = None,
