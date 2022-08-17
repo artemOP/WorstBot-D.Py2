@@ -176,9 +176,8 @@ class Tag(commands.GroupCog, name = "tag"):
         user = user or interaction.user
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND owner = $2 AND private = FALSE", interaction.guild_id, user.id)
         if not tags:
-            return await interaction.response.send_message(f"{str(user)} has no tags")
-        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(
-            tag["name"] for tag in tags))
+            return await interaction.response.send_message(f"{str(user)} has no tags", ephemeral = True)
+        embeds = EmbedGen.SimpleEmbedList(title = f"{user.name}'s tags", descriptions = "\n".join(tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "list-all", description = "View all tags on the server")
@@ -186,8 +185,7 @@ class Tag(commands.GroupCog, name = "tag"):
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND private = FALSE", interaction.guild_id)
         if not tags:
             return await interaction.response.send_message("No tags", ephemeral = True)
-        embeds = EmbedGen.EmbedGen.SimpleEmbedList(title = "Server tags", descriptions = "\n".join(
-            tag["name"] for tag in tags))
+        embeds = EmbedGen.SimpleEmbedList(title = "Server tags", descriptions = "\n".join(tag["name"] for tag in tags))
         await interaction.response.send_message(embeds = embeds, ephemeral = True)
 
     @app_commands.command(name = "transfer", description = "Transfer ownership of tag to someone else")
