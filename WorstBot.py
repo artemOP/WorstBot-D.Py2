@@ -86,7 +86,7 @@ class WorstBot(commands.Bot):
 
 
 load_dotenv()
-bot = WorstBot(command_prefix = commands.when_mentioned_or('.'),
+bot = WorstBot(command_prefix = commands.when_mentioned,
                activity = discord.Game(name = "With ones and zeros"),
                intents = discord.Intents.all())
 bot.run(environ.get("discord"), log_level = WARN)
