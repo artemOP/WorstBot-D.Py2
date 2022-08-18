@@ -123,7 +123,7 @@ class Votes(commands.GroupCog, name = "poll"):
         QuestionTable = [discord.SelectOption(label = item["question"], value = item["voteid"]) for item in await self.bot.fetch("SELECT voteid, question FROM votes WHERE guild=$1", interaction.guild_id)]
         view = PollResultsView(timeout = 15, bot = self.bot, options = QuestionTable)
         await interaction.response.send_message(view = view, embed = await EmbedGen(bot = self.bot, poll = poll), ephemeral = True)
-        view.response = await interaction.original_message()
+        view.response = await interaction.original_response()
         return view
 
     @app_commands.command(name = "results", description = "Show the current results of a poll")

@@ -95,7 +95,7 @@ class Profile(commands.GroupCog, name = "profile"):
         embed = await self.FetchProfile(interaction.user.id)
         view = ProfileView(timeout = 30)
         await interaction.response.send_message(view = view, embed = embed, ephemeral = True)
-        view.response = await interaction.original_message()
+        view.response = await interaction.original_response()
 
     @app_commands.command(name = "view", description = "Look at a users profile")
     async def ProfileCommand(self, interaction: Interaction, user: discord.User):

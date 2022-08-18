@@ -29,7 +29,7 @@ class Reminder(commands.Cog):
             await interaction.response.send_message("that isnt how days work")
             return
         await interaction.response.send_message(f"""Reminding you about "{message}" at {str(expiretime).split("+")[0]} """, ephemeral = True)
-        response = await interaction.original_message()
+        response = await interaction.original_response()
         await self.bot.execute("INSERT INTO reminder(guild, member, creationtime, expiretime,message, jumplink) VALUES($1, $2, $3, $4, $5, $6)", interaction.guild.id, interaction.user.id, interaction.created_at, expiretime, message, response.jump_url)
         if self.ReminderTask.is_running():
             self.ReminderTask.restart()
