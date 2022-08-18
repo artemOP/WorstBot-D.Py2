@@ -34,7 +34,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
             if after.channel.id == PersonalChannel.id:
                 channel = await after.channel.category.create_voice_channel(name = member.name, user_limit = 99, bitrate = member.guild.bitrate_limit)
                 await member.move_to(channel)
-        elif before.channel is not None and before.channel.id != PersonalChannel.id:
+        elif before.channel is not None and before.channel != PersonalChannel:
             if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM CallBlacklist WHERE channel=$1)", before.channel.id) is True or before.channel.members:
                 return
             if not await self.bot.fetchval("SELECT textarchive FROM events WHERE guild = $1", member.guild.id):
