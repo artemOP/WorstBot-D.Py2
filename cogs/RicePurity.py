@@ -1,13 +1,13 @@
 from json import load
-from math import ceil
-
-import discord
-from discord import app_commands, Interaction
-from discord.ui import Item, Button, button
-from discord.ext import commands
 from typing import Any
 
-from modules.EmbedGen import EmbedFieldList, EmbedField
+import discord
+from discord import Interaction, app_commands
+from discord.ext import commands
+from discord.ui import Button, Item, button
+
+from modules.EmbedGen import EmbedField, EmbedFieldList
+from modules.Paginators import ButtonPaginatedEmbeds
 
 
 def generator():
@@ -58,48 +58,6 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
                 self.counter += 1
                 await interaction.response.edit_message(view = self, content = ": ".join(next(self.generator)))
 
-
-class PurityLeaderboard(discord.ui.View):
-    def __init__(self, timeout):
-        super().__init__(timeout = timeout)
-        self.response = None
-        self.embedlist = None
-        self.page = 0
-
-    async def on_timeout(self) -> None:
-        await self.response.edit(view = None)
-
-    @button(label = 'First page', style = discord.ButtonStyle.red, custom_id = 'RicePurityPersistent:FirstPage')
-    async def first(self, interaction: Interaction, button: Button):
-        await interaction.response.edit_message(embed = self.embedlist[0])
-        self.page = 0
-
-    @button(label = 'Previous page', style = discord.ButtonStyle.red, custom_id = 'RicePurityPersistent:back')
-    async def previous(self, interaction: Interaction, button: Button):
-        if self.page >= 1:
-            self.page -= 1
-            await interaction.response.edit_message(embed = self.embedlist[self.page])
-        else:
-            self.page = len(self.embedlist) - 1
-            await interaction.response.edit_message(embed = self.embedlist[self.page])
-
-    @button(label = 'Stop', style = discord.ButtonStyle.grey, custom_id = 'RicePurityPersistent:exit')
-    async def exit(self, interaction: Interaction, button: Button):
-        await self.on_timeout()
-
-    @button(label = 'Next Page', style = discord.ButtonStyle.green, custom_id = 'RicePurityPersistent:forward')
-    async def next(self, interaction: Interaction, button: Button):
-        self.page += 1
-        if self.page > len(self.embedlist) - 1:
-            self.page = 0
-        await interaction.response.edit_message(embed = self.embedlist[self.page])
-
-    @button(label = 'Last Page', style = discord.ButtonStyle.green, custom_id = 'RicePurityPersistent:LastPage')
-    async def last(self, interaction: Interaction, button: Button):
-        self.page = len(self.embedlist) - 1
-        await interaction.response.edit_message(embed = self.embedlist[self.page])
-
-
 class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
     def __init__(self, bot: commands.Bot):
         super().__init__()
@@ -114,28 +72,28 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
     async def test(self, interaction: Interaction):
         view = PurityButtons(timeout = 30, bot = self.bot)
         await interaction.response.send_message('Are you ready to begin your rice purity test?', view = view, ephemeral = True)
-        view.response = await interaction.original_message()
+        view.response = await interaction.original_response()
 
     @app_commands.command(name = "leaderboard")
     async def leaderboard(self, interaction: Interaction):
-        view = PurityLeaderboard(timeout = 30)
         users = {}
         for member in interaction.guild.members:
             if (score := await self.bot.fetchval("SELECT score FROM ricepurity WHERE id=$1", member.id)) is not None:
                 users[member.id] = score
-        view.embedlist = EmbedFieldList(
+        embed_list = EmbedFieldList(
             title = "Rice Purity Scores",
             fields = [
                 EmbedField(
                     name = str(self.bot.get_user(userid)),
-                    value = str(userscore))
-                for userid, userscore in sorted(users.items(), key = lambda item: item[1])
+                    value = str(user_score))
+                for userid, user_score in sorted(users.items(), key = lambda item: item[1])
             ],
             max_fields = 9,
             colour = discord.Colour.dark_purple()
         )
+        view = ButtonPaginatedEmbeds(timeout = 30, embed_list = embed_list)
         await interaction.response.send_message(view = view, embed = view.embedlist[0], ephemeral = True)
-        view.response = await interaction.original_message()
+        view.response = await interaction.original_response()
 
 
 async def setup(bot):

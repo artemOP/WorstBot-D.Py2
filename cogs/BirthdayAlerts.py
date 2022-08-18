@@ -1,51 +1,12 @@
 import discord
-from discord import app_commands, Interaction, ui
+from discord import app_commands, Interaction
 from discord.app_commands import Range
 from discord.ext import commands, tasks
 from datetime import date, time
 from dateutil.relativedelta import relativedelta
 from asyncpg import Record
 from modules.EmbedGen import SimpleEmbedList
-
-class BirthdayView(ui.View):
-    def __init__(self, timeout: int, embedlist: list[discord.Embed]):
-        super().__init__(timeout = timeout)
-        self.response = None
-        self.embedlist = embedlist
-        self.page = 0
-
-    async def on_timeout(self) -> None:
-        await self.response.edit(view = None)
-
-    @ui.button(label = 'First page', style = discord.ButtonStyle.red)
-    async def first(self, interaction: Interaction, button: ui.Button):
-        await interaction.response.edit_message(embed = self.embedlist[0])
-        self.page = 0
-
-    @ui.button(label = 'Previous page', style = discord.ButtonStyle.red)
-    async def previous(self, interaction: Interaction, button: ui.Button):
-        if self.page >= 1:
-            self.page -= 1
-            await interaction.response.edit_message(embed = self.embedlist[self.page])
-        else:
-            self.page = len(self.embedlist) - 1
-            await interaction.response.edit_message(embed = self.embedlist[self.page])
-
-    @ui.button(label = 'Stop', style = discord.ButtonStyle.grey)
-    async def exit(self, interaction: Interaction, button: ui.Button):
-        await self.on_timeout()
-
-    @ui.button(label = 'Next Page', style = discord.ButtonStyle.green)
-    async def next(self, interaction: Interaction, button: ui.Button):
-        self.page += 1
-        if self.page > len(self.embedlist) - 1:
-            self.page = 0
-        await interaction.response.edit_message(embed = self.embedlist[self.page])
-
-    @ui.button(label = 'Last Page', style = discord.ButtonStyle.green)
-    async def last(self, interaction: Interaction, button: ui.Button):
-        self.page = len(self.embedlist) - 1
-        await interaction.response.edit_message(embed = self.embedlist[self.page])
+from modules.Paginators import ButtonPaginatedEmbeds
 
 
 class BirthdayAlert(commands.GroupCog, name = "birthday"):
@@ -89,9 +50,9 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
                 descriptions.append(f"{member.mention}: {birthday}\n")
         embed_list = SimpleEmbedList(title = "Birthdays", descriptions = descriptions)
 
-        view = BirthdayView(timeout = 30, embedlist = embed_list)
+        view = ButtonPaginatedEmbeds(timeout = 30, embed_list = embed_list)
         await interaction.response.send_message(view = view, embed = embed_list[0], ephemeral = True)
-        view.response = await interaction.original_message()
+        view.response = await interaction.original_response()
 
     @tasks.loop(time = time(1, 0), reconnect = True)
     async def BirthdayCheck(self):

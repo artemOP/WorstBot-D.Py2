@@ -1,52 +1,9 @@
-from math import ceil
-
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 
 from modules.EmbedGen import EmbedField, EmbedFieldList
-
-
-class AutoRoleList(discord.ui.View):
-    def __init__(self, timeout):
-        super().__init__(timeout = timeout)
-        self.response = None
-        self.embedlist = None
-        self.page = 0
-
-    async def on_timeout(self) -> None:
-        await self.response.edit(view = None)
-
-    @discord.ui.button(label = 'First page', style = discord.ButtonStyle.red)
-    async def first(self, interaction: Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(embed = self.embedlist[0])
-        self.page = 0
-
-    @discord.ui.button(label = 'Previous page', style = discord.ButtonStyle.red)
-    async def previous(self, interaction: Interaction, button: discord.ui.Button):
-        if self.page >= 1:
-            self.page -= 1
-            await interaction.response.edit_message(embed = self.embedlist[self.page])
-        else:
-            self.page = len(self.embedlist) - 1
-            await interaction.response.edit_message(embed = self.embedlist[self.page])
-
-    @discord.ui.button(label = 'Stop', style = discord.ButtonStyle.grey)
-    async def exit(self, interaction: Interaction, button: discord.ui.Button):
-        await self.on_timeout()
-
-    @discord.ui.button(label = 'Next Page', style = discord.ButtonStyle.green)
-    async def next(self, interaction: Interaction, button: discord.ui.Button):
-        self.page += 1
-        if self.page > len(self.embedlist) - 1:
-            self.page = 0
-        await interaction.response.edit_message(embed = self.embedlist[self.page])
-
-    @discord.ui.button(label = 'Last Page', style = discord.ButtonStyle.green)
-    async def last(self, interaction: Interaction, button: discord.ui.Button):
-        self.page = len(self.embedlist) - 1
-        await interaction.response.edit_message(embed = self.embedlist[self.page])
-
+from modules.Paginators import ButtonPaginatedEmbeds
 
 @app_commands.default_permissions(manage_roles = True)
 class AutoRole(commands.GroupCog, name = "autorole"):
@@ -70,17 +27,17 @@ class AutoRole(commands.GroupCog, name = "autorole"):
 
     @app_commands.command(name = "list")
     async def AutoRoleList(self, interaction: Interaction):
-        view = AutoRoleList(timeout = 60)
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", interaction.guild.id)
         for role in roles:
             roles[roles.index(role)] = interaction.guild.get_role(role["role"])
-        view.embedlist = EmbedFieldList(
+        embed_list = EmbedFieldList(
             title = "Automatically applied roles",
             fields = [EmbedField(name = "Role", value = role.mention) for role in roles],
             max_fields = 9
         )
+        view = ButtonPaginatedEmbeds(timeout = 60, embed_list = embed_list)
         await interaction.response.send_message(view = view, embed = view.embedlist[0], ephemeral = True)
-        view.response = await interaction.original_message()
+        view.response = await interaction.original_response()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
