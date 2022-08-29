@@ -39,10 +39,11 @@ class BaseEvents(commands.Cog):
     @app_commands.default_permissions()
     @app_commands.choices(event = Choices())
     async def toggle(self, interaction: Interaction, event: Choice[str]):
+        await interaction.response.defer(ephemeral = True)
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM events WHERE guild = $1)", interaction.guild_id):
             await self.on_guild_join(interaction.guild)
         toggle = await self.bot.execute(f"UPDATE events SET {event.value} = NOT {event.value} WHERE guild = $1 RETURNING {event.value}", interaction.guild_id)
-        await interaction.response.send_message(f"{event.value} set to: {toggle}", ephemeral = True)
+        await interaction.followup.send(f"{event.value} set to: {toggle}", ephemeral = True)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
