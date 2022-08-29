@@ -2,21 +2,21 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from discord.app_commands import Choice, Transform, Transformer
-from modules.EmbedGen import SimpleEmbedList
+from modules import EmbedGen, Converters
+
 
 class RoleTransformer(Transformer):
 
-    @classmethod
-    async def transform(cls, interaction: Interaction, value: str) -> discord.Role:
-        return interaction.guild.get_role(await interaction.client.to_int(value))
+    async def transform(self, interaction: Interaction, value: str) -> discord.Role:
+        return interaction.guild.get_role(Converters.to_int(value))
 
-    @classmethod
-    async def autocomplete(cls, interaction: Interaction, current) -> list[Choice[str]]:
+    async def autocomplete(self, interaction: Interaction, current) -> list[Choice[str]]:
         roleids = await interaction.client.fetch("SELECT role FROM selfroles WHERE guild = $1", interaction.guild_id)
         roles = {role["role"]: interaction.guild.get_role(role["role"]).name for role in roleids}
         if not current:
             return [Choice(name = item[1], value = str(item[0])) for item in roles.items()]
         return [Choice(name = item[1], value = str(item[0])) for item in roles.items() if current in item[1]]
+
 
 class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Toggle a self assignable role"):
     def __init__(self, bot: commands.Bot):
@@ -45,10 +45,11 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
             return await interaction.response.send_message("no roles", ephemeral = True)
         for index, value in enumerate(roles):
             roles[index] = interaction.guild.get_role(value["role"])
-        embed_list = SimpleEmbedList(
+        embed_list = EmbedGen.SimpleEmbedList(
             title = "giveme roles",
             descriptions = "\n\n".join(f"`{i + 1}: {role.name}`" for i, role in enumerate(roles)))
         await interaction.response.send_message(embeds = embed_list, ephemeral = True)
+
 
 async def setup(bot):
     await bot.add_cog(SelfAssignableRoles(bot))
