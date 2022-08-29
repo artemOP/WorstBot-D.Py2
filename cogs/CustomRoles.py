@@ -38,7 +38,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
         position = member.top_role.position if member.top_role.position > 0 else 1
         await role.edit(position = position)
         await member.add_roles(role)
-        await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role", member.guild.id, member.id, role.id, colour)
+        await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role, colour = EXCLUDED.colour", member.guild.id, member.id, role.id, colour)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -65,12 +65,13 @@ class CustomRoles(commands.GroupCog, name = "role"):
 
     @app_commands.command(name = "colour", description = "edits the colour of your custom role")
     async def EditRole(self, interaction: Interaction, colour: app_commands.Transform[int, hexTransformer]):
+        await interaction.response.defer(ephemeral = True)
         role = await self.FetchRole(guild = interaction.guild, member = interaction.user)
         if not role:
             await self.CreateRole(interaction.user, colour)
         else:
             await role.edit(colour = colour)
-        await interaction.response.send_message(content = f'your role colour has now been set to {hex(colour)}', ephemeral = True)
+        await interaction.followup.send(content = f'your role colour has now been set to {hex(colour)}', ephemeral = True)
 
     @app_commands.command(name = "check")
     async def colourCheckCommand(self, interaction: Interaction, arg: Optional[discord.User] = None):
