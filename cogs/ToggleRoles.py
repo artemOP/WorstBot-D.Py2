@@ -24,7 +24,7 @@ class ToggleRoles(commands.Cog):
     @app_commands.command(name = "toggle-role", description = "Toggles a user between two roles")
     async def ToggleRole(self, interaction: Interaction, member: discord.Member, toggle: int):
         await interaction.response.defer(ephemeral = True)
-        toggle = await self.bot.fetchrow("SELECT role1, role2 FROM toggleroles WHERE id = $1", int(toggle))
+        toggle = await self.bot.fetchrow("SELECT role1, role2 FROM toggleroles WHERE id = $1", toggle)
         role1, role2 = interaction.guild.get_role(toggle["role1"]), interaction.guild.get_role(toggle["role2"])
         if role1 in member.roles:
             await RoleManipulation.role_remove(member, role1, "Roles toggled")
