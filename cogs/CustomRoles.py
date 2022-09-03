@@ -3,7 +3,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from typing import Optional
-from modules.EmbedGen import SimpleEmbed
+from modules import EmbedGen, RoleManipulation
 
 class hexTransformer(app_commands.Transformer, ABC):
     @classmethod
@@ -37,7 +37,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
         role = await member.guild.create_role(name = str(member), colour = discord.Colour(colour), hoist = False)
         position = member.top_role.position if member.top_role.position > 0 else 1
         await role.edit(position = position)
-        await member.add_roles(role)
+        await RoleManipulation.role_add(member, role, "WorstBot Custom Coloured Roles")
         await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role, colour = EXCLUDED.colour", member.guild.id, member.id, role.id, colour)
 
     @commands.Cog.listener()
@@ -85,7 +85,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
             await interaction.followup.send("This user does not have a custom role or it may be broken")
         else:
             await interaction.followup.send(
-                embed = SimpleEmbed(
+                embed = EmbedGen.SimpleEmbed(
                     colour = role.colour,
                     text = f"{member.name} Uses the role colour {role.colour}"),
                 ephemeral = True)

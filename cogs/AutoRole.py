@@ -1,9 +1,7 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
-
-from modules.EmbedGen import EmbedField, EmbedFieldList
-from modules.Paginators import ButtonPaginatedEmbeds
+from modules import EmbedGen, Paginators, RoleManipulation
 
 @app_commands.default_permissions(manage_roles = True)
 class AutoRole(commands.GroupCog, name = "autorole"):
@@ -30,12 +28,12 @@ class AutoRole(commands.GroupCog, name = "autorole"):
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", interaction.guild.id)
         for role in roles:
             roles[roles.index(role)] = interaction.guild.get_role(role["role"])
-        embed_list = EmbedFieldList(
+        embed_list = EmbedGen.EmbedFieldList(
             title = "Automatically applied roles",
-            fields = [EmbedField(name = "Role", value = role.mention) for role in roles],
+            fields = [EmbedGen.EmbedField(name = "Role", value = role.mention) for role in roles],
             max_fields = 9
         )
-        view = ButtonPaginatedEmbeds(timeout = 60, embed_list = embed_list)
+        view = Paginators.ButtonPaginatedEmbeds(timeout = 60, embed_list = embed_list)
         await interaction.response.send_message(view = view, embed = view.embedlist[0], ephemeral = True)
         view.response = await interaction.original_response()
 
@@ -45,11 +43,8 @@ class AutoRole(commands.GroupCog, name = "autorole"):
             return
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", member.guild.id)
         for role in roles:
-            role = member.guild.get_role(role["role"])
-            try:
-                await member.add_roles(role)
-            except Exception:
-                pass
+            role = await RoleManipulation.role_generate(role["role"], member.guild)
+            await RoleManipulation.role_add(member, role, "WorstBot AutoRole")
 
 
 async def setup(bot):

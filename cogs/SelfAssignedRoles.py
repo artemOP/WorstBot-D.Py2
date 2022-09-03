@@ -2,7 +2,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from discord.app_commands import Choice, Transform, Transformer
-from modules import EmbedGen, Converters
+from modules import EmbedGen, Converters, RoleManipulation
 
 
 class RoleTransformer(Transformer):
@@ -32,10 +32,10 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
         if not role:
             return
         if role in interaction.user.roles:
-            await interaction.user.remove_roles(role)
+            await RoleManipulation.role_remove(interaction.user, role, "WorstBot Giveme Role")
             await interaction.response.send_message(f"You have removed the {role.name} role", ephemeral = True)
         else:
-            await interaction.user.add_roles(role)
+            await RoleManipulation.role_add(interaction.user, role, "WorstBot Giveme Role")
             await interaction.response.send_message(f"You have added the {role.name} role", ephemeral = True)
 
     @app_commands.command(name = "list")
