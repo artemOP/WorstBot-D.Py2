@@ -49,6 +49,10 @@ class AutoRole(commands.GroupCog, name = "autorole"):
             role = await RoleManipulation.role_generate(role["role"], member.guild)
             await RoleManipulation.role_add(member, role, "WorstBot AutoRole")
 
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self, role: discord.Role):
+        await self.bot.execute("DELETE FROM autorole WHERE role = $1", role.id)
+
 
 async def setup(bot):
     await bot.add_cog(AutoRole(bot))
