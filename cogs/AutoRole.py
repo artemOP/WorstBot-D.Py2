@@ -26,11 +26,14 @@ class AutoRole(commands.GroupCog, name = "autorole"):
     @app_commands.command(name = "list")
     async def AutoRoleList(self, interaction: Interaction):
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", interaction.guild.id)
-        for role in roles:
-            roles[roles.index(role)] = interaction.guild.get_role(role["role"])
         embed_list = EmbedGen.EmbedFieldList(
             title = "Automatically applied roles",
-            fields = [EmbedGen.EmbedField(name = "Role", value = role.mention) for role in roles],
+            fields = [
+                EmbedGen.EmbedField(
+                    name = "Role",
+                    value = "Broken Role" if not (role := await RoleManipulation.role_generate(role_id["role"], interaction.guild)) else role.mention)
+                for role_id in roles
+            ],
             max_fields = 9
         )
         view = Paginators.ButtonPaginatedEmbeds(timeout = 60, embed_list = embed_list)
