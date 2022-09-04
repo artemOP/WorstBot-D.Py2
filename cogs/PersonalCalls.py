@@ -3,7 +3,7 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 from datetime import datetime
 from os import remove
-from modules.EmbedGen import FullEmbed, EmbedField
+from modules import EmbedGen
 
 @app_commands.default_permissions(manage_channels = True, ban_members=True)
 class PersonalCalls(commands.GroupCog, name = "personal-call"):
@@ -70,9 +70,9 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
     @app_commands.command(name="protection-list", description = "Lists out channels blocked from deletion")
     async def CallBlacklistList(self, interaction: Interaction):
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
-        embed = FullEmbed(
+        embed = EmbedGen.FullEmbed(
             title = "Protected channels",
-            fields = [EmbedField(name = self.bot.get_channel(channel["channel"]), value = "\u200b") for channel in channels]
+            fields = [EmbedGen.EmbedField(name = self.bot.get_channel(channel["channel"]), value = "\u200b") for channel in channels]
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
