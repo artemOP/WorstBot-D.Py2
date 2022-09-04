@@ -4,7 +4,7 @@ from datetime import datetime as dt, timezone, timedelta
 from asyncpg import Record
 
 
-class Events(commands.GroupCog, name = "events"):
+class Events(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
