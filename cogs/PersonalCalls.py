@@ -72,7 +72,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
         embed = EmbedGen.FullEmbed(
             title = "Protected channels",
-            fields = [EmbedGen.EmbedField(name = self.bot.get_channel(channel["channel"]), value = "\u200b") for channel in channels]
+            fields = [EmbedGen.EmbedField(name = interaction.guild.get_channel(channel["channel"]).name, value = "\u200b") for channel in channels]
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
