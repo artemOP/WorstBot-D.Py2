@@ -15,6 +15,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.streamersTable = None
 
     async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT NOT NULL, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
         await self.TokenGen()
         await self.streamers()
         self.request.start()
@@ -24,7 +25,6 @@ class Twitch(commands.GroupCog, name = "twitch"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT NOT NULL, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
         print("Twitch cog online")
 
     async def streamers(self):

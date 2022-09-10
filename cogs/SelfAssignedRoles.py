@@ -22,9 +22,14 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS selfroles(guild BIGINT NOT NULL, role BIGINT PRIMARY KEY)")
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS selfroles(guild BIGINT NOT NULL, role BIGINT PRIMARY KEY)")
         print("SelfAssignableRoles Cog online")
 
     @app_commands.command(name = "role")

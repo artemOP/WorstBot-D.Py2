@@ -12,6 +12,12 @@ class TTS(commands.GroupCog, name = "tts"):
         self.bot = bot
         self.exe = environ.get("ffmpeg")
 
+    async def cog_load(self) -> None:
+        ...
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("TTS cog online")

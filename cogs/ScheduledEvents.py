@@ -9,15 +9,15 @@ class Events(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    def cog_load(self) -> None:
+    async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS scheduled_events(event BIGINT PRIMARY KEY, guild BIGINT, expiretime timestamptz)")
         self.Channel_Create.start()
 
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         self.Channel_Create.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS scheduled_events(event BIGINT PRIMARY KEY, guild BIGINT, expiretime timestamptz)")
         print("Events cog online")
 
     @commands.Cog.listener()

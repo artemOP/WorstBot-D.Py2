@@ -8,6 +8,12 @@ class Template(commands.GroupCog, name = "template"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        ...
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("Template cog online")

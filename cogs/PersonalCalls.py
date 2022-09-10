@@ -12,11 +12,16 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         super().__init__()
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS personalcall(guild BIGINT UNIQUE, channel BIGINT UNIQUE)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS callblacklist(guild BIGINT NOT NULL, channel BIGINT UNIQUE)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS userblacklist(guild BIGINT NOT NULL, member BIGINT NOT NULL)")
+
+    async def cog_unload(self) -> None:
+        ...
+
+    @commands.Cog.listener()
+    async def on_ready(self):
         print("Personal call cog online")
 
     @commands.Cog.listener()

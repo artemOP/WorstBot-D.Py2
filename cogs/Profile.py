@@ -80,9 +80,14 @@ class Profile(commands.GroupCog, name = "profile"):
         )
         self.bot.tree.add_command(self.ContextMenu)
 
+    async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS profile(member BIGINT NOT NULL, name VARCHAR(256), value VARCHAR(1024), index SMALLINT, UNIQUE(member, index))")
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS profile(member BIGINT NOT NULL, name VARCHAR(256), value VARCHAR(1024), index SMALLINT, UNIQUE(member, index))")
         print("profile cog online")
 
     async def FetchProfile(self, user: int) -> discord.Embed:

@@ -87,11 +87,16 @@ class Votes(commands.GroupCog, name = "poll"):
         super().__init__()
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS votes(voteid SERIAL PRIMARY KEY, guild BIGINT, question TEXT NOT NULL, author BIGINT UNIQUE)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS answers(voteid INT REFERENCES votes(voteid) ON UPDATE CASCADE ON DELETE CASCADE, answerid SERIAL PRIMARY KEY, answer TEXT NOT NULL, UNIQUE(voteid, answer))")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS voters(voteid INT REFERENCES votes(voteid) ON UPDATE CASCADE ON DELETE CASCADE, answerid INT REFERENCES answers(answerid) ON UPDATE CASCADE ON DELETE CASCADE, member BIGINT NOT NULL, UNIQUE(voteid, member))")
+
+    async def cog_unload(self) -> None:
+        ...
+
+    @commands.Cog.listener()
+    async def on_ready(self):
         print("Votes cog online")
 
     @app_commands.command(name = "start", description = "Start a serverwide poll (max of 20 answers)")

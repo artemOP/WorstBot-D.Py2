@@ -28,10 +28,15 @@ class Stats(commands.GroupCog, name = "stats"):
         self.blank = 0
         self.total = 0
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS globalusage(command TEXT PRIMARY KEY, usages INT DEFAULT 1, lastusage timestamptz)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS serverusage(guild BIGINT, command TEXT, lastusage timestamptz)")
+
+    async def cog_unload(self) -> None:
+        ...
+
+    @commands.Cog.listener()
+    async def on_ready(self):
         print("Stats cog online")
 
     @app_commands.command(name = "line-count", description = "display the line count stats for worstbot")

@@ -10,6 +10,12 @@ class Admin(commands.GroupCog, name = "admin"):
         super().__init__()
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        ...
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("Admin cog online")

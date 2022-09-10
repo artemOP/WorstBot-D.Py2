@@ -10,8 +10,7 @@ class BaseEvents(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def cog_load(self) -> None:
         await self.bot.execute(
             """
             CREATE TABLE IF NOT EXISTS 
@@ -29,6 +28,13 @@ class BaseEvents(commands.Cog):
             )
             """
         )
+
+    async def cog_unload(self) -> None:
+        ...
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+
         print("BaseEvents cog online")
 
     @staticmethod

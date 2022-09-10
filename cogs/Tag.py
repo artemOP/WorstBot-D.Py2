@@ -78,8 +78,7 @@ class Tag(commands.GroupCog, name = "tag"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def cog_load(self) -> None:
         await self.bot.execute(
             """
             CREATE TABLE IF NOT EXISTS tags(
@@ -95,6 +94,12 @@ class Tag(commands.GroupCog, name = "tag"):
             )
             """
         )
+
+    async def cog_unload(self) -> None:
+        ...
+
+    @commands.Cog.listener()
+    async def on_ready(self):
         print("Tag cog online")
 
     async def OwnerCheck(self, tagid: int, user: int) -> bool:

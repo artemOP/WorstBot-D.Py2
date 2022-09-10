@@ -7,6 +7,12 @@ class Sync(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        ...
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("Sync cog online")

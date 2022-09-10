@@ -63,9 +63,14 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
         super().__init__()
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS ricepurity(id BIGINT PRIMARY KEY, score INT)")
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS ricepurity(id BIGINT PRIMARY KEY, score INT)")
         print("RicePurity cog online")
 
     @app_commands.command(name = "test")

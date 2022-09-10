@@ -8,9 +8,14 @@ class StickyMessage(commands.GroupCog, name = "sticky"):
         super().__init__()
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS sticky(channel BIGINT UNIQUE NOT NULL,messageid BIGINT, message TEXT NOT NULL )")
+
+    async def cog_unload(self) -> None:
+        ...
+
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS sticky(channel BIGINT UNIQUE NOT NULL,messageid BIGINT, message TEXT NOT NULL )")
         print("StickyMessage cog online")
 
     @app_commands.command(name = "add", description = "Pin a message to the bottom of a channel")

@@ -20,9 +20,11 @@ class HotReload(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    async def cog_load(self) -> None:
         self.hot_reload_loop.start()
 
-    def cog_unload(self):
+    async def cog_unload(self) -> None:
         self.hot_reload_loop.stop()
 
     @tasks.loop(seconds = 3)

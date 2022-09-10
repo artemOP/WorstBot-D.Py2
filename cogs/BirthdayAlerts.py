@@ -14,16 +14,16 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
 
-    def cog_load(self) -> None:
+    async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdaychannel(guild BIGINT PRIMARY KEY, channel BIGINT NOT NULL)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdays(guild BIGINT, member BIGINT, birthday DATE, PRIMARY KEY(guild, member))")
         self.BirthdayCheck.start()
 
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         self.BirthdayCheck.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdaychannel(guild BIGINT PRIMARY KEY, channel BIGINT NOT NULL)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdays(guild BIGINT, member BIGINT, birthday DATE, PRIMARY KEY(guild, member))")
         print("BirthdayAlert cog online")
 
     @app_commands.command(name = "alert", description = "Add or remove your Birthday")

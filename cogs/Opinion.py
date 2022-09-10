@@ -8,16 +8,16 @@ class Opinion(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    def cog_load(self) -> None:
+    async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS Opinion(guild BIGINT NOT NULL, timestamp TIMESTAMP WITH TIME ZONE NOT NULL, content TEXT DEFAULT NULL)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS PrefixBlacklist(guild BIGINT NOT NULL, prefix TEXT NOT NULL)")
         self.DeleteOld.start()
 
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         self.DeleteOld.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS Opinion(guild BIGINT NOT NULL, timestamp TIMESTAMP WITH TIME ZONE NOT NULL, content TEXT DEFAULT NULL)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS PrefixBlacklist(guild BIGINT NOT NULL, prefix TEXT NOT NULL)")
         print("Opinion cog online")
 
     @commands.Cog.listener()
