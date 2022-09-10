@@ -19,6 +19,7 @@ class HotReload(commands.Cog):
     """
 
     def __init__(self, bot):
+        self.last_modified_time = {}
         self.bot = bot
 
     async def cog_load(self) -> None:
@@ -54,6 +55,7 @@ class HotReload(commands.Cog):
 
     @hot_reload_loop.before_loop
     async def cache_last_modified_time(self):
+        await self.bot.wait_until_ready()
         self.last_modified_time = {}
         # Mapping = {extension: timestamp}
         for extension in self.bot.extensions.keys():
