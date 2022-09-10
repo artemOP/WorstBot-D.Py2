@@ -9,6 +9,14 @@ matplotlib.use('Agg')  # must set before other imports to ensure correct backend
 
 
 def pie(data: dict[str, int], *args, **kwargs) -> BytesIO:
+    """
+    plot data to pie chart
+
+    :param data: {labels: Size of slice}
+    :param args: TODO: allow args use in chart
+    :param kwargs: additional matplot configuration
+    :return: Pie chart BytesIO
+    """
     fig, ax = plt.subplots()
     ax.pie(
         x = list(data.values()),
