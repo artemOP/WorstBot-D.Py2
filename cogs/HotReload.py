@@ -43,10 +43,10 @@ class HotReload(commands.Cog):
 
             try:
                 await self.bot.reload_extension(extension)
-            except commands.ExtensionError:
-                print(f"Couldn't reload extension: {extension}")
             except commands.ExtensionNotLoaded:
                 continue
+            except commands.ExtensionError:
+                print(f"Couldn't reload extension: {extension}")
             else:
                 print(f"Reloaded extension: {extension}")
             finally:
