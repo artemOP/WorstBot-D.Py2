@@ -42,14 +42,14 @@ class StartPollModal(ui.Modal, title = "Poll"):
         else:
             self.voteid = await self.bot.fetchval("INSERT INTO votes(guild, question, author) VALUES($1, $2, $3) ON CONFLICT DO NOTHING RETURNING voteid", interaction.guild_id, self.question.value, interaction.user.id)
             if not self.voteid:
-                return await interaction.followup.send("This user already has a poll")
+                return await interaction.followup.send("This user already has a poll", ephemeral = True)
         for answer in answers:
             await self.bot.execute("INSERT INTO answers(voteid, answer) VALUES($1, $2) ON CONFLICT(voteid, answer) DO NOTHING", self.voteid, answer)
         rows = await self.bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1", self.voteid)
         for row in rows:
             if row["answer"] not in answers:
                 await self.bot.execute("DELETE FROM answers WHERE answerid=$1", row["answerid"])
-        await interaction.response.send_message(f'"{self.question.value}"\nVote started', ephemeral = True)
+        await interaction.followup.send(f'"{self.question.value}"\nVote started', ephemeral = True)
 
     async def on_error(self, interaction: Interaction, error: Exception) -> None:
         raise
