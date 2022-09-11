@@ -35,20 +35,21 @@ class StartPollModal(ui.Modal, title = "Poll"):
         self.add_item(self.answers)
 
     async def on_submit(self, interaction: Interaction) -> None:
-        await interaction.response.send_message(f'"{self.question.value}"\nVote started', ephemeral = True)
+        await interaction.response.defer(ephemeral = True)
         answers = str(self.answers).split("\n")[:25]
         if self.voteid:
             await self.bot.execute("UPDATE votes SET question=$1 WHERE voteid=$2", self.question.value, self.voteid)
         else:
-            self.voteid = await self.bot.fetchval("INSERT INTO votes(guild, question, author) VALUES($1, $2, $3) RETURNING voteid", interaction.guild_id, self.question.value, interaction.user.id)
-
+            self.voteid = await self.bot.fetchval("INSERT INTO votes(guild, question, author) VALUES($1, $2, $3) ON CONFLICT DO NOTHING RETURNING voteid", interaction.guild_id, self.question.value, interaction.user.id)
+            if not self.voteid:
+                return await interaction.followup.send("This user already has a poll")
         for answer in answers:
             await self.bot.execute("INSERT INTO answers(voteid, answer) VALUES($1, $2) ON CONFLICT(voteid, answer) DO NOTHING", self.voteid, answer)
-
         rows = await self.bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1", self.voteid)
         for row in rows:
             if row["answer"] not in answers:
                 await self.bot.execute("DELETE FROM answers WHERE answerid=$1", row["answerid"])
+        await interaction.response.send_message(f'"{self.question.value}"\nVote started', ephemeral = True)
 
     async def on_error(self, interaction: Interaction, error: Exception) -> None:
         raise
