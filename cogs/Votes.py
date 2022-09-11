@@ -108,14 +108,12 @@ class Votes(commands.GroupCog, name = "poll"):
         await interaction.response.send_modal(StartPollModal(bot = self.bot))
 
     @app_commands.command(name = "response", description = "respond to a poll")
-    async def VoteResponse(self, interaction: Interaction, poll: str, answer: str):
-        poll, answer = Converters.to_int(poll), Converters.to_int(answer)
+    async def VoteResponse(self, interaction: Interaction, poll: int, answer: int):
         await self.bot.execute("INSERT INTO voters(voteid, answerid, member) VALUES($1, $2, $3) ON CONFLICT (voteid, member) DO UPDATE SET answerid=$2", poll, answer, interaction.user.id)
         await interaction.response.send_message("vote recorded", ephemeral = True)
 
     @app_commands.command(name = "edit", description = "Edit a currently active poll")
-    async def VoteEdit(self, interaction: Interaction, poll: str):
-        poll = Converters.to_int(poll)
+    async def VoteEdit(self, interaction: Interaction, poll: int):
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM votes WHERE author=$1 AND voteid=$2)", interaction.user.id, poll):
             await interaction.response.send_message("This poll does not belong to you", ephemeral=True)
             return
@@ -132,13 +130,11 @@ class Votes(commands.GroupCog, name = "poll"):
         return view
 
     @app_commands.command(name = "results", description = "Show the current results of a poll")
-    async def VoteResults(self, interaction: Interaction, poll: str):
-        poll = Converters.to_int(poll)
+    async def VoteResults(self, interaction: Interaction, poll: int):
         await self.Results(interaction, poll)
 
     @app_commands.command(name = "end", description = "End a poll")
-    async def VoteEnd(self, interaction: Interaction, poll: str):
-        poll = Converters.to_int(poll)
+    async def VoteEnd(self, interaction: Interaction, poll: int):
         if interaction.user.guild_permissions.administrator is False:
             if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM votes WHERE author=$1 AND voteid=$2)", interaction.user.id, poll):
                 await interaction.response.send_message("This poll does not belong to you", ephemeral=True)
@@ -154,14 +150,13 @@ class Votes(commands.GroupCog, name = "poll"):
     async def ResponsePollAutocomplete(self, interaction: Interaction, current):
         current = self.bot.current(current)
         responses = await self.bot.fetch("SELECT voteid, question FROM votes WHERE guild=$1 AND question LIKE $2", interaction.guild_id, current)
-        return [app_commands.Choice(name = question, value = str(voteid)) for voteid, question in responses]
+        return [app_commands.Choice(name = question, value = voteid) for voteid, question in responses]
 
     @VoteResponse.autocomplete("answer")
     async def ResponseAnswerAutocomplete(self, interaction: Interaction, current):
-        poll = Converters.to_int(interaction.namespace.poll)
         current = self.bot.current(current)
-        responses = await self.bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1 AND answer LIKE $2", poll, current)
-        return [app_commands.Choice(name = answer, value = str(answerid)) for answerid, answer in responses]
+        responses = await self.bot.fetch("SELECT answerid, answer FROM answers WHERE voteid=$1 AND answer LIKE $2", interaction.namespace.poll, current)
+        return [app_commands.Choice(name = answer, value = answerid) for answerid, answer in responses]
 
 
 async def setup(bot):
