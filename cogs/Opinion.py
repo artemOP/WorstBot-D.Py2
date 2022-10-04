@@ -38,8 +38,8 @@ class Opinion(commands.Cog):
 
     @app_commands.command(name="opinion", description="Ask worst bot for its opinion on your super important questions")
     async def opinion(self, interaction: discord.Interaction, opinion: str = None):
-        row = await self.bot.fetchrow("SELECT content FROM Opinion WHERE GUILD=$1 ORDER BY random() LIMIT 1", interaction.guild.id)
-        await interaction.response.send_message(content=f"""{row["content"]}""")
+        content = await self.bot.fetchval("SELECT content FROM Opinion WHERE GUILD=$1 ORDER BY random() LIMIT 1", interaction.guild.id)
+        await interaction.response.send_message(content=f"what is my opinion on `{opinion}`?\n\n{content or 'I have no opinions'}")
 
     @app_commands.command(name = "prefix-blacklist", description = "blacklist prefixes used by other bots in opinion forming")
     @app_commands.default_permissions()
