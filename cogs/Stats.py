@@ -1,10 +1,12 @@
+from abc import ABC
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
+from discord.app_commands import Transform, Transformer
 from os import listdir
 from dataclasses import dataclass, field, MISSING
 from modules import EmbedGen, Converters, Graphs
-from datetime import date
+from datetime import date, datetime
 
 
 @dataclass
@@ -19,6 +21,12 @@ class Cog:
         self.total = len(self.lines)
 
 
+class DateTransformer(Transformer, ABC):
+
+    @classmethod
+    async def transform(cls, interaction: Interaction, value: str) -> datetime:
+        return Converters.to_datetime(value, "%Y/%m/%d")
+
 class Stats(commands.GroupCog, name = "stats"):
 
     def __init__(self, bot: commands.Bot):
@@ -29,8 +37,7 @@ class Stats(commands.GroupCog, name = "stats"):
         self.total = 0
 
     async def cog_load(self) -> None:
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS globalusage(command TEXT PRIMARY KEY, usages INT DEFAULT 1, lastusage timestamptz)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS serverusage(guild BIGINT, command TEXT, lastusage timestamptz)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS usage(command TEXT, guild BIGINT, execution_time timestamptz)")
 
     async def cog_unload(self) -> None:
         ...
@@ -119,11 +126,10 @@ class Stats(commands.GroupCog, name = "stats"):
 
     @app_commands.command(name = "server-usage", description = "WorstBot usage on this server")
     @app_commands.describe(before = "YYYY/MM/DD", after = "YYYY/MM/DD")
-    async def GuildUsage(self, interaction: Interaction, before: str = None, after: str = None):
+    async def GuildUsage(self, interaction: Interaction, before: Transform[str, DateTransformer] = Converters.to_datetime("2100/01/01", "%Y/%m/%d"), after: Transform[str, DateTransformer] = Converters.to_datetime("1970/01/01", "%Y/%m/%d")):
         await interaction.response.defer(ephemeral = True)
-        before = Converters.to_datetime("2100/01/01" if not before else before, "%Y/%m/%d")
-        after = Converters.to_datetime("1970/01/01" if not after else after, "%Y/%m/%d")
-        usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM serverusage WHERE guild = $1 AND lastusage BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
+
+        usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM usage WHERE guild = $1 AND execution_time BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
         chartIO = await Graphs.graph("pie", {row["command"]: row["count"] for row in usage})
         embeds = EmbedGen.SimpleEmbedList(title = "Guild command usage",
                                           descriptions = "\n".join(
@@ -134,23 +140,20 @@ class Stats(commands.GroupCog, name = "stats"):
     @app_commands.command(name = "global-usage", description = "Global WorstBot usage")
     async def GloablUsage(self, interaction: Interaction):
         await interaction.response.defer(ephemeral = True)
-        usage = await self.bot.fetch("SELECT command, usages, lastusage FROM globalusage ORDER BY usages DESC")
-        chartIO = await Graphs.graph("pie", {row["command"]: row["usages"] for row in usage})
+        usage = await self.bot.fetch("SELECT command, COUNT(*) as count, max(execution_time) as last_usage FROM usage GROUP BY command ORDER BY count DESC")
+        chartIO = await Graphs.graph("pie", {row["command"]: row["count"] for row in usage})
         embeds = EmbedGen.SimpleEmbedList(title = "Global command usage",
                                           descriptions = "\n".join(
-                                              f"{row['command']}: {row['usages']} (Last used: {row['lastusage'].strftime('%Y/%m/%d')})"
+                                              f"{row['command']}: {row['count']} (Last used: {row['last_usage'].strftime('%Y/%m/%d')})"
                                               for row in usage),
                                           image = "attachment://image.png")
         await interaction.followup.send(embeds = embeds, file = discord.File(fp = chartIO, filename = "image.png"))
 
-    @commands.Cog.listener(name = "on_interaction")
-    async def CommandUsage(self, interaction: Interaction) -> None:
-        if not interaction.command:
-            return
+    @commands.Cog.listener(name = "on_app_command_completion")
+    async def CommandUsage(self, interaction: Interaction, command: app_commands.Command | app_commands.ContextMenu) -> None:
         if await self.bot.fetchval("SELECT usage FROM events WHERE guild = $1", interaction.guild_id) is False:
             return
-        await self.bot.execute("INSERT INTO globalusage(command, lastusage) VALUES($1, $2) ON CONFLICT(command) DO UPDATE SET usages = globalusage.usages + 1, lastusage = excluded.lastusage", interaction.command.qualified_name, interaction.created_at)
-        await self.bot.execute("INSERT INTO serverusage(guild, command, lastusage) VALUES($1, $2, $3)", interaction.guild_id, interaction.command.qualified_name, interaction.created_at)
+        await self.bot.execute("INSERT INTO usage(command, guild, execution_time) VALUES($1, $2, $3)", command.qualified_name, interaction.guild_id, interaction.created_at)
 
 
 async def setup(bot):
