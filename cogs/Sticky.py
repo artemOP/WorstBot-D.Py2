@@ -21,12 +21,12 @@ class StickyMessage(commands.GroupCog, name = "sticky"):
     @app_commands.command(name = "add", description = "Pin a message to the bottom of a channel")
     async def StickyAdd(self, interaction: discord.Interaction, message: str):
         await self.bot.execute("INSERT INTO sticky(channel, messageid, message) VALUES($1, $2, $3) ON CONFLICT (channel) DO UPDATE SET messageid=NULL , message=excluded.message", interaction.channel_id, None, message)
-        await interaction.response.send_message(f'"{message}" \n\nhas been added as a sticky.')
+        await interaction.response.send_message(f'"{message}" \n\nhas been added as a sticky.', ephemeral = True)
 
     @app_commands.command(name = "remove", description = "Remove pinned message")
     async def StickyRemove(self, interaction: discord.Interaction):
         await self.bot.execute("DELETE FROM sticky WHERE channel=$1", interaction.channel_id)
-        await interaction.response.send_message('Sticky has been removed from this channel.')
+        await interaction.response.send_message('Sticky has been removed from this channel.', ephemeral = True)
 
     @commands.Cog.listener()
     async def on_message(self, message):
