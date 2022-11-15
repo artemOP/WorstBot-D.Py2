@@ -42,7 +42,7 @@ class BaseCommands(commands.Cog):
     @app_commands.describe(dice="number of dice to roll", sides="number of faces on each die", ephemeral="Set to false to be visible by all")
     async def roll_the_dice(self, interaction: Interaction, dice: int = 1, sides: int = 6, ephemeral: bool = True):
         rolls = [str(random.randint(1, sides)) for _ in range(dice)]
-        await interaction.response.send_message(f"You rolled: {', '.join(rolls)}", ephemeral=ephemeral)
+        await interaction.response.send_message(f"You rolled {dice} d{sides}\n\n You rolled: {', '.join(rolls)}", ephemeral=ephemeral)
 
 
 async def setup(bot):
