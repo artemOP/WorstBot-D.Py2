@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 import random
 
 class BaseCommands(commands.Cog):
@@ -29,7 +29,7 @@ class BaseCommands(commands.Cog):
         await interaction.channel.send(content = arg)
 
     def is_me(self, message: discord.Message) -> bool:
-        return not message.author == self.bot.user or message.created_at < datetime.now(timezone.utc) - timedelta(seconds = 10)
+        return not message.author == self.bot.user or message.created_at < discord.utils.utcnow() - timedelta(seconds = 10)
 
     @app_commands.command(name = "purge")
     @app_commands.default_permissions(manage_messages = True)
