@@ -39,10 +39,12 @@ class BaseCommands(commands.Cog):
         await interaction.followup.send(content = f"deleted {len(deleted)} messages")
 
     @app_commands.command(name = "rtd", description = "role some dice")
-    @app_commands.describe(dice="number of dice to roll", sides="number of faces on each die", ephemeral="Set to false to be visible by all")
-    async def roll_the_dice(self, interaction: Interaction, dice: int = 1, sides: int = 6, ephemeral: bool = True):
-        rolls = [str(random.randint(1, sides)) for _ in range(dice)]
-        await interaction.response.send_message(f"You rolled {dice} d{sides}\n\n You rolled: {', '.join(rolls)}", ephemeral=ephemeral)
+    @app_commands.describe(dice="number of dice to roll", sides="Number of faces on die, set either this or min+max+step", minimum="lowest number on die", maximum="highest number on die", step="increase on each face", ephemeral="Set to false to be visible by all")
+    async def roll_the_dice(self, interaction: Interaction, dice: int = 1, sides: int = 6, minimum: int = None, maximum: int = None, step: int = 1, ephemeral: bool = True):
+        if not (minimum or maximum):
+            minimum, maximum = 1, sides
+        rolls = [str(random.randrange(minimum, maximum+1, step)) for _ in range(dice)]
+        await interaction.response.send_message(f"You rolled {dice} d{int(maximum/step)}\n\n You rolled: {', '.join(rolls)}", ephemeral=ephemeral)
 
 
 async def setup(bot):
