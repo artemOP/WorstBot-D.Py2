@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
-
+import random
 
 class BaseCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -58,6 +58,12 @@ class BaseCommands(commands.Cog):
             await interaction.response.send_message(f"Unban succeeded")
         except discord.NotFound:
             await interaction.response.send_message(f"User not found", ephemeral = True)
+
+    @app_commands.command(name = "rtd", description = "role some dice")
+    @app_commands.describe(dice="number of dice to roll", sides="number of faces on each die", ephemeral="Set to false to be visible by all")
+    async def roll_the_dice(self, interaction: discord.Interaction, dice: int = 1, sides: int = 6, ephemeral: bool = True):
+        rolls = [str(random.randint(1, sides)) for _ in range(dice)]
+        await interaction.response.send_message(f"You rolled: {', '.join(rolls)}", ephemeral=ephemeral)
 
     ############################
     # error clearing
