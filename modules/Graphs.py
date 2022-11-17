@@ -29,10 +29,9 @@ def pie(data: dict[str, int], *args, **kwargs) -> BytesIO:
     b.seek(0)
     return b
 
-async def graph(graph_type: Literal["pie"], data: dict[str, int], *args, **kwargs) -> BytesIO | None:
+async def graph(graph_type: Literal["pie"], loop: asyncio.AbstractEventLoop, data: dict[str, int], *args, **kwargs) -> BytesIO | None:
     if not (graph_type or data):
         return
-    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, partial(GRAPH_TYPES[graph_type], data, *args, **kwargs))
 
 GRAPH_TYPES = {

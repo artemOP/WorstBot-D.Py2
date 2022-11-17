@@ -130,7 +130,7 @@ class Stats(commands.GroupCog, name = "stats"):
         await interaction.response.defer(ephemeral = True)
 
         usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM usage WHERE guild = $1 AND execution_time BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
-        chartIO = await Graphs.graph("pie", {row["command"]: row["count"] for row in usage})
+        chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage})
         embeds = EmbedGen.SimpleEmbedList(title = "Guild command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']}" for row in usage),
@@ -141,7 +141,7 @@ class Stats(commands.GroupCog, name = "stats"):
     async def GloablUsage(self, interaction: Interaction):
         await interaction.response.defer(ephemeral = True)
         usage = await self.bot.fetch("SELECT command, COUNT(*) as count, max(execution_time) as last_usage FROM usage GROUP BY command ORDER BY count DESC")
-        chartIO = await Graphs.graph("pie", {row["command"]: row["count"] for row in usage})
+        chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage})
         embeds = EmbedGen.SimpleEmbedList(title = "Global command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']} (Last used: {row['last_usage'].strftime('%Y/%m/%d')})"
