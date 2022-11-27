@@ -15,27 +15,36 @@ class EmbedField(BaseModel):
 
 def set_colour(colour: Colour | None):
     return Colour.random() if not colour else colour
+
 def set_author(embed: discord.Embed, author: dict[str, str]) -> discord.Embed:
     if isinstance(author, dict):
         embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
+    else:
+        raise NotImplementedError
     return embed
 
 
 def set_footer(embed: discord.Embed, footer: dict[str, str]) -> discord.Embed:
     if isinstance(footer, dict):
         embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
+    else:
+        raise NotImplementedError
     return embed
 
 
 def set_image(embed: discord.Embed, image: str) -> discord.Embed:
     if isinstance(image, str):
         embed.set_image(url = image)
+    else:
+        raise NotImplementedError
     return embed
 
 
 def set_thumbnail(embed: discord.Embed, image: str) -> discord.Embed:
     if isinstance(image, str):
         embed.set_thumbnail(url = image)
+    else:
+        raise NotImplementedError
     return embed
 
 
