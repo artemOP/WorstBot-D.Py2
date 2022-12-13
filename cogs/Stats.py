@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord.app_commands import Transform, Transformer
 from os import listdir
 from dataclasses import dataclass, field, MISSING
-from modules import EmbedGen, Converters, Graphs
+from modules import EmbedGen, Converters, Graphs, Paginators
 from datetime import date, datetime
 
 
@@ -111,18 +111,19 @@ class Stats(commands.GroupCog, name = "stats"):
         elif not contributors.get("data"):
             return await interaction.followup.send("no content", ephemeral = True)
         data, author = contributors.get("data").get("weeks") or {}, contributors.get("data").get("author") or {}
-        embed = EmbedGen.FullEmbed(
+        embed_list = EmbedGen.EmbedFieldList(
             author = {"name": author.get("login"), "url": author.get("html_url"), "icon_url": author.get("avatar_url")},
             fields = [
                 EmbedGen.EmbedField(
                     name = date.fromtimestamp(week.get("w")).strftime("%d/%m/%Y"),
                     value = f"""Additions: {week.get("a")}\nDeletions: {week.get("d")}\n Commits:{week.get("c")}\n"""
-                ) for week in data
+                ) for week in data if not (week["a"] == 0 and week["d"] == 0 and week["c"] == 0)
             ],
-            footer = {"text": f"Total commits: {contributors.get('data').get('total')}", "icon_url": author.get("avatar_url")},
-            thumbnail = author.get("avatar_url")
+            max_fields = 9
         )
-        await interaction.followup.send(embed = embed, ephemeral = True)
+        view = Paginators.ButtonPaginatedEmbeds(timeout = 30, embed_list = embed_list)
+        await interaction.followup.send(view = view, embed = embed_list[0], content = f"Total commits: {contributors.get('data').get('total')}", ephemeral = True)
+        view.response = await interaction.original_response()
 
     @app_commands.command(name = "server-usage", description = "WorstBot usage on this server")
     @app_commands.describe(before = "YYYY/MM/DD", after = "YYYY/MM/DD")
