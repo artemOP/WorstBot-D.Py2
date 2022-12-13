@@ -4,6 +4,7 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 from typing import Optional
 from modules import EmbedGen, RoleManipulation
+from asyncio import sleep
 
 class hexTransformer(app_commands.Transformer, ABC):
     @classmethod
@@ -21,7 +22,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
         self.bot.tree.add_command(self.ContextMenu)
 
     async def cog_load(self) -> None:
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS customroles(guild BIGINT, member BIGINT, role BIGINT UNIQUE, colour INT)")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS customroles(guild BIGINT, member BIGINT, role BIGINT UNIQUE, colour INT, UNIQUE(guild, member))")
 
     async def cog_unload(self) -> None:
         ...
@@ -39,11 +40,12 @@ class CustomRoles(commands.GroupCog, name = "role"):
         return role if not None else None
 
     async def CreateRole(self, member: discord.Member, colour: int) -> None:
+        await sleep(10)
         role = await member.guild.create_role(name = str(member), colour = discord.Colour(colour), hoist = False)
         position = member.top_role.position if member.top_role.position > 0 else 1
         await role.edit(position = position)
         await RoleManipulation.role_add(member, role, "WorstBot Custom Coloured Roles")
-        await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (role) DO UPDATE SET role = EXCLUDED.role, colour = EXCLUDED.colour", member.guild.id, member.id, role.id, colour)
+        await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (guild, member) DO UPDATE SET role = EXCLUDED.role, colour = EXCLUDED.colour", member.guild.id, member.id, role.id, colour)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
