@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from enum import Enum, auto
 from logging import WARN, INFO, DEBUG
 from os import environ, listdir
 
@@ -10,13 +11,26 @@ import asyncpg
 from aiohttp import ClientSession
 from dotenv import load_dotenv
 
+class _events(Enum):
+    autorole = auto()
+    autoevent = auto()
+    birthdays = auto()
+    roles = auto()
+    opinion = auto()
+    calls = auto()
+    textarchive = auto()
+    twitch = auto()
+    usage = auto()
 
 class WorstBot(discord_commands.Bot):
+
     def __init__(self, command_prefix, activity, intents):
         super().__init__(command_prefix, intents = intents)
         self.pool = None
         self.session = None
+        self._event_toggles = {}
         self.activity = activity
+        self._events = _events
 
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
@@ -80,10 +94,20 @@ class WorstBot(discord_commands.Bot):
     def current(current: str) -> str:
         return "%" if not current else current
 
+    async def events(self, guild_int: int, event: _events) -> bool:
+        """Returns True/False to determine if event is enabled in guild"""
+        if not self._event_toggles.get(guild_int):  # Adds guild to cache with no events
+            self._event_toggles[guild_int] = {}
+
+        if self._event_toggles[guild_int].get(event.name) is None:  # Adds event to guild on request
+            toggle_value = await self.fetchval(f"SELECT {event.name} FROM events WHERE guild = $1", guild_int)
+            self._event_toggles[guild_int][event.name] = toggle_value
+
+        return self._event_toggles[guild_int][event.name]  # returns event bool
+
 
 async def start():
-    await asyncio.gather(discord_bot.start(environ.get("discord")), return_exceptions = True)
-
+    await asyncio.gather(discord_bot.start(environ.get("discord")), return_exceptions = False)
 
 load_dotenv()
 discord.utils.setup_logging(level = WARN)

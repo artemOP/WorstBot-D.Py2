@@ -60,11 +60,12 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         if not birthdays:
             return
         for birthday in birthdays:
-            if await self.bot.fetchval("SELECT birthdays FROM events WHERE guild = $1", birthday["guild"]):
-                return
+            if await self.bot.events(birthday["guild"], self.bot._events.birthdays) is False:
+                continue
             guild = self.bot.get_guild(birthday["guild"])
             if not guild:
-                return await self.bot.execute("DELETE FROM birthdays WHERE guild = $1", birthday["guild"])
+                await self.bot.execute("DELETE FROM birthdays WHERE guild = $1", birthday["guild"])
+                continue
             channel = await self.bot.fetchval("SELECT channel FROM birthdaychannel WHERE guild = $1", guild.id)
             channel = guild.get_channel(channel)
             member = guild.get_member(birthday["member"])

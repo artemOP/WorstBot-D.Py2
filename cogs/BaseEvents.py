@@ -48,8 +48,11 @@ class BaseEvents(commands.Cog):
         await interaction.response.defer(ephemeral = True)
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM events WHERE guild = $1)", interaction.guild_id):
             await self.on_guild_join(interaction.guild)
-        toggle = await self.bot.execute(f"UPDATE events SET {event.value} = NOT {event.value} WHERE guild = $1 RETURNING {event.value}", interaction.guild_id)
-        await interaction.followup.send(f"{event.value} set to: {toggle}", ephemeral = True)
+        toggle = await self.bot.execute(f"UPDATE events SET {event.name} = NOT {event.name} WHERE guild = $1 RETURNING {event.name}", interaction.guild_id)
+        if self.bot._event_toggles[interaction.guild_id]:
+            self.bot._event_toggles.pop(interaction.guild_id)
+
+        await interaction.followup.send(f"{event.name} set to: {toggle}", ephemeral = True)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
