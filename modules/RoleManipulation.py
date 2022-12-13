@@ -20,10 +20,12 @@ async def role_add(member: discord.Member, role: discord.Role, reason: Optional[
     :param reason:
     :return: success bool
     """
+    if not role:
+        return False
     try:
         await member.add_roles(role, reason = reason or "WorstBot Added A Role")
         return True
-    except discord.Forbidden | discord.HTTPException:
+    except discord.HTTPException | discord.Forbidden:
         return False
 
 async def role_remove(member: discord.Member, role: discord.Role, reason: Optional[str] = None) -> bool:
