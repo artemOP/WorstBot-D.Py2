@@ -39,7 +39,7 @@ class Events(commands.Cog):
             return
 
         for event in events:  # type: Record
-            if await self.bot.fetchval("SELECT autoevent FROM events WHERE guild = $1", event["guild"]) is False:
+            if await self.bot.events(event["guild"], self.bot._events.autoevent) is False:
                 continue
             if (event["expiretime"] - dt.now(timezone.utc)).days > 7:
                 continue

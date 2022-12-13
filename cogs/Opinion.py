@@ -26,7 +26,7 @@ class Opinion(commands.Cog):
             return
         if any((message.author.bot, message.channel.is_nsfw(), message.attachments)):
             return
-        if await self.bot.fetchval("SELECT opinion FROM events WHERE guild = $1", message.guild.id) is False:
+        if await self.bot.events(message.guild.id, self.bot._events.opinion) is False:
             return
         prefixes = await self.bot.fetch("SELECT prefix FROM PrefixBlacklist WHERE guild = $1", message.guild.id)
         if any(message.content.startswith(prefix["prefix"]) for prefix in prefixes):

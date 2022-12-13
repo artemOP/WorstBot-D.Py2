@@ -90,8 +90,8 @@ class Twitch(commands.GroupCog, name = "twitch"):
         streams = await self.bot.get(url = "https://api.twitch.tv/helix/streams", params = {"user_id": [user["userid"] for user in self.streamersTable]}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
 
         for user in self.streamersTable:
-            if await self.bot.fetchval("SELECT twitch FROM events WHERE guild = $1", user["guild"]) is False:
-                continue
+            if await self.bot.events(user["guild"], self.bot._events.twitch) is False:
+                return
             if not any(int(stream["user_id"]) == user["userid"] for stream in streams["data"]):
                 await self.bot.execute("UPDATE twitch SET live = FALSE WHERE userid = $1", user["userid"])
                 continue

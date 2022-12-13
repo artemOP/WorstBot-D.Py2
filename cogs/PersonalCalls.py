@@ -26,7 +26,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if await self.bot.fetchval("SELECT calls FROM events WHERE guild = $1", member.guild.id) is False:
+        if await self.bot.events(member.guild.id, self.bot._events.calls) is False:
             return
         PersonalChannel = self.bot.get_channel(await self.bot.fetchval("SELECT channel FROM PersonalCall WHERE guild=$1", member.guild.id))
         if PersonalChannel is None:
@@ -42,7 +42,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         elif before.channel is not None and before.channel != PersonalChannel:
             if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM CallBlacklist WHERE channel=$1)", before.channel.id) is True or before.channel.members:
                 return
-            if not await self.bot.fetchval("SELECT textarchive FROM events WHERE guild = $1", member.guild.id):
+            if await self.bot.events(member.guild.id, self.bot._events.textarchive) is False:
                 return await before.channel.delete()
             if not [message async for message in before.channel.history(limit=1)]:
                 return await before.channel.delete()

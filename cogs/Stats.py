@@ -151,7 +151,7 @@ class Stats(commands.GroupCog, name = "stats"):
 
     @commands.Cog.listener(name = "on_app_command_completion")
     async def CommandUsage(self, interaction: Interaction, command: app_commands.Command | app_commands.ContextMenu) -> None:
-        if await self.bot.fetchval("SELECT usage FROM events WHERE guild = $1", interaction.guild_id) is False:
+        if await self.bot.events(interaction.guild_id, self.bot._events.usage) is False:
             return
         await self.bot.execute("INSERT INTO usage(command, guild, execution_time) VALUES($1, $2, $3)", command.qualified_name, interaction.guild_id, interaction.created_at)
 
