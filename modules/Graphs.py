@@ -1,7 +1,7 @@
 from io import BytesIO
 import matplotlib
 from matplotlib import pyplot as plt
-from typing import Literal
+import typing
 import asyncio
 from functools import partial
 
@@ -29,11 +29,29 @@ def pie(data: dict[str, int], *args, **kwargs) -> BytesIO:
     b.seek(0)
     return b
 
-async def graph(graph_type: Literal["pie"], loop: asyncio.AbstractEventLoop, data: dict[str, int], *args, **kwargs) -> BytesIO | None:
+def bar(data: dict[str, int], *args, **kwargs) -> BytesIO:
+    """
+    Plot data to bar chart
+
+    :param data: {label: bar size}
+    :param args:
+    :param kwargs:
+    :return: Bar chart BytesIO
+    """
+    fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
+    ax.bar(data.keys(), data.values())
+    b = BytesIO()
+    plt.savefig(b, format = kwargs.get("format") or "png", transparent = kwargs.get("transparent") or True)
+    plt.close()
+    b.seek(0)
+    return b
+
+async def graph(graph_type: typing.Literal["pie", "bar"], loop: asyncio.AbstractEventLoop, data: dict[str, int], *args, **kwargs) -> BytesIO | None:
     if not (graph_type or data):
         return
     return await loop.run_in_executor(None, partial(GRAPH_TYPES[graph_type], data, *args, **kwargs))
 
 GRAPH_TYPES = {
-    "pie": pie
+    "pie": pie,
+    "bar": bar
 }
