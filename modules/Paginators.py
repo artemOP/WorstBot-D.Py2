@@ -1,15 +1,19 @@
 import discord
 from discord import Interaction, ButtonStyle
 
-class ButtonPaginatedEmbeds(discord.ui.View):
-    def __init__(self, embed_list, timeout = 30):
+class BaseView(discord.ui.View):
+    def __init__(self, timeout):
         super().__init__(timeout = timeout)
-        self.response = None
-        self.embedlist = embed_list or [discord.Embed()]
-        self.page = 0
+        self.response: discord.InteractionMessage = None
 
     async def on_timeout(self) -> None:
         await self.response.edit(view = None)
+
+class ButtonPaginatedEmbeds(BaseView):
+    def __init__(self, embed_list, timeout = 30):
+        super().__init__(timeout = timeout)
+        self.embedlist = embed_list or [discord.Embed()]
+        self.page = 0
 
     @discord.ui.button(label = 'First page', style = ButtonStyle.red)
     async def first(self, interaction: Interaction, button: discord.ui.Button):
