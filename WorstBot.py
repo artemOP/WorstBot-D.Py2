@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import typing
 from enum import Enum, auto
 from logging import WARN, INFO, DEBUG
 from os import environ, listdir
@@ -52,13 +53,13 @@ class WorstBot(discord_commands.Bot):
     async def on_ready(self):
         print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
-    async def post(self, *, url: str, params: dict = None, headers: dict = None):
+    async def post(self, *, url: str, params: dict = None, headers: dict = None) -> dict:
         async with self.session.post(url = url, params = params, headers = headers) as response:
             content = await response.json()
             content["status"] = response.status
             return content
 
-    async def get(self, *, url: str, params: dict = None, headers: dict = None):
+    async def get(self, *, url: str, params: dict = None, headers: dict = None) -> dict:
         async with self.session.get(url = url, params = params, headers = headers) as response:
             content = await response.json()
             if not isinstance(content, dict):
@@ -66,32 +67,32 @@ class WorstBot(discord_commands.Bot):
             content["status"] = response.status
             return content
 
-    async def getstatus(self, *, url: str, params: dict = None, headers: dict = None):
+    async def getstatus(self, *, url: str, params: dict = None, headers: dict = None) -> int:
         async with self.session.get(url = url, params = params, headers = headers) as response:
             return response.status
 
-    async def fetch(self, sql: str, *args):
+    async def fetch(self, sql: str, *args) -> list[asyncpg.Record] | None:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetch(sql, *args)
 
-    async def fetchrow(self, sql: str, *args):
+    async def fetchrow(self, sql: str, *args) -> asyncpg.Record | None:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchrow(sql, *args)
 
-    async def fetchval(self, sql: str, *args):
+    async def fetchval(self, sql: str, *args) -> typing.Any:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
-    async def execute(self, sql: str, *args):
+    async def execute(self, sql: str, *args) -> typing.Any:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
     @staticmethod
-    def current(current: str) -> str:
+    def current(current: str) -> typing.Literal["%"] | str:
         return "%" if not current else current
 
     async def events(self, guild_int: int, event: _events) -> bool:
