@@ -7,11 +7,13 @@ from math import ceil
 from pydantic import BaseModel, conint, constr, Field
 from inspect import currentframe, getargvalues
 
+
 class EmbedField(BaseModel):
     index: conint(ge = 1, le = 25) = Field(default = None)
     name: constr(min_length = 1, curtail_length = 256)
     value: constr(min_length = 1, curtail_length = 1024)
     inline: bool = Field(default = True)
+
 
 def set_colour(colour: Colour | None):
     return Colour.random() if not colour else colour
