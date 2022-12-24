@@ -1,12 +1,19 @@
 from io import BytesIO
 import matplotlib
 from matplotlib import pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import typing
 import asyncio
 from functools import partial
+from random import random
 
 matplotlib.use('Agg')  # must set before other imports to ensure correct backend
 
+def save_fig(**kwargs) -> BytesIO:
+    b = BytesIO()
+    plt.savefig(b, format = kwargs.get("format") or "png", transparent = kwargs.get("transparent") or True)
+    b.seek(0)
+    return b
 
 def pie(data: dict[str, int], *args, **kwargs) -> list[BytesIO]:
     """
@@ -27,11 +34,8 @@ def pie(data: dict[str, int], *args, **kwargs) -> list[BytesIO]:
             autopct = kwargs.get("autopct") or "%1.0f%%",
             textprops = textprops[i],
             pctdistance = kwargs.get("pctdistance") or 0.85)
-        b = BytesIO()
-        plt.savefig(b, format = kwargs.get("format") or "png", transparent = kwargs.get("transparent") or True)
+        plots.append(save_fig(**kwargs))
         plt.close()
-        b.seek(0)
-        plots.append(b)
     return plots
 
 def bar(data: dict[str, int], *args, **kwargs) -> list[BytesIO]:
@@ -43,15 +47,16 @@ def bar(data: dict[str, int], *args, **kwargs) -> list[BytesIO]:
     :param kwargs:
     :return: Bar chart BytesIO
     """
+    plt_props = kwargs.get("plt_props") or [{"label_colour": "black", "bg_colour": "white"}, {"label_colour": "white", "bg_colour": "black"}]
+    fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
+    ax.bar(data.keys(), data.values(), color = [[random(), random(), random()] for _ in data])
+    ax.yaxis.set_major_locator(MaxNLocator(integer = True))
     plots = []
-    for _ in range(2):
-        fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
-        ax.bar(data.keys(), data.values())
-        b = BytesIO()
-        plt.savefig(b, format = kwargs.get("format") or "png", transparent = kwargs.get("transparent") or True)
-        plt.close()
-        b.seek(0)
-        plots.append(b)
+    for i in range(2):
+        ax.tick_params(colors = plt_props[i]["label_colour"])
+        fig.set_facecolor(plt_props[i]["bg_colour"])
+        plots.append(save_fig(**kwargs))
+    plt.close()
     return plots
 
 async def graph(graph_type: typing.Literal["pie", "bar"], loop: asyncio.AbstractEventLoop, data: dict[str, int], *args, **kwargs) -> list[BytesIO] | None:
