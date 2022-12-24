@@ -1,5 +1,6 @@
 import discord
 from discord import Interaction, ButtonStyle
+from io import BytesIO
 
 class BaseView(discord.ui.View):
     def __init__(self, timeout):
@@ -45,3 +46,15 @@ class ButtonPaginatedEmbeds(BaseView):
         self.page = len(self.embedlist) - 1
         await interaction.response.edit_message(embed = self.embedlist[self.page])
 
+class ThemedGraphView(BaseView):
+    """
+    Handles Light and dark theme text for graphs, provide "Light" and "Dark" keys with plots
+    """
+    def __init__(self, graphs: dict[str, BytesIO], timeout: int = 30):
+        super().__init__(timeout = timeout)
+        self.graphs = graphs
+
+    @discord.ui.select(placeholder = "Theme select", options = [discord.SelectOption(label = "Light"), discord.SelectOption(label = "Dark")])
+    async def Select(self, interaction: Interaction, select: discord.ui.Select):
+        await interaction.response.edit_message(attachments = [discord.File(fp = self.graphs[select.values[0]], filename = "image.png")])
+        self.graphs[select.values[0]].seek(0)

@@ -132,23 +132,27 @@ class Stats(commands.GroupCog, name = "stats"):
 
         usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM usage WHERE guild = $1 AND execution_time BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
         chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage})
+        view = Paginators.ThemedGraphView({"Light": chartIO[0], "Dark": chartIO[1]})
         embeds = EmbedGen.SimpleEmbedList(title = "Guild command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']}" for row in usage),
                                           image = "attachment://image.png")
-        await interaction.followup.send(embeds = embeds, file = discord.File(fp = chartIO, filename = "image.png"))
+        await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[0], filename = "image.png"))
+        view.response = await interaction.original_response()
 
     @app_commands.command(name = "global-usage", description = "Global WorstBot usage")
     async def GloablUsage(self, interaction: Interaction):
         await interaction.response.defer(ephemeral = True)
         usage = await self.bot.fetch("SELECT command, COUNT(*) as count, max(execution_time) as last_usage FROM usage GROUP BY command ORDER BY count DESC")
         chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage})
+        view = Paginators.ThemedGraphView({"Light": chartIO[0], "Dark": chartIO[1]})
         embeds = EmbedGen.SimpleEmbedList(title = "Global command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']} (Last used: {row['last_usage'].strftime('%Y/%m/%d')})"
                                               for row in usage),
                                           image = "attachment://image.png")
-        await interaction.followup.send(embeds = embeds, file = discord.File(fp = chartIO, filename = "image.png"))
+        await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[0], filename = "image.png"))
+        view.response = await interaction.original_response()
 
     @commands.Cog.listener(name = "on_app_command_completion")
     async def CommandUsage(self, interaction: Interaction, command: app_commands.Command | app_commands.ContextMenu) -> None:
