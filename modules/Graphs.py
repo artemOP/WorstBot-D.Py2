@@ -51,6 +51,7 @@ def bar(data: dict[str, int], *args, **kwargs) -> list[BytesIO]:
     fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
     ax.bar(data.keys(), data.values(), color = [[random(), random(), random()] for _ in data])
     ax.yaxis.set_major_locator(MaxNLocator(integer = True))
+    fig.autofmt_xdate()
     plots = []
     for i in range(2):
         ax.tick_params(colors = plt_props[i]["label_colour"])
