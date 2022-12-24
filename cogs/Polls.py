@@ -90,7 +90,6 @@ class StartPollModal(ui.Modal, title = "Poll"):
         raise
 
 
-@app_commands.default_permissions()
 class Poll(commands.GroupCog, name = "poll"):
 
     def __init__(self, bot: commands.Bot):
