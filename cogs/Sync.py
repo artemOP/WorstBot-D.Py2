@@ -22,7 +22,7 @@ class Sync(commands.Cog):
     @commands.is_owner()
     @app_commands.default_permissions()
     @app_commands.describe(option = "*|/ to add|remove global sync, +|- to add|remove local sync")
-    async def sync(self, ctx: Context, option: Literal["*", "/", "+", "-"]) -> discord.Message:
+    async def sync(self, ctx: Context, option: Literal["*", "/", "+", "-"] = "*") -> discord.Message:
         await ctx.defer(ephemeral = True)
         match option:
             case "*":
