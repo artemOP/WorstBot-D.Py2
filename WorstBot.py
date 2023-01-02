@@ -36,14 +36,6 @@ class WorstBot(discord_commands.Bot):
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
         self.session = ClientSession()
-        self.post = self.post
-        self.get = self.get
-        self.getstatus = self.getstatus
-        self.fetch = self.fetch
-        self.fetchrow = self.fetchrow
-        self.fetchval = self.fetchval
-        self.execute = self.execute
-        self.current = self.current
 
         for filename in listdir("cogs"):
             if filename.endswith(".py") and not filename.startswith("-"):
