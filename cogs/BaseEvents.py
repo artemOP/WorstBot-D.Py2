@@ -2,8 +2,9 @@ import discord
 from discord import app_commands, Interaction
 from discord.app_commands import Choice
 from discord.ext import commands
+from WorstBot import _events
 
-events = ["autorole", "autoevent", "birthdays", "roles", "opinion", "calls", "textarchive", "twitch", "usage"]
+events = [event.name for event in _events]
 
 class BaseEvents(commands.Cog):
 
