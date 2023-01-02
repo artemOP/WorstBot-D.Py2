@@ -137,7 +137,7 @@ class Stats(commands.GroupCog, name = "stats"):
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']}" for row in usage),
                                           image = "attachment://image.png")
-        await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[0], filename = "image.png"))
+        await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[1], filename = "image.png"))
         view.response = await interaction.original_response()
 
     @app_commands.command(name = "global-usage", description = "Global WorstBot usage")
@@ -151,7 +151,7 @@ class Stats(commands.GroupCog, name = "stats"):
                                               f"{row['command']}: {row['count']} (Last used: {row['last_usage'].strftime('%Y/%m/%d')})"
                                               for row in usage),
                                           image = "attachment://image.png")
-        await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[0], filename = "image.png"))
+        await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[1], filename = "image.png"))
         view.response = await interaction.original_response()
 
     @commands.Cog.listener(name = "on_app_command_completion")
