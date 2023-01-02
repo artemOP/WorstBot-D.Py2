@@ -110,10 +110,11 @@ class WorstBot(discord_commands.Bot):
 async def start():
     await asyncio.gather(discord_bot.start(environ.get("discord")), return_exceptions = False)
 
-load_dotenv()
-discord.utils.setup_logging(level = WARN)
-discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
-                       activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
-                       intents = discord.Intents.all())
+if __name__ == "__main__":
+    load_dotenv()
+    discord.utils.setup_logging(level = WARN)
+    discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
+                           activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
+                           intents = discord.Intents.all())
 
-asyncio.run(start())
+    asyncio.run(start())
