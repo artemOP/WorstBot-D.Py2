@@ -60,7 +60,7 @@ class StartPollModal(ui.Modal, title = "Poll"):
 
     async def on_submit(self, interaction: Interaction) -> None:
         await interaction.response.defer(ephemeral = True)
-        answers = self.answers.value.split("\n")[:25]
+        answers = [answer for answer in self.answers.value.split("\n")[:25] if answer != ""]
         options = []
         try:
             accepted_responses = min(int(self.accepted_responses.value), len(answers))
