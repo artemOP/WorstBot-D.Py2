@@ -87,6 +87,16 @@ class WorstBot(discord_commands.Bot):
     def current(current: str) -> typing.Literal["%"] | str:
         return "%" if not current else current
 
+    @staticmethod
+    def to_codeblock(language: str, code: str) -> str:
+        """
+        Returns codeblock in the format of:
+        ```{language}
+        code
+        ```
+        """
+        return f"```{language}\n{code}```"
+
     async def events(self, guild_int: int, event: _events) -> bool:
         """Returns True/False to determine if event is enabled in guild"""
         if not self._event_toggles.get(guild_int):  # Adds guild to cache with no events
