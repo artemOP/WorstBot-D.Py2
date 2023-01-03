@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import typing
 from enum import Enum, auto
+import logging
 from logging import WARN, INFO, DEBUG
 from os import environ, listdir
 
@@ -32,6 +33,7 @@ class WorstBot(discord_commands.Bot):
         self._event_toggles = {}
         self.activity = activity
         self._events = _events
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
