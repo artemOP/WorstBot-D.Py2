@@ -25,8 +25,8 @@ class _events(Enum):
 
 class WorstBot(discord_commands.Bot):
 
-    def __init__(self, command_prefix, activity, intents):
-        super().__init__(command_prefix, intents = intents)
+    def __init__(self, command_prefix, activity, intents, owner_id):
+        super().__init__(command_prefix, intents = intents, owner_id = owner_id)
         self.pool = None
         self.session = None
         self._event_toggles = {}
@@ -107,6 +107,7 @@ if __name__ == "__main__":
     discord.utils.setup_logging(level = WARN)
     discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
                            activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
-                           intents = discord.Intents.all())
+                           intents = discord.Intents.all(),
+                           owner_id = environ.get("owner"))
 
     asyncio.run(start())
