@@ -18,13 +18,12 @@ def generator():
 
 
 class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives output
-    def __init__(self, timeout, bot: commands.Bot):
+    def __init__(self, timeout):
         super().__init__(timeout = timeout)
         self.response = None
         self.score = 101
         self.counter = 0
         self.generator = generator()
-        self.bot = bot
 
     async def on_timeout(self) -> None:
         await self.response.edit(view = None)
@@ -35,7 +34,7 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
     async def on_complete(self, interaction: Interaction):
         await self.on_timeout()
         await interaction.response.edit_message(content = f"Your score was:{self.score}")
-        await self.bot.execute("INSERT INTO ricepurity(id, score) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET score = excluded.score", interaction.user.id, self.score)
+        await interaction.client.execute("INSERT INTO ricepurity(id, score) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET score = excluded.score", interaction.user.id, self.score)
 
     @button(emoji = "✅", style = discord.ButtonStyle.grey)
     async def tick(self, interaction: Interaction, button: Button):
@@ -75,7 +74,7 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
 
     @app_commands.command(name = "test")
     async def test(self, interaction: Interaction):
-        view = PurityButtons(timeout = 30, bot = self.bot)
+        view = PurityButtons(timeout = 30)
         await interaction.response.send_message('Are you ready to begin your rice purity test?', view = view, ephemeral = True)
         view.response = await interaction.original_response()
 
