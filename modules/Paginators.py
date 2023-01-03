@@ -5,7 +5,7 @@ from io import BytesIO
 class BaseView(discord.ui.View):
     def __init__(self, timeout):
         super().__init__(timeout = timeout)
-        self.response: discord.InteractionMessage = None
+        self.response: discord.InteractionMessage | None = None
 
     async def on_timeout(self) -> None:
         await self.response.edit(view = None)
