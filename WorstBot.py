@@ -83,6 +83,9 @@ class WorstBot(discord_commands.Bot):
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
+    async def maybe_fetch_user(self, user_id: int) -> discord.User:
+        return self.get_user(user_id) or await self.fetch_user(user_id)
+
     @staticmethod
     def current(current: str) -> typing.Literal["%"] | str:
         return "%" if not current else current

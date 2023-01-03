@@ -167,7 +167,7 @@ class Tag(commands.GroupCog, name = "tag"):
             return await interaction.followup.send("Tag is private", ephemeral = True)
         if tag["nsfw"] and not interaction.channel.nsfw:
             return await interaction.followup.send("Tag is NSFW", ephemeral = True)
-        owner = self.bot.get_user(tag["owner"])
+        owner = await self.bot.maybe_fetch_user(tag["owner"])
         embed = EmbedGen.SimpleEmbed(author = {"name": str(owner), "icon_url": owner.display_avatar},
                                      title = tag["name"]
                                      )
@@ -187,7 +187,7 @@ class Tag(commands.GroupCog, name = "tag"):
         tag = await self.bot.fetchrow("SELECT owner, name, value FROM tags WHERE guild = $1 AND nsfw = FALSE AND private = FALSE AND name LIKE $2 ORDER BY RANDOM() LIMIT 1", interaction.guild_id, f"%{tag}%")
         if not tag:
             return
-        owner = self.bot.get_user(tag["owner"])
+        owner = await self.bot.maybe_fetch_user(tag["owner"])
         await interaction.response.send_message(
             embed = EmbedGen.SimpleEmbed(
                 author = {"name": str(owner), "icon_url": owner.display_avatar},
@@ -223,7 +223,7 @@ class Tag(commands.GroupCog, name = "tag"):
     async def Claim(self, interaction: Interaction, tag: str):
         if not (tag := Converters.to_int(tag)):
             return
-        owner = self.bot.get_user(await self.bot.fetchval("SELECT owner FROM tags WHERE tagid = $1", tag))
+        owner = await self.bot.maybe_fetch_user(await self.bot.fetchval("SELECT owner FROM tags WHERE tagid = $1", tag))
         if owner not in interaction.guild.members:
             await self.bot.execute("UPDATE tags SET owner = $1 WHERE tagid = $2", interaction.user.id, tag)
             return await interaction.response.send_message("You have successfully claimed the tag", ephemeral = True)

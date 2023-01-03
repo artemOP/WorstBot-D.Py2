@@ -48,7 +48,7 @@ class Reminder(commands.Cog):
             self.ReminderTask.stop()
         else:
             await discord.utils.sleep_until(reminder["expiretime"])
-            user = self.bot.get_user(reminder["member"])
+            user = await self.bot.maybe_fetch_user(reminder["member"])
             embed = FullEmbed(title = "**Reminder**",
                               fields = [EmbedField(name = "**original message:**", value = reminder["jumplink"])],
                               description = f"""You asked to be reminded of: "{reminder["message"]}" """)

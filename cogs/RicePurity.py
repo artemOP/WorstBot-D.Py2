@@ -89,7 +89,7 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
             title = "Rice Purity Scores",
             fields = [
                 EmbedField(
-                    name = str(self.bot.get_user(userid)),
+                    name = str(await self.bot.maybe_fetch_user(userid)),
                     value = str(user_score))
                 for userid, user_score in sorted(users.items(), key = lambda item: item[1])
             ],
