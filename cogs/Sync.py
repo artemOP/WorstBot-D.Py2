@@ -2,10 +2,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
+from WorstBot import WorstBot
 from typing import Literal
 
 class Sync(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:

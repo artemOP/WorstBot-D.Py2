@@ -3,6 +3,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from discord.app_commands import Transform, Transformer
+from WorstBot import WorstBot
 from os import listdir
 from dataclasses import dataclass, field, MISSING
 from modules import EmbedGen, Converters, Graphs, Paginators
@@ -29,7 +30,7 @@ class DateTransformer(Transformer, ABC):
 
 class Stats(commands.GroupCog, name = "stats"):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
         self.source = 0
         self.comment = 0

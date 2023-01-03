@@ -2,6 +2,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from discord.app_commands import Choice, Transform, Transformer
+from WorstBot import WorstBot
 from modules import EmbedGen, Converters, RoleManipulation
 
 
@@ -19,7 +20,7 @@ class RoleTransformer(Transformer):
 
 
 class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Toggle a self assignable role"):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:

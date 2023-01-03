@@ -1,6 +1,6 @@
 import os
 import pathlib
-
+from WorstBot import WorstBot
 import discord
 from discord.ext import commands, tasks
 
@@ -18,7 +18,7 @@ class HotReload(commands.Cog):
     Cog for reloading extensions as soon as the file is edited
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: WorstBot):
         self.last_modified_time = {}
         self.bot = bot
 

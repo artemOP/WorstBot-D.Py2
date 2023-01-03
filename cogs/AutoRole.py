@@ -1,11 +1,12 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
+from WorstBot import WorstBot
 from modules import EmbedGen, Paginators, RoleManipulation
 
 @app_commands.default_permissions(manage_roles = True)
 class AutoRole(commands.GroupCog, name = "autorole"):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
 

@@ -3,10 +3,11 @@ import discord
 from discord import app_commands, Interaction
 from discord.app_commands import Choice
 from discord.ext import commands
+from WorstBot import WorstBot
 
 @app_commands.default_permissions()
 class Admin(commands.GroupCog, name = "admin"):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
 

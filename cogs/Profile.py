@@ -2,6 +2,7 @@ import discord
 from discord import Interaction, app_commands
 from discord.ext import commands
 from discord.ui import Button, View, Modal, TextInput
+from WorstBot import WorstBot
 from modules.EmbedGen import FullEmbed, EmbedField
 
 class ProfileFill(Modal, title = "Profile field"):
@@ -72,7 +73,7 @@ class ProfileView(View):
 
 class Profile(commands.GroupCog, name = "profile"):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
         self.ContextMenu = app_commands.ContextMenu(
             name = "Profile",

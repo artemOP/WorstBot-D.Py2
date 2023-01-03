@@ -5,6 +5,7 @@ import discord
 from discord import Interaction, app_commands
 from discord.ext import commands
 from discord.ui import Button, Item, button
+from WorstBot import WorstBot
 
 from modules.EmbedGen import EmbedField, EmbedFieldList
 from modules.Paginators import ButtonPaginatedEmbeds
@@ -58,7 +59,7 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
                 await interaction.response.edit_message(view = self, content = ": ".join(next(self.generator)))
 
 class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
 

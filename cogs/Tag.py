@@ -2,6 +2,7 @@ import discord
 from discord import Interaction, app_commands, ui  # , SelectOption
 from discord.ext import commands
 from discord.app_commands import Choice
+from WorstBot import WorstBot
 from modules import Converters, EmbedGen
 
 
@@ -75,7 +76,7 @@ class TagModal(ui.Modal, title = "tag"):
 
 class Tag(commands.GroupCog, name = "tag"):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:

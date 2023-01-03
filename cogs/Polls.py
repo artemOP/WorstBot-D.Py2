@@ -1,6 +1,7 @@
 import discord
 from discord import Interaction, app_commands, ui
 from discord.ext import commands
+from WorstBot import WorstBot
 from modules import EmbedGen, Graphs, Paginators
 
 class Responses(ui.Select):
@@ -92,7 +93,7 @@ class StartPollModal(ui.Modal, title = "Poll"):
 
 class Poll(commands.GroupCog, name = "poll"):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
         self.views = []
 

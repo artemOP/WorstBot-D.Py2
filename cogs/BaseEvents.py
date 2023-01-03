@@ -2,13 +2,13 @@ import discord
 from discord import app_commands, Interaction
 from discord.app_commands import Choice
 from discord.ext import commands
-from WorstBot import _events
+from WorstBot import WorstBot, _events
 
 events = [event.name for event in _events]
 
 class BaseEvents(commands.Cog):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:

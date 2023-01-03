@@ -2,6 +2,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.app_commands import Range
 from discord.ext import commands, tasks
+from WorstBot import WorstBot
 from datetime import date, time
 from dateutil.relativedelta import relativedelta
 from asyncpg import Record
@@ -11,8 +12,8 @@ from modules.Paginators import ButtonPaginatedEmbeds
 
 class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
-    def __init__(self, bot: commands.Bot):
-        self.bot: commands.Bot = bot
+    def __init__(self, bot: WorstBot):
+        self.bot = bot
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdaychannel(guild BIGINT PRIMARY KEY, channel BIGINT NOT NULL)")

@@ -1,11 +1,12 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
+from WorstBot import WorstBot
 from datetime import timedelta
 import random
 
 class BaseCommands(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:

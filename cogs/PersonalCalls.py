@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
+from WorstBot import WorstBot
 from datetime import datetime
 from os import remove
 from modules import EmbedGen
@@ -8,7 +9,7 @@ from modules import EmbedGen
 @app_commands.default_permissions(manage_channels = True, ban_members=True)
 class PersonalCalls(commands.GroupCog, name = "personal-call"):
 
-    def __init__(self, bot):
+    def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
 

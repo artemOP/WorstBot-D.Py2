@@ -2,6 +2,7 @@ from abc import ABC
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
+from WorstBot import WorstBot
 from typing import Optional
 from modules import EmbedGen, RoleManipulation
 from asyncio import sleep
@@ -12,7 +13,7 @@ class hexTransformer(app_commands.Transformer, ABC):
         return int(value, 16)
 
 class CustomRoles(commands.GroupCog, name = "role"):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
         self.ContextMenu = app_commands.ContextMenu(

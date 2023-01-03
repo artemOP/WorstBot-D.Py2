@@ -1,13 +1,14 @@
 import discord
 from discord import Interaction, app_commands
 from discord.ext import commands, tasks
+from WorstBot import WorstBot
 from os import environ
 from asyncio import sleep
 from modules import Converters, EmbedGen
 
 @app_commands.default_permissions()
 class Twitch(commands.GroupCog, name = "twitch"):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
         self.TwitchClientId = environ.get("twitch_client")
         self.TwitchSecret = environ.get("twitch_secret")

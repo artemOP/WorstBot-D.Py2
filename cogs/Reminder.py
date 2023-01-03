@@ -2,11 +2,12 @@ import discord
 from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands, tasks
+from WorstBot import WorstBot
 from datetime import datetime as dt, timezone, time
 from modules.EmbedGen import FullEmbed, EmbedField
 
 class Reminder(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:

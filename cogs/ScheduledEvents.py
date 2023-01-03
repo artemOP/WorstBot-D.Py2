@@ -1,12 +1,13 @@
 import discord
 from discord.ext import commands, tasks
+from WorstBot import WorstBot
 from datetime import datetime as dt, timezone, timedelta
 from asyncpg import Record
 
 
 class Events(commands.Cog):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:

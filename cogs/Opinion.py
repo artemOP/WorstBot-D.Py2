@@ -1,11 +1,12 @@
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
+from WorstBot import WorstBot
 from re import sub
 from asyncio import sleep
 
 class Opinion(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WorstBot):
         self.bot = bot
 
     async def cog_load(self) -> None:
