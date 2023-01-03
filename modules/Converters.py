@@ -1,7 +1,20 @@
 import discord
+from discord.utils import MISSING
 from typing import Optional
 from datetime import datetime as dt
 
+class CodeBlock:
+    """
+        Returns codeblock in the format of:
+        ```{language}
+        code
+        ```
+    """
+    def __init__(self, language: str = "py", code: str = MISSING):
+        self._codeblock = f"```{language}\n{code}```"
+
+    def __str__(self) -> str:
+        return self._codeblock
 
 def to_int(x: str | float | bytes, base: Optional[int] = 10) -> int:
     """
