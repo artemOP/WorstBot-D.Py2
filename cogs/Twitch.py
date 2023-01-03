@@ -45,7 +45,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
                                         "grant_type": "client_credentials"
                                     }
                                     )
-        self.token = token["access_token"]
+        self.token = token.get("access_token")
 
     @app_commands.command(name = "add", description = "Get live alerts for your selected twitch channel")
     async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str, alert_role: discord.Role = None):
