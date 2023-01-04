@@ -22,10 +22,6 @@ class Admin(commands.GroupCog, name = "admin"):
         print("Admin cog online")
 
     @staticmethod
-    async def owner_only(interaction: Interaction):
-        return await interaction.client.is_owner(interaction.user)
-
-    @staticmethod
     def Choices() -> list[Choice[str]]:
         return [
             Choice(name = cog[:-3], value = cog[:-3]) for cog in listdir("cogs") if
@@ -33,14 +29,12 @@ class Admin(commands.GroupCog, name = "admin"):
         ]
 
     @app_commands.command(name = "load")
-    @app_commands.check(owner_only)
     @app_commands.choices(cog = Choices())
     async def CogLoad(self, interaction: Interaction, cog: Choice[str]):
         await self.bot.load_extension(f"cogs.{cog.value}")
         await interaction.response.send_message(f"{cog.value} has been loaded", ephemeral = True)
 
     @app_commands.command(name = "unload")
-    @app_commands.check(owner_only)
     @app_commands.choices(cog = Choices())
     async def CogUnload(self, interaction: Interaction, cog: Choice[str]):
         await self.bot.unload_extension(f"cogs.{cog.value}")
@@ -56,7 +50,6 @@ class Admin(commands.GroupCog, name = "admin"):
             await interaction.response.send_message(f"{cog.value} is not a valid input", ephemeral = True)
 
     @app_commands.command(name = "nickname", description = "Change WorstBot's nickname")
-    @app_commands.check(owner_only)
     async def nickname(self, interaction: Interaction, nickname: str = ""):
         await interaction.guild.me.edit(nick = nickname)
         await interaction.response.send_message(f"nickname set to {nickname}", ephemeral = True)
