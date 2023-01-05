@@ -50,6 +50,7 @@ class HotReload(commands.Cog):
                 print(f"Couldn't reload extension: {extension}")
             else:
                 print(f"Reloaded extension: {extension}")
+                self.bot.dispatch("cog_reload", root = None, file = f"{extension}.py")
             finally:
                 self.last_modified_time[extension] = time
 

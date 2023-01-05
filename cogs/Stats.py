@@ -1,25 +1,21 @@
 from abc import ABC
 import discord
 from discord import app_commands, Interaction
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.app_commands import Transform, Transformer
+from discord.utils import MISSING
 from WorstBot import WorstBot
-from os import listdir
-from dataclasses import dataclass, field, MISSING
+from dataclasses import dataclass
 from modules import EmbedGen, Converters, Graphs, Paginators
 from datetime import date, datetime
+from os import walk, getcwd, listdir
 
-
-@dataclass
-class Cog:
-    lines: list = MISSING
-    source: int = 0
-    comment: int = 0
-    blank: int = 0
-    total: int = field(init = False)
-
-    def __post_init__(self):
-        self.total = len(self.lines)
+@dataclass()
+class File:
+    total_lines: int
+    source_lines: int = 0
+    comment_lines: int = 0
+    blank_lines: int = 0
 
 
 class DateTransformer(Transformer, ABC):
@@ -28,78 +24,36 @@ class DateTransformer(Transformer, ABC):
     async def transform(cls, interaction: Interaction, value: str) -> datetime:
         return Converters.to_datetime(value, "%Y/%m/%d")
 
+
 class Stats(commands.GroupCog, name = "stats"):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
-        self.source = 0
-        self.comment = 0
-        self.blank = 0
-        self.total = 0
+        self.line_count: dict[str, File] = {}
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS usage(command TEXT, guild BIGINT, execution_time timestamptz)")
+        self.count_lines.start()
 
     async def cog_unload(self) -> None:
-        ...
+        self.count_lines.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
         print("Stats cog online")
 
-    @app_commands.command(name = "line-count", description = "display the line count stats for worstbot")
-    async def LineCount(self, interaction: Interaction):
-        await interaction.response.defer(ephemeral = True)
-        fields: list[EmbedGen.EmbedField] = []
-        cogs = {}
-        blocksize = 0
-        for cog in listdir("cogs"):
-            if cog.startswith("-") or not cog.endswith(".py"):
+    @tasks.loop(count = 1)
+    async def count_lines(self):
+        for directory in next(walk(getcwd()))[1]:
+            if directory.startswith((".", "-")):
                 continue
-            with open(f"cogs/{cog}", "r", encoding = "utf-8") as f:
-                cogs[cog] = Cog(f.readlines())
-            cog = cogs[cog]
-            for line in cog.lines:
-                if line == "\n":
-                    cog.blank += 1
-                    self.blank += 1
-                elif "#" in line:
-                    cog.comment += 1
-                    self.comment += 1
-                elif '"""' in line:
-                    if blocksize != 0 or line.count('"""') % 2 == 0:
-                        cog.comment += blocksize + 1
-                        self.comment += blocksize + 1
-                        blocksize = 0
-                    else:
-                        blocksize += 1
-                else:
-                    if blocksize != 0:
-                        blocksize += 1
-                    else:
-                        cog.source += 1
-                        self.source += 1
-                self.total += 1
-            fields.append(
-                EmbedGen.EmbedField(name = [k for k, v in cogs.items() if v == cog][0][:-3],
-                                    value = f"""
-                           source code: {cog.source} ({Converters.to_percent(cog.source, cog.total)}%)\n
-                           comments: {cog.comment} ({Converters.to_percent(cog.comment, cog.total)}%)\n
-                           blank: {cog.blank} ({Converters.to_percent(cog.blank, cog.total)}%)\n
-                           total: {cog.total}\n\u200b
-                           """
-                                    )
-            )
-        embeds = EmbedGen.EmbedFieldList(title = "stats", fields = fields, max_fields = 12)
-        embeds.insert(0,
-                      EmbedGen.SimpleEmbed(
-                          title = "Project total",
-                          text = f"""
-                          source code: {self.source} ({Converters.to_percent(self.source, self.total)}%)\n
-                          comments: {self.comment} ({Converters.to_percent(self.comment, self.total)}%)\n
-                          blank: {self.blank} ({Converters.to_percent(self.blank, self.total)}%)\n
-                          total: {self.total}\n\u200b"""))
-        await interaction.followup.send(embeds = embeds, ephemeral = True)
+            for file in listdir(directory):
+                self.bot.logger.debug(f"dispatch {file}")
+                self.bot.dispatch("cog_reload", root = directory, file = file)
+
+    @count_lines.before_loop
+    async def wait_until_ready(self):
+        await self.bot.wait_until_ready()
 
     @app_commands.command(name = "github", description = "Various stats about WorstBot's GitHub Repo")
     async def github(self, interaction: Interaction):
@@ -155,11 +109,93 @@ class Stats(commands.GroupCog, name = "stats"):
         await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[1], filename = "image.png"))
         view.response = await interaction.original_response()
 
+    @app_commands.command(name = "line-count", description = "Display the line count for Worstbot")
+    async def line_count(self, interaction: Interaction):
+        total_lines: File = File(total_lines = 0)
+        fields = []
+        for key, file in self.line_count.items():  # type: str, File
+            fields.append(
+                EmbedGen.EmbedField(
+                    name = key,
+                    value = await self.text_formatting(file)
+                )
+            )
+            total_lines.source_lines += file.source_lines
+            total_lines.comment_lines += file.comment_lines
+            total_lines.blank_lines += file.blank_lines
+            total_lines.total_lines += sum((file.source_lines, file.comment_lines, file.blank_lines))
+
+        author = {
+            "name": interaction.guild.me.display_name,
+            "url": "https://github.com/artemOP/WorstBot-D.Py2",
+            "icon_url": interaction.guild.me.display_avatar.url
+        }
+        embed_list = EmbedGen.EmbedFieldList(
+            author = author,
+            title = "Line Count",
+            fields = fields,
+            max_fields = 9
+        )
+        embed_list.insert(
+            0,
+            EmbedGen.SimpleEmbed(
+                title = "Project total",
+                author = author,
+                text = await self.text_formatting(total_lines)
+            )
+        )
+        view = Paginators.ButtonPaginatedEmbeds(timeout = 60, embed_list = embed_list)
+        await interaction.response.send_message(view = view, embed = embed_list[0], ephemeral = True)
+        view.response = await interaction.original_response()
+
     @commands.Cog.listener(name = "on_app_command_completion")
     async def CommandUsage(self, interaction: Interaction, command: app_commands.Command | app_commands.ContextMenu) -> None:
         if await self.bot.events(interaction.guild_id, self.bot._events.usage) is False:
             return
         await self.bot.execute("INSERT INTO usage(command, guild, execution_time) VALUES($1, $2, $3)", command.qualified_name, interaction.guild_id, interaction.created_at)
+
+    @commands.Cog.listener()
+    async def on_cog_reload(self, root: str = None, file: str = MISSING):
+        self.bot.logger.debug(f"Event triggered: {root}/{file}")
+        if not root:
+            root, file = file.split(".", maxsplit = 1)
+        if file.startswith("-") or not file.endswith(".py"):
+            self.bot.logger.debug(f"Early return on {root}/{file}")
+            return
+        with open(f"{root}/{file}", encoding = "utf-8") as f:
+            self.line_count[file] = await self.file_analysis(f.readlines())
+        self.line_count = dict(sorted(self.line_count.items(), key = lambda x: x[1].total_lines, reverse = True))
+
+    @staticmethod
+    async def file_analysis(lines: list[str]) -> File:
+        file = File(len(lines))
+        block_size = 0
+        for line in lines:
+            if line == "\n":
+                file.blank_lines += 1
+            elif "#" in line:
+                file.comment_lines += 1
+            elif '"""' in line:
+                if block_size != 0 or line.count('"""') % 2 == 0:
+                    file.comment_lines += block_size + 1
+                    block_size = 0
+                else:
+                    block_size += 1
+            else:
+                if block_size != 0:
+                    block_size += 1
+                else:
+                    file.source_lines += 1
+        return file
+
+    @staticmethod
+    async def text_formatting(file: File) -> str:
+        return f"""
+                source code: {file.source_lines} ({Converters.to_percent(file.source_lines, file.total_lines)}%)\n
+                comments: {file.comment_lines} ({Converters.to_percent(file.comment_lines, file.total_lines)}%)\n
+                blank: {file.blank_lines} ({Converters.to_percent(file.blank_lines, file.total_lines)}%)\n
+                total: {file.total_lines}\n\u200b
+                """
 
 
 async def setup(bot):
