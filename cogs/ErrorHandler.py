@@ -62,6 +62,9 @@ class ErrorHandler(commands.Cog):
             case discord.errors.Forbidden():
                 error: discord.Forbidden
                 await self.send(interaction, error.text, codeblock)
+            case app_commands.errors.CheckFailure():
+                error: app_commands.CheckFailure
+                await self.send(interaction, str(error), codeblock)
 
             case _:
                 await self.owner.send(codeblock)
