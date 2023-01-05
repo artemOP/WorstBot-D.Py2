@@ -17,7 +17,7 @@ class Template(commands.GroupCog, name = "template"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Template cog online")
+        self.bot.logger.info("Template cog online")
 
     @app_commands.command(name = "template")
     async def template(self, interaction: Interaction):

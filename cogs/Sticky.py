@@ -17,7 +17,7 @@ class StickyMessage(commands.GroupCog, name = "sticky"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("StickyMessage cog online")
+        self.bot.logger.info("StickyMessage cog online")
 
     @app_commands.command(name = "add", description = "Pin a message to the bottom of a channel")
     async def StickyAdd(self, interaction: discord.Interaction, message: str):

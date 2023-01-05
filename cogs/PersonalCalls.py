@@ -23,7 +23,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Personal call cog online")
+        self.bot.logger.info("Personal call cog online")
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):

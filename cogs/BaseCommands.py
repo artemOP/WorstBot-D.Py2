@@ -17,7 +17,7 @@ class BaseCommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("BaseCommands cog online")
+        self.bot.logger.info("BaseCommands cog online")
 
     @app_commands.command(name = "ping")
     async def ping(self, interaction: Interaction):

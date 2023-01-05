@@ -25,7 +25,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("BirthdayAlert cog online")
+        self.bot.logger.info("BirthdayAlert cog online")
 
     @app_commands.command(name = "alert", description = "Add or remove your Birthday")
     async def BirthdayAdd(self, interaction: Interaction, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None):

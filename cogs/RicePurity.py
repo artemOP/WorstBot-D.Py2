@@ -71,7 +71,7 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("RicePurity cog online")
+        self.bot.logger.info("RicePurity cog online")
 
     @app_commands.command(name = "test")
     async def test(self, interaction: Interaction):

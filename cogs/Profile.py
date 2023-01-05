@@ -89,7 +89,7 @@ class Profile(commands.GroupCog, name = "profile"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("profile cog online")
+        self.bot.logger.info("profile cog online")
 
     async def FetchProfile(self, user: int) -> discord.Embed:
         rows = await self.bot.fetch("SELECT name, value, index FROM profile WHERE member = $1", user)

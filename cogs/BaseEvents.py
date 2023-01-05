@@ -35,8 +35,7 @@ class BaseEvents(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-
-        print("BaseEvents cog online")
+        self.bot.logger.info("BaseEvents cog online")
 
     @staticmethod
     def Choices() -> list[Choice[str]]:

@@ -21,7 +21,7 @@ class TTS(commands.GroupCog, name = "tts"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("TTS cog online")
+        self.bot.logger.info("TTS cog online")
 
     @staticmethod
     def Choices() -> list[Choice[str]]:

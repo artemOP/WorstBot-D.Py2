@@ -40,7 +40,7 @@ class Stats(commands.GroupCog, name = "stats"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Stats cog online")
+        self.bot.logger.info("Stats cog online")
 
     @tasks.loop(count = 1)
     async def count_lines(self):

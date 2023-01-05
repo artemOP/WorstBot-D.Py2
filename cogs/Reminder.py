@@ -11,6 +11,7 @@ class Reminder(commands.Cog):
         self.bot = bot
 
     async def cog_load(self) -> None:
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime TIMESTAMP WITH TIME ZONE NOT NULL,message TEXT NOT NULL, jumplink TEXT NOT NULL)")
         self.ReminderTask.start()
 
     async def cog_unload(self) -> None:
@@ -18,8 +19,7 @@ class Reminder(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime TIMESTAMP WITH TIME ZONE NOT NULL,message TEXT NOT NULL, jumplink TEXT NOT NULL)")
-        print("Reminder cog online")
+        self.bot.logger.info("Reminder cog online")
 
     @app_commands.command(name = "remindme", description = "Set a DM reminder for all your important things (all fields are optional)")
     @app_commands.describe(year = "YYYY", month = "MM", day = "DD", hour = "HH", minute = "MM", second = "SS", message = "reminder message")

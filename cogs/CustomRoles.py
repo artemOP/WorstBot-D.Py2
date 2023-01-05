@@ -30,7 +30,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("CustomRoles cog online")
+        self.bot.logger.info("CustomRoles cog online")
 
     async def FetchRole(self, *, guild: discord.Guild, member: discord.Member) -> Optional[discord.Role]:
 

@@ -101,7 +101,7 @@ class Tag(commands.GroupCog, name = "tag"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Tag cog online")
+        self.bot.logger.info("Tag cog online")
 
     async def OwnerCheck(self, tagid: int, user: int) -> bool:
         select = await self.bot.fetchrow("SELECT owner, public  FROM tags WHERE tagid = $1", tagid)

@@ -19,7 +19,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Events cog online")
+        self.bot.logger.info("Events cog online")
 
     @commands.Cog.listener()
     async def on_scheduled_event_create(self, event: discord.ScheduledEvent):

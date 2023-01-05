@@ -45,7 +45,7 @@ class WorstBot(discord_commands.Bot):
                 pass
 
     async def on_ready(self):
-        print(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
+        self.logger.info(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
     async def post(self, *, url: str, params: dict = None, headers: dict = None) -> dict:
         async with self.session.post(url = url, params = params, headers = headers) as response:
@@ -109,7 +109,7 @@ async def start():
 
 if __name__ == "__main__":
     load_dotenv()
-    discord.utils.setup_logging(level = WARN)
+    discord.utils.setup_logging(level = INFO)
     discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
                            activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
                            intents = discord.Intents.all(),

@@ -119,7 +119,7 @@ class Poll(commands.GroupCog, name = "poll"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Polls cog online")
+        self.bot.logger.info("Polls cog online")
 
     @app_commands.command(name = "start", description = "Start a serverwide poll (max of 20 answers)")
     async def VoteStart(self, interaction: Interaction):

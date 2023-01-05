@@ -19,7 +19,7 @@ class Admin(commands.GroupCog, name = "admin"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Admin cog online")
+        self.bot.logger.info("Admin cog online")
 
     @staticmethod
     def Choices() -> list[Choice[str]]:

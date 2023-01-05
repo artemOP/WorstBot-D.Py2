@@ -28,6 +28,10 @@ class HotReload(commands.Cog):
     async def cog_unload(self) -> None:
         self.hot_reload_loop.stop()
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.bot.logger.info("Hot reload cog online")
+
     @tasks.loop(seconds = 3)
     async def hot_reload_loop(self):
         for extension in list(self.bot.extensions.keys()):

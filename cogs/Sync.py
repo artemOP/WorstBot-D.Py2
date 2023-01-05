@@ -17,7 +17,7 @@ class Sync(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Sync cog online")
+        self.bot.logger.info("Sync cog online")
 
     @commands.hybrid_command(name = "sync", description = "Sync command")
     @commands.is_owner()

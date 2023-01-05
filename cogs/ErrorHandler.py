@@ -39,7 +39,7 @@ class ErrorHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Error handling cog online")
+        self.bot.logger.info("Error handling cog online")
 
     @staticmethod
     async def send(interaction: Interaction, short_text: str, verbose_text: Converters.CodeBlock):

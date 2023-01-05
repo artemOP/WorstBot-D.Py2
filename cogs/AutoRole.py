@@ -18,7 +18,7 @@ class AutoRole(commands.GroupCog, name = "autorole"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("AutoRole cog online")
+        self.bot.logger.info("AutoRole cog online")
 
     @app_commands.command(name = "setup", description = "add or remove role from autorole")
     async def AutoRole(self, interaction: Interaction, role: discord.Role):

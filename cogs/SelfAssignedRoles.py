@@ -31,7 +31,7 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("SelfAssignableRoles Cog online")
+        self.bot.logger.info("SelfAssignableRoles Cog online")
 
     @app_commands.command(name = "role")
     async def ToggleRole(self, interaction: Interaction, role: Transform[discord.Role, RoleTransformer]):

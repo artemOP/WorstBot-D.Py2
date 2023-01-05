@@ -26,7 +26,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Twitch cog online")
+        self.bot.logger.info("Twitch cog online")
 
     async def streamers(self):
         self.streamersTable = await self.bot.fetch("SELECT * FROM twitch")

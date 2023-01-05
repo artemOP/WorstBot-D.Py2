@@ -19,7 +19,7 @@ class Opinion(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Opinion cog online")
+        self.bot.logger.info("Opinion cog online")
 
     @commands.Cog.listener()
     async def on_message(self, message):
