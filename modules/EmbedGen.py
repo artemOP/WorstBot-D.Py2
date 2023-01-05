@@ -9,6 +9,7 @@ from inspect import currentframe, getargvalues
 
 
 class EmbedField(BaseModel):
+    """index: Optional[int] 1-25, name: Str 1-256, value: Str 1-1024, inline: Bool"""
     index: conint(ge = 1, le = 25) = Field(default = None)
     name: constr(min_length = 1, curtail_length = 256)
     value: constr(min_length = 1, curtail_length = 1024)
