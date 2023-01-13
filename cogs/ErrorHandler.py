@@ -31,8 +31,8 @@ class ErrorHandler(commands.Cog):
         self.owner = None
 
     async def cog_load(self) -> None:
+        self.owner = await self.bot.maybe_fetch_user(self.bot.owner_id)
         self.bot.tree.on_error = self.on_app_command_error
-        self.owner = await self.bot.fetch_user(self.bot.owner_id)
 
     async def cog_unload(self) -> None:
         self.bot.tree.on_error = self.bot.tree.__class__.on_error
