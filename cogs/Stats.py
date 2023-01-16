@@ -33,17 +33,17 @@ class Stats(commands.GroupCog, name = "stats"):
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS usage(command TEXT, guild BIGINT, execution_time timestamptz)")
-        self.count_lines.start()
+        self.file_finder.start()
 
     async def cog_unload(self) -> None:
-        self.count_lines.stop()
+        self.file_finder.stop()
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.bot.logger.info("Stats cog online")
 
     @tasks.loop(count = 1)
-    async def count_lines(self):
+    async def file_finder(self):
         for directory in next(walk(getcwd()))[1]:
             if directory.startswith((".", "-")):
                 continue
@@ -51,7 +51,7 @@ class Stats(commands.GroupCog, name = "stats"):
                 self.bot.logger.debug(f"dispatch {file}")
                 self.bot.dispatch("cog_reload", root = directory, file = file)
 
-    @count_lines.before_loop
+    @file_finder.before_loop
     async def wait_until_ready(self):
         await self.bot.wait_until_ready()
 
