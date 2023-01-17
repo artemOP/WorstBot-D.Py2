@@ -12,6 +12,7 @@ from discord.ext import commands as discord_commands
 import asyncpg
 from aiohttp import ClientSession
 from dotenv import load_dotenv
+import orjson
 
 class _events(Enum):
     autorole = auto()
@@ -36,8 +37,8 @@ class WorstBot(discord_commands.Bot):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     async def setup_hook(self) -> None:
-        self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, max_size = 100, min_size = 25)
-        self.session = ClientSession()
+        self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, min_size = 1, max_size = 100, loop = self.loop)
+        self.session = ClientSession(loop = self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
 
         for filename in listdir("cogs"):
             if filename.endswith(".py") and not filename.startswith("-"):
