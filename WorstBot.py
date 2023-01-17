@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import typing
-from enum import Enum, auto
+from enum import StrEnum, auto
 import logging
 from logging import WARN, INFO, DEBUG
 from os import environ, listdir
@@ -14,7 +14,7 @@ from aiohttp import ClientSession
 from dotenv import load_dotenv
 import orjson
 
-class _events(Enum):
+class _events(StrEnum):
     autorole = auto()
     autoevent = auto()
     birthdays = auto()
