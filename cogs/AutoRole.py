@@ -37,7 +37,7 @@ class AutoRole(commands.GroupCog, name = "autorole"):
             fields = [
                 EmbedGen.EmbedField(
                     name = "Role",
-                    value = "Broken Role" if not (role := await RoleManipulation.role_generate(role_id["role"], interaction.guild)) else role.mention)
+                    value = "Broken Role" if not (role := interaction.guild.get_role(role_id["role"])) else role.mention)
                 for role_id in roles
             ],
             max_fields = 9
@@ -47,12 +47,12 @@ class AutoRole(commands.GroupCog, name = "autorole"):
         view.response = await interaction.original_response()
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         if await self.bot.events(member.guild.id, self.bot._events.autorole) is False:
             return
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", member.guild.id)
         for role in roles:
-            role = await RoleManipulation.role_generate(role["role"], member.guild)
+            role = member.guild.get_role(role)
             await RoleManipulation.role_add(member, role, "WorstBot AutoRole")
 
     @commands.Cog.listener()
