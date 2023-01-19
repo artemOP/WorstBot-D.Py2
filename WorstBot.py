@@ -1,12 +1,14 @@
 import asyncio
 import datetime
 import typing
+from typing import Any, Optional
 from enum import StrEnum, auto
 import logging
 from logging import WARN, INFO, DEBUG
 from os import environ, listdir
 
 import discord
+from discord import abc
 from discord.ext import commands as discord_commands
 
 import asyncpg
@@ -28,11 +30,10 @@ class _events(StrEnum):
 class WorstBot(discord_commands.Bot):
 
     def __init__(self, command_prefix, activity, intents, owner_id):
-        super().__init__(command_prefix, intents = intents, owner_id = owner_id)
-        self.pool = None
-        self.session = None
+        super().__init__(command_prefix, intents = intents, owner_id = owner_id, activity = activity)
+        self.pool: Optional[asyncpg.Pool] = None
+        self.session: Optional[ClientSession] = None
         self._event_toggles = {}
-        self.activity = activity
         self._events = _events
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -71,23 +72,44 @@ class WorstBot(discord_commands.Bot):
             async with conn.transaction():
                 return await conn.fetch(sql, *args)
 
-    async def fetchrow(self, sql: str, *args) -> asyncpg.Record | None:
+    async def fetchrow(self, sql: str, *args) -> Optional[asyncpg.Record]:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchrow(sql, *args)
 
-    async def fetchval(self, sql: str, *args) -> typing.Any:
+    async def fetchval(self, sql: str, *args) -> Optional[Any]:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
-    async def execute(self, sql: str, *args) -> typing.Any:
+    async def execute(self, sql: str, *args) -> Optional[Any]:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
-    async def maybe_fetch_user(self, user_id: int) -> discord.User:
-        return self.get_user(user_id) or await self.fetch_user(user_id)
+    async def maybe_fetch_guild(self, guild_id: int) -> Optional[discord.Guild]:
+        try:
+            return self.get_guild(guild_id) or await self.fetch_guild(guild_id)
+        except discord.Forbidden | discord.HTTPException:
+            return None
+
+    async def maybe_fetch_channel(self, channel_id: int) -> Optional[abc.GuildChannel | abc.PrivateChannel | discord.Thread]:
+        try:
+            return self.get_channel(channel_id) or await self.fetch_channel(channel_id)
+        except discord.HTTPException | discord.NotFound | discord.Forbidden:
+            return None
+
+    async def maybe_fetch_member(self, source: discord.Guild | discord.Thread, member_id: int = None) -> Optional[discord.Member]:
+        try:
+            source.get_member(member_id) or await source.fetch_member(member_id)
+        except discord.HTTPException | discord.NotFound | discord.Forbidden:
+            return None
+
+    async def maybe_fetch_user(self, user_id: int) -> Optional[discord.User]:
+        try:
+            return self.get_user(user_id) or await self.fetch_user(user_id)
+        except discord.HTTPException | discord.NotFound:
+            return None
 
     @staticmethod
     def current(current: str) -> typing.Literal["%"] | str:
@@ -105,7 +127,7 @@ class WorstBot(discord_commands.Bot):
         return self._event_toggles[guild_int][event.name]  # returns event bool
 
 
-async def start():
+async def start() -> typing.NoReturn:
     await asyncio.gather(discord_bot.start(environ.get("discord")), return_exceptions = False)
 
 if __name__ == "__main__":
