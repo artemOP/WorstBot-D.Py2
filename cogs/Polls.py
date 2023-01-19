@@ -131,7 +131,7 @@ class Poll(commands.GroupCog, name = "poll"):
             await interaction.response.send_message("This poll does not belong to you", ephemeral = True)
             return
         poll = await self.bot.fetchrow("SELECT question, channel, message_id, accepted_responses from votes WHERE vote_id=$1", poll_id)
-        channel: discord.TextChannel = self.bot.get_channel(poll["channel"])
+        channel: discord.PartialMessageable = await self.bot.get_partial_messageable(poll["channel"])
         message = channel.get_partial_message(poll["message_id"])
         answers = await self.bot.fetch("SELECT answer FROM answers WHERE vote_id=$1", poll_id)
         answers = "\n".join([answer["answer"] for answer in answers])
@@ -146,8 +146,8 @@ class Poll(commands.GroupCog, name = "poll"):
 
         chartIO = await Graphs.graph("bar", self.bot.loop, counts)
 
-        author = interaction.guild.get_member(poll["author"])
-        channel = self.bot.get_channel(poll["channel"])
+        author = await self.bot.maybe_fetch_member(interaction.guild, poll["author"])
+        channel = self.bot.get_partial_messageable(poll["channel"], guild_id = interaction.guild_id)
         message = channel.get_partial_message(poll["message_id"])
         view = Paginators.ThemedGraphView({"Light": chartIO[0], "Dark": chartIO[1]})
         embed = EmbedGen.FullEmbed(
@@ -172,7 +172,7 @@ class Poll(commands.GroupCog, name = "poll"):
     async def VoteEnd(self, interaction: Interaction, poll_id: int):
         await self.results(interaction, poll_id, ephemeral = False)
         channel, message = await self.bot.fetchrow("DELETE FROM votes WHERE vote_id = $1 RETURNING channel, message_id", poll_id)  # type: int, int
-        channel: discord.TextChannel = self.bot.get_channel(channel)
+        channel: discord.PartialMessageable = self.bot.get_partial_messageable(channel)
         message: discord.PartialMessage = channel.get_partial_message(message)
         await message.delete()
 
