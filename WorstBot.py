@@ -101,7 +101,7 @@ class WorstBot(discord_commands.Bot):
 
     async def maybe_fetch_event(self, guild: discord.Guild, event_id: int) -> Optional[discord.ScheduledEvent]:
         try:
-            guild.get_scheduled_event(event_id) or await guild.fetch_scheduled_event(event_id)
+            return guild.get_scheduled_event(event_id) or await guild.fetch_scheduled_event(event_id)
         except discord.NotFound | discord.HTTPException:
             return None
 
