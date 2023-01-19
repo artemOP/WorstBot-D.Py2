@@ -67,7 +67,7 @@ class WorstBot(discord_commands.Bot):
         async with self.session.get(url = url, params = params, headers = headers) as response:
             return response.status
 
-    async def fetch(self, sql: str, *args) -> list[asyncpg.Record] | None:
+    async def fetch(self, sql: str, *args) -> Optional[list[asyncpg.Record]]:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.fetch(sql, *args)
@@ -133,9 +133,20 @@ async def start() -> typing.NoReturn:
 if __name__ == "__main__":
     load_dotenv()
     discord.utils.setup_logging(level = INFO)
+    intents = discord.Intents(
+        auto_moderation_execution = True,
+        bans = True,
+        emojis = True,
+        guilds = True,
+        integrations = True,
+        invites = True,
+        members = True,
+        messages = True,
+        voice_states = True,
+        webhooks = True
+    )
     discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
                            activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
-                           intents = discord.Intents.all(),
+                           intents = intents,
                            owner_id = environ.get("owner"))
-
     asyncio.run(start())
