@@ -30,7 +30,7 @@ class _events(StrEnum):
 class WorstBot(discord_commands.Bot):
 
     def __init__(self, command_prefix, activity, intents, owner_id):
-        super().__init__(command_prefix, intents = intents, owner_id = owner_id, activity = activity)
+        super().__init__(command_prefix, intents = intents, owner_id = owner_id, activity = activity, tree_cls = CommandTree)
         self.pool: Optional[asyncpg.Pool] = None
         self.session: Optional[ClientSession] = None
         self._event_toggles = {}
@@ -132,6 +132,15 @@ class WorstBot(discord_commands.Bot):
 
         return self._event_toggles[guild_int][event.name]  # returns event bool
 
+class CommandTree(discord.app_commands.CommandTree):
+    def __init__(self, bot):
+        super().__init__(bot)
+
+    async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
+        if not interaction.guild:
+            await interaction.response.send_message("This bot cannot be used in dm's, sorry", ephemeral = True)
+            return False
+        return True
 
 async def start() -> typing.NoReturn:
     await asyncio.gather(discord_bot.start(environ.get("discord")), return_exceptions = False)
@@ -140,19 +149,19 @@ if __name__ == "__main__":
     load_dotenv()
     discord.utils.setup_logging(level = INFO)
     intents = discord.Intents(
-        auto_moderation_execution = True,
         bans = True,
         emojis = True,
         guilds = True,
         integrations = True,
         invites = True,
         members = True,
-        messages = True,
+        guild_messages = True,
+        guild_scheduled_events = True,
         voice_states = True,
         webhooks = True
     )
     discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
                            activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
                            intents = intents,
-                           owner_id = environ.get("owner"))
+                           owner_id = int(environ.get("owner")))
     asyncio.run(start())
