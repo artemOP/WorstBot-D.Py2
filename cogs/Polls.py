@@ -131,7 +131,7 @@ class Poll(commands.GroupCog, name = "poll"):
             await interaction.response.send_message("This poll does not belong to you", ephemeral = True)
             return
         poll = await self.bot.fetchrow("SELECT question, channel, message_id, accepted_responses from votes WHERE vote_id=$1", poll_id)
-        channel: discord.PartialMessageable = await self.bot.get_partial_messageable(poll["channel"])
+        channel: discord.PartialMessageable = self.bot.get_partial_messageable(poll["channel"])
         message = channel.get_partial_message(poll["message_id"])
         answers = await self.bot.fetch("SELECT answer FROM answers WHERE vote_id=$1", poll_id)
         answers = "\n".join([answer["answer"] for answer in answers])
@@ -151,7 +151,7 @@ class Poll(commands.GroupCog, name = "poll"):
         message = channel.get_partial_message(poll["message_id"])
         view = Paginators.ThemedGraphView({"Light": chartIO[0], "Dark": chartIO[1]})
         embed = EmbedGen.FullEmbed(
-            author = {"name": author, "url": message.jump_url, "icon_url": author.display_avatar.url},
+            author = {"name": author or "poll", "url": message.jump_url, "icon_url": None if not author else author.display_avatar.url},
             title = poll["question"],
             fields = [EmbedGen.EmbedField(name = name, value = value) for name, value in counts.items()],
             image = "attachment://image.png"

@@ -107,8 +107,8 @@ class WorstBot(discord_commands.Bot):
 
     async def maybe_fetch_member(self, source: discord.Guild | discord.Thread, member_id: int = None) -> Optional[discord.Member]:
         try:
-            source.get_member(member_id) or await source.fetch_member(member_id)
-        except discord.HTTPException | discord.NotFound | discord.Forbidden:
+            return source.get_member(member_id) or await source.fetch_member(member_id)
+        except discord.HTTPException | discord.NotFound | discord.Forbidden as e:
             return None
 
     async def maybe_fetch_user(self, user_id: int) -> Optional[discord.User]:
