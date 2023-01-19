@@ -48,9 +48,12 @@ class Events(commands.Cog):
             await discord.utils.sleep_until((event["expiretime"] - timedelta(minutes = 10)))
 
             guild: discord.Guild = self.bot.get_guild(event["guild"])
-            event: discord.ScheduledEvent = await guild.fetch_scheduled_event(event["event"])
-            baseCall: discord.VoiceChannel = self.bot.get_channel(await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", event.guild_id))
-            category: discord.CategoryChannel = baseCall.category
+            event: discord.ScheduledEvent = await self.bot.maybe_fetch_event(guild, event["event"])
+            base_call_id = await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", event.guild_id)
+            base_call: discord.VoiceChannel = await self.bot.maybe_fetch_channel(base_call_id)
+            if not base_call:
+                return await self.bot.execute("DELETE FROM scheduled_events WHERE event = $1", event.id)
+            category: discord.CategoryChannel = base_call.category
 
             overwrites = {
                              member: discord.PermissionOverwrite(view_channel = True)

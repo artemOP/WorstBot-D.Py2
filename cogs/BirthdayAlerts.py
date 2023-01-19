@@ -43,7 +43,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         table: list[Record] = await self.bot.fetch("SELECT member, birthday FROM birthdays WHERE guild = $1 ORDER BY birthday", interaction.guild_id)
         descriptions: list[str] = [""]
         for member, birthday in table:
-            member = interaction.guild.get_member(member)
+            member = await self.bot.maybe_fetch_member(interaction.guild, member)
             birthday = birthday.strftime("%d/%m")
             if len(descriptions[-1] + str(member) + birthday) < 4000:
                 descriptions[-1] += f"{member.mention}: {birthday}\n"
@@ -63,13 +63,13 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         for birthday in birthdays:
             if await self.bot.events(birthday["guild"], self.bot._events.birthdays) is False:
                 continue
-            guild = self.bot.get_guild(birthday["guild"])
+            guild = await self.bot.maybe_fetch_guild(birthday["guild"])
             if not guild:
                 await self.bot.execute("DELETE FROM birthdays WHERE guild = $1", birthday["guild"])
                 continue
             channel = await self.bot.fetchval("SELECT channel FROM birthdaychannel WHERE guild = $1", guild.id)
-            channel = guild.get_channel(channel)
-            member = guild.get_member(birthday["member"])
+            channel = await self.bot.maybe_fetch_channel(channel)
+            member = await self.bot.maybe_fetch_member(guild, birthday["member"])
             await channel.send(f"Today is {member.mention}'s birthday, dont forget to send them a happy birthday message")
             await self.bot.execute("UPDATE birthdays SET birthday = birthday + INTERVAL '1 year' WHERE member = $1", member.id)
 

@@ -26,10 +26,11 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         self.bot.logger.info("Personal call cog online")
 
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
+    async def on_voice_state_update(self, member, before, after):  # todo: clean smell
         if await self.bot.events(member.guild.id, self.bot._events.calls) is False:
             return
-        PersonalChannel = self.bot.get_channel(await self.bot.fetchval("SELECT channel FROM PersonalCall WHERE guild=$1", member.guild.id))
+        channel_id = await self.bot.fetchval("SELECT channel FROM PersonalCall WHERE guild=$1", member.guild.id)
+        PersonalChannel = await self.bot.maybe_fetch_channel(channel_id)
         if PersonalChannel is None:
             return
         if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", member.guild.id, member.id) is True and after.channel is not None:
@@ -78,7 +79,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
         embed = EmbedGen.FullEmbed(
             title = "Protected channels",
-            fields = [EmbedGen.EmbedField(name = interaction.guild.get_channel(channel["channel"]).name, value = "\u200b") for channel in channels]
+            fields = [EmbedGen.EmbedField(name = str(await self.bot.maybe_fetch_channel(channel["channel"])), value = "\u200b") for channel in channels]
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 

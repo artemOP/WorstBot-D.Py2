@@ -99,6 +99,12 @@ class WorstBot(discord_commands.Bot):
         except discord.HTTPException | discord.NotFound | discord.Forbidden:
             return None
 
+    async def maybe_fetch_event(self, guild: discord.Guild, event_id: int) -> Optional[discord.ScheduledEvent]:
+        try:
+            guild.get_scheduled_event(event_id) or await guild.fetch_scheduled_event(event_id)
+        except discord.NotFound | discord.HTTPException:
+            return None
+
     async def maybe_fetch_member(self, source: discord.Guild | discord.Thread, member_id: int = None) -> Optional[discord.Member]:
         try:
             source.get_member(member_id) or await source.fetch_member(member_id)

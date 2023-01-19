@@ -101,8 +101,9 @@ class Twitch(commands.GroupCog, name = "twitch"):
 
             await self.bot.execute("UPDATE twitch SET live = TRUE WHERE userid=$1", user["userid"])
             stream = [dictionary for dictionary in streams["data"] if int(dictionary["user_id"]) == user["userid"]][0]
-            channel = self.bot.get_channel(user["channel"])
-            role = channel.guild.get_role(user["role"])
+            guild: discord.Guild = await self.bot.maybe_fetch_guild(user["guild"])
+            channel: discord.PartialMessageable = self.bot.get_partial_messageable(user["channel"])
+            role = guild.get_role(user["role"])
             embed = EmbedGen.SimpleEmbed(
                 author = {
                     "name": stream["user_name"],
