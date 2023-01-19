@@ -30,11 +30,10 @@ class StickyMessage(commands.GroupCog, name = "sticky"):
         await interaction.response.send_message('Sticky has been removed from this channel.', ephemeral = True)
 
     @commands.Cog.listener()
-    async def on_message(self, message):
-        sticky = await self.bot.fetchval("SELECT EXISTS( SELECT 1 FROM sticky WHERE channel = $1)", message.channel.id)
+    async def on_message(self, message: discord.Message):
+        sticky = await self.bot.fetchrow("SELECT * FROM sticky WHERE channel=$1", message.channel.id)
         if message.author.bot or not sticky:
             return
-        sticky = await self.bot.fetchrow("SELECT * FROM sticky WHERE channel=$1", message.channel.id)
         if sticky["messageid"]:
             try:
                 oldmessage = await message.channel.fetch_message(sticky["messageid"])
