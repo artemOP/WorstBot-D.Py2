@@ -70,8 +70,5 @@ class BaseCommands(commands.Cog):
             except discord.Forbidden as e:
                 await interaction.followup.send(f"{name} could not be addded due to: {e.text}", ephemeral = True)
 
-
-
-
 async def setup(bot):
     await bot.add_cog(BaseCommands(bot))
