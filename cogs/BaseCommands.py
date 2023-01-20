@@ -4,6 +4,7 @@ from discord.ext import commands
 from WorstBot import WorstBot
 from datetime import timedelta
 import random
+import re
 
 class BaseCommands(commands.Cog):
     def __init__(self, bot: WorstBot):
@@ -46,6 +47,30 @@ class BaseCommands(commands.Cog):
             minimum, maximum = 1, sides
         rolls = [str(random.randrange(minimum, maximum+1, step)) for _ in range(dice)]
         await interaction.response.send_message(f"You rolled {dice} d{int(maximum/step)}\n\n You rolled: {', '.join(rolls)}", ephemeral=ephemeral)
+
+    @app_commands.command(name = "emoji")
+    @app_commands.default_permissions(manage_emojis = True)
+    async def emoji_stealer(self, interaction: Interaction, emoji: str):
+        """"Get emoji from other servers and add it to your own"
+        :param interaction: discord model
+        :param emoji: Custom Emoji you want to add to your server
+        """
+        await interaction.response.defer(ephemeral = True)
+        emoji_strings: list[str] = re.findall("<(?P<animated>a?):(?P<name>[a-zA-Z0-9_]{2,32}):(?P<id>[0-9]{18,22})>", emoji)
+        if not emoji_strings:
+            return await interaction.followup.send("Please enter a custom emoji into the emoji parameter")
+        for animated, name, _id in emoji_strings:
+            partial_emoji = discord.PartialEmoji.with_state(state = self.bot._connection, name = name, animated = animated, id = _id)
+            if not partial_emoji.is_custom_emoji():
+                interaction.followup.send("Please enter a custom emoji into into the emoji parameter")
+                continue
+            try:
+                emoji = await interaction.guild.create_custom_emoji(image = await partial_emoji.read(), name = name, reason = "Emoji stolen by worstbot")
+                await interaction.followup.send(f"{emoji} has been added to the server", ephemeral = True)
+            except discord.Forbidden as e:
+                await interaction.followup.send(f"{name} could not be addded due to: {e.text}", ephemeral = True)
+
+
 
 
 async def setup(bot):
