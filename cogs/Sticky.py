@@ -22,7 +22,7 @@ class StickyMessage(commands.GroupCog, name = "sticky"):
     @app_commands.command(name = "add", description = "Pin a message to the bottom of a channel")
     async def StickyAdd(self, interaction: discord.Interaction, message: str):
         await self.bot.execute("INSERT INTO sticky(channel, messageid, message) VALUES($1, $2, $3) ON CONFLICT (channel) DO UPDATE SET messageid=NULL , message=excluded.message", interaction.channel_id, None, message)
-        await interaction.response.send_message(f'"{message}" \n\nhas been added as a sticky.', ephemeral = True)
+        await interaction.response.send_message(f'"{message}" \n\nhas been added as a sticky.')
 
     @app_commands.command(name = "remove", description = "Remove pinned message")
     async def StickyRemove(self, interaction: discord.Interaction):
@@ -36,9 +36,9 @@ class StickyMessage(commands.GroupCog, name = "sticky"):
             return
         if sticky["messageid"]:
             try:
-                oldmessage = await message.channel.fetch_message(sticky["messageid"])
+                oldmessage = message.channel.get_partial_message(sticky["messageid"])
             except:
-                oldmessage = await message.channel.fetch_message(message.channel.last_message_id)
+                oldmessage = message.channel.get_partial_message(message.channel.last_message_id)
             await oldmessage.delete()
         sticky = await message.channel.send(sticky["message"])
         await self.bot.execute("UPDATE sticky SET messageid=$1 WHERE channel=$2", sticky.id, message.channel.id)
