@@ -42,11 +42,14 @@ class CustomRoles(commands.GroupCog, name = "role"):
 
     async def CreateRole(self, member: discord.Member, colour: int) -> None:
         await sleep(10)
-        role = await member.guild.create_role(name = str(member), colour = discord.Colour(colour), hoist = False)
-        position = member.top_role.position if member.top_role.position > 0 else 1
-        await role.edit(position = position)
-        await RoleManipulation.role_add(member, role, "WorstBot Custom Coloured Roles")
-        await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (guild, member) DO UPDATE SET role = EXCLUDED.role, colour = EXCLUDED.colour", member.guild.id, member.id, role.id, colour)
+        custom_role = await member.guild.create_role(name = str(member), colour = discord.Colour(colour), hoist = False)
+        position = 1
+        for role in member.roles:
+            if role.position > position:
+                position = role.position
+        await custom_role.edit(position = position)
+        await RoleManipulation.role_add(member, custom_role, "WorstBot Custom Coloured Roles")
+        await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (guild, member) DO UPDATE SET role = EXCLUDED.role, colour = EXCLUDED.colour", member.guild.id, member.id, custom_role.id, colour)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
