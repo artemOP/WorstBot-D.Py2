@@ -51,8 +51,11 @@ class AutoRole(commands.GroupCog, name = "autorole"):
         if await self.bot.events(member.guild.id, self.bot._events.autorole) is False:
             return
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", member.guild.id)
-        for role in roles:
-            role = member.guild.get_role(role)
+        for row in roles:
+            role = member.guild.get_role(row["role"])
+            if not role:
+                await self.bot.execute("DELETE FROM autorole WHERE role=$1", row["role"])
+                continue
             await RoleManipulation.role_add(member, role, "WorstBot AutoRole")
 
     @commands.Cog.listener()
