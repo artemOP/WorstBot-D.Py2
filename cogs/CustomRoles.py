@@ -42,12 +42,12 @@ class CustomRoles(commands.GroupCog, name = "role"):
 
     async def CreateRole(self, member: discord.Member, colour: int) -> None:
         await sleep(10)
-        custom_role = await member.guild.create_role(name = str(member), colour = discord.Colour(colour), hoist = False)
+        custom_role = await RoleManipulation.role_create(member.guild, name = str(member), colour = discord.Colour(colour))
         position = 1
         for role in member.roles:
             if role.position > position:
                 position = role.position
-        await custom_role.edit(position = position)
+        await RoleManipulation.role_edit(custom_role, position = position)
         await RoleManipulation.role_add(member, custom_role, "WorstBot Custom Coloured Roles")
         await self.bot.execute("INSERT INTO customroles(guild, member, role, colour) VALUES ($1, $2, $3, $4) ON CONFLICT (guild, member) DO UPDATE SET role = EXCLUDED.role, colour = EXCLUDED.colour", member.guild.id, member.id, custom_role.id, colour)
 
@@ -63,7 +63,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
     async def on_member_remove(self, member):
         role = await self.FetchRole(guild = member.guild, member = member)
         if role:
-            await role.delete()
+            await RoleManipulation.role_delete(role, "WorstBot custom role no longer needed as user left the server")
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
@@ -72,7 +72,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
         role_id = await self.bot.fetchval("SELECT role FROM customroles WHERE guild = $1 AND member = $2", before.guild.id, before.id)
         for guild in self.bot.guilds:
             if (role := guild.get_role(role_id)) is not None:
-                await role.edit(name = str(after))
+                await RoleManipulation.role_edit(role, name=str(after))
 
     @app_commands.command(name = "colour", description = "edits the colour of your custom role")
     async def EditRole(self, interaction: Interaction, colour: app_commands.Transform[int, hexTransformer]):
@@ -81,7 +81,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
         if not role:
             await self.CreateRole(interaction.user, colour)
         else:
-            await role.edit(colour = colour)
+            await RoleManipulation.role_edit(role, colour = colour)
         await interaction.followup.send(content = f'your role colour has now been set to {hex(colour)}', ephemeral = True)
 
     @app_commands.command(name = "check")
