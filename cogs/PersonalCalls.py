@@ -2,9 +2,8 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from WorstBot import WorstBot
-from datetime import datetime
-from os import remove
 from modules import EmbedGen
+from io import BytesIO
 
 @app_commands.default_permissions(manage_channels = True, ban_members=True)
 class PersonalCalls(commands.GroupCog, name = "personal-call"):
@@ -25,38 +24,39 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
     async def on_ready(self):
         self.bot.logger.info("Personal call cog online")
 
+    @staticmethod
+    async def text_archive(base_call: discord.VoiceChannel, personal_channel: discord.VoiceChannel) -> None:
+        bytesIO = BytesIO()
+        bytesIO.writelines([f"{message.created_at.strftime('%Y-%m-%d %H:%M:%S')} | {message.author} : {message.content}\n" async for message in personal_channel.history(limit = None)])
+        bytesIO.seek(0)
+        await base_call.send(file = discord.File(filename = f"{personal_channel.name} archive.txt", fp = bytesIO))
+
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):  # todo: clean smell
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         if await self.bot.events(member.guild.id, self.bot._events.calls) is False:
             return
-        channel_id = await self.bot.fetchval("SELECT channel FROM PersonalCall WHERE guild=$1", member.guild.id)
-        PersonalChannel = await self.bot.maybe_fetch_channel(channel_id)
-        if PersonalChannel is None:
-            return
-        if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", member.guild.id, member.id) is True and after.channel is not None:
-            # if after.channel.id == PersonalChannel.id:
-            await member.edit(voice_channel = None)
-            return
-        if before.channel is None and after.channel is not None:
-            if after.channel.id == PersonalChannel.id:
-                channel = await after.channel.category.create_voice_channel(name = member.name, user_limit = 99, bitrate = member.guild.bitrate_limit)
-                await member.move_to(channel)
-        elif before.channel is not None and before.channel != PersonalChannel:
-            if await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM CallBlacklist WHERE channel=$1)", before.channel.id) is True or before.channel.members:
-                return
-            if await self.bot.events(member.guild.id, self.bot._events.textarchive) is False:
-                return await before.channel.delete()
-            if not [message async for message in before.channel.history(limit=1)]:
-                return await before.channel.delete()
-            file = f"{member.name}-{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
-            with open(file, "w+") as f:
-                f.writelines([f"{message.created_at.strftime('%Y-%m-%d %H:%M:%S')} | {message.author} : {message.content}\n" async for message in before.channel.history(limit = None)])
-            await PersonalChannel.send(file = discord.File(filename = file, description = "Text archive for Personal Calls", fp = file))
-            remove(file)
-            await before.channel.delete()
 
-        if after.channel is not None and after.channel.id == PersonalChannel.id:
+        channel_id = await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", member.guild.id)
+        base_call: discord.VoiceChannel = await self.bot.maybe_fetch_channel(channel_id)  # type: Ignore
+        if base_call is None:
+            return
+
+        call_blacklist = await self.bot.fetch("SELECT channel FROM callblacklist WHERE guild=$1", member.guild.id)
+        user_blacklist = await self.bot.fetch("SELECT member FROM userblacklist WHERE guild=$1", member.guild.id)
+        if any(member.id == record["member"] for record in user_blacklist):
             await member.edit(voice_channel = None)
+
+        if after.channel == base_call:
+            personal_call = await base_call.category.create_voice_channel(name = member.name, user_limit = 99, bitrate = member.guild.bitrate_limit)
+            await member.move_to(personal_call, reason = "WorstBot Personal Calls")
+
+        if before.channel is not any((base_call, None)):
+            if any(before.channel.id == record["channel"] for record in call_blacklist) or before.channel.members:
+                return
+
+            # if await self.bot.events(member.guild.id, self.bot._events.textarchive):  # Disabled until message intent re-enabled
+            #     await self.text_archive(base_call, before.channel)
+            await before.channel.delete()
 
     @app_commands.command(name = "setup")
     async def PersonalCallSetup(self, interaction: Interaction, channel: discord.VoiceChannel = None):
