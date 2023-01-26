@@ -1,8 +1,11 @@
+import discord
+
 class Base(Exception):
     """Custom Base for all exceptions"""
-    def __init__(self, original_error: Exception, message: str):
+    def __init__(self, original_error: Exception, guild: discord.Guild, text: str):
         self.original_error = original_error
-        self.message = message
+        self.guild = guild
+        self.text = text
 
 class ManageGuild(Base):
     """Raises when bot is missing the "manage guild" permission"""
