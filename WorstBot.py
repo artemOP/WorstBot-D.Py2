@@ -90,32 +90,32 @@ class WorstBot(discord_commands.Bot):
     async def maybe_fetch_guild(self, guild_id: int) -> Optional[discord.Guild]:
         try:
             return self.get_guild(guild_id) or await self.fetch_guild(guild_id)
-        except discord.Forbidden | discord.HTTPException:
-            return None
+        except (discord.Forbidden, discord.HTTPException):
+            return
 
     async def maybe_fetch_channel(self, channel_id: int) -> Optional[abc.GuildChannel | abc.PrivateChannel | discord.Thread]:
         try:
             return self.get_channel(channel_id) or await self.fetch_channel(channel_id)
-        except discord.HTTPException | discord.NotFound | discord.Forbidden:
-            return None
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            return
 
     async def maybe_fetch_event(self, guild: discord.Guild, event_id: int) -> Optional[discord.ScheduledEvent]:
         try:
             return guild.get_scheduled_event(event_id) or await guild.fetch_scheduled_event(event_id)
-        except discord.NotFound | discord.HTTPException:
-            return None
+        except (discord.NotFound, discord.HTTPException):
+            return
 
     async def maybe_fetch_member(self, source: discord.Guild | discord.Thread, member_id: int = None) -> Optional[discord.Member]:
         try:
             return source.get_member(member_id) or await source.fetch_member(member_id)
-        except discord.HTTPException | discord.NotFound | discord.Forbidden as e:
-            return None
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            return
 
     async def maybe_fetch_user(self, user_id: int) -> Optional[discord.User]:
         try:
             return self.get_user(user_id) or await self.fetch_user(user_id)
-        except discord.HTTPException | discord.NotFound:
-            return None
+        except (discord.NotFound, discord.HTTPException):
+            return
 
     @staticmethod
     def current(current: str) -> typing.Literal["%"] | str:
