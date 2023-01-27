@@ -11,13 +11,14 @@ import sys
 from typing import Optional
 
 class DebugView(Paginators.BaseView):
-    def __init__(self, short_text: discord.Embed, verbose_text: Converters.CodeBlock, timeout=30):
+    def __init__(self, short_text: discord.Embed, verbose_text: Converters.CodeBlock, verbose: bool, timeout=30):
         super().__init__(timeout=timeout)
         self.short_text = short_text
         self.verbose_text = verbose_text
-        self.VERBOSE = False
+        self.VERBOSE = verbose
+        self.Traceback.label = "View Simplified Message" if verbose else "View Traceback"
 
-    @discord.ui.button(label="View Traceback", style=discord.ButtonStyle.red)
+    @discord.ui.button(style=discord.ButtonStyle.red)
     async def Traceback(self, interaction: Interaction, button: discord.ui.Button):
         if not self.VERBOSE:
             button.label = "View Simplified Message"
@@ -58,21 +59,21 @@ class ErrorHandler(commands.Cog):
         except discord.Forbidden:
             raise Errors.SendMessages
 
-    async def send_view(self, interaction: Interaction = None, messageable: Messageable = None, error = MISSING):
+    async def send_view(self, interaction: Interaction = None, messageable: Messageable = None, error = MISSING, verbose = False):
         if interaction and messageable:
             raise NotImplemented
         short_text = EmbedGen.SimpleEmbed(title="Oops, this interaction threw an error.", text=getattr(error, "text", str(error)))
         traceback_text = await self.format_traceback(type(error), error, error.__traceback__)
         verbose_text = Converters.CodeBlock("py", traceback_text)
-        view = DebugView(short_text, verbose_text)
+        view = DebugView(short_text, verbose_text, verbose)
         if interaction:
             if not interaction.response.is_done():
-                await interaction.response.send_message(embed=short_text, view=view, ephemeral=True)
+                await interaction.response.send_message(content = verbose_text if verbose else None, embed = short_text if not verbose else None, view=view, ephemeral=True)
             else:
-                await interaction.followup.send(embed=short_text, view=view, ephemeral=True)
+                await interaction.followup.send(content = verbose_text if verbose else None, embed = short_text if not verbose else None, view=view, ephemeral=True)
             view.response = await interaction.original_response()
         else:
-            await self.send(messageable = messageable, embed = short_text, view = view)
+            await self.send(messageable = messageable, content = verbose_text if verbose else None, embed = short_text if not verbose else None, view = view)
 
     async def on_app_command_error(self, interaction: Interaction, error: AppCommandError):
         if isinstance(error, app_commands.CommandInvokeError):
@@ -88,7 +89,7 @@ class ErrorHandler(commands.Cog):
             case _:
                 error: discord.HTTPException
                 if self.owner:
-                    await self.send_view(messageable = self.owner, error = error)
+                    await self.send_view(messageable = self.owner, error = error, verbose = True)
                 self.bot.logger.error(await self.format_traceback(type(error), error, error.__traceback__))
 
     async def on_error(self, event: str, *args, **kwargs):
