@@ -53,9 +53,9 @@ class ErrorHandler(commands.Cog):
         return "".join(traceback_lines)
 
     @staticmethod
-    async def send(messageable: Messageable, **kwargs):
+    async def send(messageable: Messageable, **kwargs) -> discord.Message:
         try:
-            await messageable.send(**kwargs)
+            return await messageable.send(**kwargs)
         except discord.Forbidden:
             raise Errors.SendMessages
 
@@ -73,7 +73,7 @@ class ErrorHandler(commands.Cog):
                 await interaction.followup.send(content = verbose_text if verbose else None, embed = short_text if not verbose else None, view=view, ephemeral=True)
             view.response = await interaction.original_response()
         else:
-            await self.send(messageable = messageable, content = verbose_text if verbose else None, embed = short_text if not verbose else None, view = view)
+            view.response = await self.send(messageable = messageable, content = verbose_text if verbose else None, embed = short_text if not verbose else None, view = view)
 
     async def on_app_command_error(self, interaction: Interaction, error: AppCommandError):
         if isinstance(error, app_commands.CommandInvokeError):
