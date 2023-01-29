@@ -37,10 +37,12 @@ class ErrorHandler(commands.Cog):
     async def cog_load(self) -> None:
         self.owner = await self.bot.maybe_fetch_user(self.bot.owner_id)
         self.bot.tree.on_error = self.on_app_command_error
+        self.bot.on_command_error = self.on_command_error
         self.bot.on_error = self.on_error
 
     async def cog_unload(self) -> None:
         self.bot.tree.on_error = self.bot.tree.__class__.on_error
+        self.bot.on_command_error = self.bot.__class__.on_command_error
         self.bot.on_error = self.bot.__class__.on_error
 
     @commands.Cog.listener()
@@ -91,6 +93,14 @@ class ErrorHandler(commands.Cog):
                 if self.owner:
                     await self.send_view(messageable = self.owner, error = error, verbose = True)
                 self.bot.logger.error(await self.format_traceback(type(error), error, error.__traceback__))
+
+    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
+        if isinstance(error, commands.NotOwner):
+            await self.send(messageable = ctx, content = str(error))
+        elif isinstance(error, commands.BadLiteralArgument):
+            await self.send(messageable = ctx, content = "Incorrect option passed, please try again")
+        else:
+            raise error
 
     async def on_error(self, event: str, *args, **kwargs):
         exception_type, exception, exception_traceback = sys.exc_info()

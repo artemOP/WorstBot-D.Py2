@@ -46,14 +46,5 @@ class Sync(commands.Cog):
                 await self.bot.tree.sync(guild = ctx.guild)
                 return await ctx.send("Local commands removed")
 
-    @sync.error
-    async def sync_error(self, ctx: Context, error):
-        if isinstance(error, commands.NotOwner):
-            await ctx.send(str(error), ephemeral = True)
-        elif isinstance(error, commands.BadLiteralArgument):
-            await ctx.send("Incorrect option passed, please try again")
-        else:
-            raise error
-
 async def setup(bot):
     await bot.add_cog(Sync(bot))
