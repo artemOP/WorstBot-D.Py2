@@ -4,7 +4,7 @@ import typing
 from typing import Any, Optional
 from enum import StrEnum, auto
 import logging
-from logging import WARN, INFO, DEBUG
+from logging import ERROR, INFO, DEBUG
 from os import environ, listdir
 
 import discord
@@ -148,6 +148,7 @@ async def start() -> typing.NoReturn:
 if __name__ == "__main__":
     load_dotenv()
     discord.utils.setup_logging(level = INFO)
+    logging.getLogger("discord.gateway").setLevel(ERROR)
     intents = discord.Intents(
         bans = True,
         emojis = True,
