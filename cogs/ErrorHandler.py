@@ -98,7 +98,7 @@ class ErrorHandler(commands.Cog):
         if isinstance(exception, Errors.ManageRoles):
             exception: Errors.ManageRoles
             await self.send_view(messageable = exception.guild.system_channel, error = exception)
-        elif Errors.SendMessages:
+        elif isinstance(exception, Errors.SendMessages):
             try:
                 await self.send_view(messageable = exception.guild.owner, error = exception)
             except:
