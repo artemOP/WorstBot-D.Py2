@@ -50,7 +50,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
             personal_call = await base_call.category.create_voice_channel(name = member.name, user_limit = 99, bitrate = member.guild.bitrate_limit)
             await member.move_to(personal_call, reason = "WorstBot Personal Calls")
 
-        if before.channel is not any((base_call, None)):
+        if before.channel not in (base_call, None):
             if any(before.channel.id == record["channel"] for record in call_blacklist) or before.channel.members:
                 return
 
