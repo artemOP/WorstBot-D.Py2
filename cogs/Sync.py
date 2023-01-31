@@ -23,28 +23,31 @@ class Sync(commands.Cog):
     @commands.is_owner()
     @app_commands.default_permissions()
     @app_commands.describe(option = "*|/ to add|remove global sync, +|- to add|remove local sync")
-    async def sync(self, ctx: Context, option: Literal["*", "/", "+", "-"] = "*") -> discord.Message:
-        await ctx.defer(ephemeral = True)
-        match option:
-            case "*":
-                await self.bot.tree.sync(guild = None)
-                return await ctx.send("Commands synced globally")
+    async def sync(self, ctx: Context, option: Literal["*", "/", "+", "-"] = "*"):
+        async with ctx.typing(ephemeral = True):
+            match option:
+                case "*":
+                    await self.bot.tree.sync(guild = None)
+                    return await ctx.send("Commands synced globally")
 
-            case "/":
-                self.bot.tree.clear_commands(guild = None)
-                await self.bot.tree.sync(guild = None)
-                return await ctx.send("Global commands removed")
+                case "/":
+                    self.bot.tree.clear_commands(guild = None)
+                    await self.bot.tree.sync(guild = None)
+                    return await ctx.send("Global commands removed")
 
-            case "+":
-                self.bot.tree.clear_commands(guild = ctx.guild)
-                self.bot.tree.copy_global_to(guild = ctx.guild)
-                await self.bot.tree.sync(guild = ctx.guild)
-                return await ctx.send("Commands synced locally")
+                case "+":
+                    self.bot.tree.clear_commands(guild = ctx.guild)
+                    self.bot.tree.copy_global_to(guild = ctx.guild)
+                    await self.bot.tree.sync(guild = ctx.guild)
+                    return await ctx.send("Commands synced locally")
 
-            case "-":
-                self.bot.tree.clear_commands(guild = ctx.guild)
-                await self.bot.tree.sync(guild = ctx.guild)
-                return await ctx.send("Local commands removed")
+                case "-":
+                    self.bot.tree.clear_commands(guild = ctx.guild)
+                    await self.bot.tree.sync(guild = ctx.guild)
+                    return await ctx.send("Local commands removed")
+
+                case _:
+                    return await ctx.send("Invalid option passed")
 
 async def setup(bot):
     await bot.add_cog(Sync(bot))
