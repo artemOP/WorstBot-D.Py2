@@ -1,8 +1,8 @@
 import discord
-from discord import app_commands, Interaction
+from discord import app_commands, Interaction, utils
 from discord.ext import commands
 from WorstBot import WorstBot
-from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 import random
 import re
 
@@ -31,13 +31,13 @@ class BaseCommands(commands.Cog):
         await interaction.channel.send(content = arg)
 
     def is_me(self, message: discord.Message) -> bool:
-        return not message.author == self.bot.user or message.created_at < discord.utils.utcnow() - timedelta(seconds = 10)
+        return not message.author == self.bot.user or message.created_at < discord.utils.utcnow() - relativedelta(seconds = 10)
 
     @app_commands.command(name = "purge")
     @app_commands.default_permissions(manage_messages = True)
     async def purge(self, interaction: Interaction, amount: app_commands.Range[int, 1, 100] = 1):
         await interaction.response.defer(ephemeral = True)
-        deleted = await interaction.channel.purge(limit = amount, check = self.is_me, bulk = True if amount > 1 else False, after = interaction.created_at - timedelta(weeks = 2), oldest_first = False)
+        deleted = await interaction.channel.purge(limit = amount, check = self.is_me, bulk = True if amount > 1 else False, after = interaction.created_at - relativedelta(weeks = 2), oldest_first = False)
         await interaction.followup.send(content = f"deleted {len(deleted)} messages")
 
     @app_commands.command(name = "rtd", description = "role some dice")
@@ -69,6 +69,18 @@ class BaseCommands(commands.Cog):
                 await interaction.followup.send(f"{emoji} has been added to the server", ephemeral = True)
             except discord.Forbidden as e:
                 await interaction.followup.send(f"{name} could not be addded due to: {e.text}", ephemeral = True)
+
+    @app_commands.command(name = "self-mute")
+    async def self_mute(self, interaction: Interaction, length: app_commands.Range[int, 1, 2_419_200] = 60):
+        """Mute yourself for a set time period
+
+        :param interaction: discord Interaction
+        :param length: Length of mute in seconds
+        """
+        until = utils.utcnow() + relativedelta(seconds = length)
+        await interaction.user.timeout(until)
+        await interaction.response.send_message(f"{interaction.user.mention} has timed themself out until {utils.format_dt(until)}")
+
 
 async def setup(bot):
     await bot.add_cog(BaseCommands(bot))
