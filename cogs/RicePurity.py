@@ -58,7 +58,7 @@ class PurityButtons(discord.ui.View):  # Makes The quiz buttons run and gives ou
                 self.counter += 1
                 await interaction.response.edit_message(view = self, content = ": ".join(next(self.generator)))
 
-class RicePurity(commands.GroupCog, name = "ricepurity", group_nsfw = True):  # Main cog class
+class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
     def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
