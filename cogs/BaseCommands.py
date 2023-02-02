@@ -80,7 +80,7 @@ class BaseCommands(commands.Cog):
         if not length:
             length = random.gammavariate(3.1, 99_000)
         until = utils.utcnow() + relativedelta(seconds = length)
-        await interaction.user.timeout(until)
+        await interaction.user.timeout(until, reason = "WorstBot self_mute commands")
         await interaction.response.send_message(f"{interaction.user.mention} has timed themself out until {utils.format_dt(until)}")
 
 
