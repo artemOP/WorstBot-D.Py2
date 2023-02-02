@@ -28,26 +28,26 @@ class Admin(commands.GroupCog, name = "admin"):
             cog.endswith(".py") and not cog.startswith("-")
         ]
 
-    @app_commands.command(name = "load")
-    @app_commands.choices(cog = Choices())
-    async def CogLoad(self, interaction: Interaction, cog: Choice[str]):
-        await self.bot.load_extension(f"cogs.{cog.value}")
-        await interaction.response.send_message(f"{cog.value} has been loaded", ephemeral = True)
-
-    @app_commands.command(name = "unload")
-    @app_commands.choices(cog = Choices())
-    async def CogUnload(self, interaction: Interaction, cog: Choice[str]):
-        await self.bot.unload_extension(f"cogs.{cog.value}")
-        await interaction.response.send_message(f"{cog.value} has been unloaded", ephemeral = True)
-
-    @app_commands.command(name = "reload")
-    @app_commands.choices(cog = Choices())
-    async def CogReload(self, interaction: Interaction, cog: Choice[str]):
-        try:
-            await self.bot.reload_extension(f"cogs.{cog.value}")
-            await interaction.response.send_message(f"{cog.value} has been reloaded", ephemeral = True)
-        except:
-            await interaction.response.send_message(f"{cog.value} is not a valid input", ephemeral = True)
+    # @app_commands.command(name = "load")
+    # @app_commands.choices(cog = Choices())
+    # async def CogLoad(self, interaction: Interaction, cog: Choice[str]):
+    #     await self.bot.load_extension(f"cogs.{cog.value}")
+    #     await interaction.response.send_message(f"{cog.value} has been loaded", ephemeral = True)
+    #
+    # @app_commands.command(name = "unload")
+    # @app_commands.choices(cog = Choices())
+    # async def CogUnload(self, interaction: Interaction, cog: Choice[str]):
+    #     await self.bot.unload_extension(f"cogs.{cog.value}")
+    #     await interaction.response.send_message(f"{cog.value} has been unloaded", ephemeral = True)
+    #
+    # @app_commands.command(name = "reload")
+    # @app_commands.choices(cog = Choices())
+    # async def CogReload(self, interaction: Interaction, cog: Choice[str]):
+    #     try:
+    #         await self.bot.reload_extension(f"cogs.{cog.value}")
+    #         await interaction.response.send_message(f"{cog.value} has been reloaded", ephemeral = True)
+    #     except:
+    #         await interaction.response.send_message(f"{cog.value} is not a valid input", ephemeral = True)
 
     @app_commands.command(name = "nickname", description = "Change WorstBot's nickname")
     async def nickname(self, interaction: Interaction, nickname: str = ""):
