@@ -87,6 +87,11 @@ class WorstBot(discord_commands.Bot):
             async with conn.transaction():
                 return await conn.fetchval(sql, *args)
 
+    async def executemany(self, sql: str, args: typing.Iterable[typing.Sequence]) -> Optional[Any]:
+        async with self.pool.acquire() as conn:  # type: asyncpg.Connection
+            async with conn.transaction():
+                return await conn.executemany(sql, args)
+
     async def maybe_fetch_guild(self, guild_id: int) -> Optional[discord.Guild]:
         try:
             return self.get_guild(guild_id) or await self.fetch_guild(guild_id)
