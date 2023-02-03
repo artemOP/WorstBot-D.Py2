@@ -15,8 +15,8 @@ class RoleTransformer(Transformer):
         roleids = await interaction.client.fetch("SELECT role FROM selfroles WHERE guild = $1", interaction.guild_id)
         roles = {role["role"]: interaction.guild.get_role(role["role"]).name for role in roleids}
         if not current:
-            return [Choice(name = item[1], value = str(item[0])) for item in roles.items()]
-        return [Choice(name = item[1], value = str(item[0])) for item in roles.items() if current in item[1]]
+            return [Choice(name = item[1], value = str(item[0])) for item in roles.items()][:25]
+        return [Choice(name = item[1], value = str(item[0])) for item in roles.items() if current in item[1]][:25]
 
 
 class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Toggle a self assignable role"):
