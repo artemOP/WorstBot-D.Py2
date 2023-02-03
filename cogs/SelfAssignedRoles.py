@@ -27,7 +27,7 @@ class RoleTransformer(Transformer):
             return [Choice(name = role.name, value = str(role.id)) for role in roles][:25]
 
         fuzzy_roles = process.extract(current, [role.name for role in roles], limit = 25)
-        fuzzy_roles = [role_name for role_name, value, _ in fuzzy_roles if value > 0]
+        fuzzy_roles = [role_name for role_name, value, _ in fuzzy_roles if value > 40]
         return [Choice(name = role.name, value = str(role.id)) for role in roles if role.name in fuzzy_roles]
 
 
