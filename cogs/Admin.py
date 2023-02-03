@@ -68,9 +68,17 @@ class Admin(commands.GroupCog, name = "admin"):
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM selfroles WHERE guild = $1 AND role = $2)", interaction.guild_id, role.id):
             await self.bot.execute("INSERT INTO selfroles(guild, role) VALUES ($1, $2) ON CONFLICT DO NOTHING", interaction.guild_id, role.id)
             await interaction.response.send_message(f"{role.name} added as a self assignable role", ephemeral = True)
+            try:
+                self.bot.giveme_roles[interaction.guild].append(role)
+            except:
+                pass
         else:
             await self.bot.execute("DELETE FROM selfroles WHERE role = $1", role.id)
             await interaction.response.send_message(f"{role.name} removed as a self assignable role", ephemeral = True)
+            try:
+                self.bot.giveme_roles[interaction.guild].remove(role)
+            except:
+                pass
 
     @app_commands.command(name="tags", description = "delete all tags in the guild")
     async def DeleteAll(self, interaction: Interaction):
