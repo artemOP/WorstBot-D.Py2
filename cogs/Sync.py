@@ -19,11 +19,18 @@ class Sync(commands.Cog):
     async def on_ready(self):
         self.bot.logger.info("Sync cog online")
 
-    @commands.hybrid_command(name = "sync", description = "Sync command")
+    @commands.command(name = "sync", description = "Sync command")
     @commands.is_owner()
-    @app_commands.default_permissions()
-    @app_commands.describe(option = "*|/ to add|remove global sync, +|- to add|remove local sync")
     async def sync(self, ctx: Context, option: Literal["*", "/", "+", "-"] = "*"):
+        """Sync commands with set options
+
+        :param ctx: Context
+        :param option:
+            *: Global Sync
+            /: Clear Global Commands
+            +: Local Sync
+            -: Clear Local Sync
+        """
         async with ctx.typing(ephemeral = True):
             match option:
                 case "*":

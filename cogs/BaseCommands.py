@@ -71,14 +71,16 @@ class BaseCommands(commands.Cog):
                 await interaction.followup.send(f"{name} could not be addded due to: {e.text}", ephemeral = True)
 
     @app_commands.command(name = "self-mute")
-    async def self_mute(self, interaction: Interaction, length: app_commands.Range[int, 1, 2_419_200] = 60):
+    async def self_mute(self, interaction: Interaction, length: app_commands.Range[int, 1, 2_419_200] = None):
         """Mute yourself for a set time period
 
         :param interaction: discord Interaction
         :param length: Length of mute in seconds
         """
+        if not length:
+            length = random.gammavariate(3.1, 99_000)
         until = utils.utcnow() + relativedelta(seconds = length)
-        await interaction.user.timeout(until)
+        await interaction.user.timeout(until, reason = "WorstBot self_mute commands")
         await interaction.response.send_message(f"{interaction.user.mention} has timed themself out until {utils.format_dt(until)}")
 
 
