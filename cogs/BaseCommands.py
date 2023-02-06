@@ -5,6 +5,7 @@ from WorstBot import WorstBot
 from dateutil.relativedelta import relativedelta
 import random
 import re
+from rapidfuzz import process
 
 class BaseCommands(commands.Cog):
     def __init__(self, bot: WorstBot):
@@ -83,6 +84,33 @@ class BaseCommands(commands.Cog):
         await interaction.user.timeout(until, reason = "WorstBot self_mute commands")
         await interaction.response.send_message(f"{interaction.user.mention} has timed themself out until {utils.format_dt(until)}")
 
+    @app_commands.command(name = "mention-command")
+    @app_commands.default_permissions()
+    async def mention_command(self, interaction: Interaction, command: str):
+        await interaction.response.send_message(command)
+
+    @mention_command.autocomplete(name = "command")
+    async def mention_command_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
+        commands_and_groups = self.bot.tree.get_commands(guild = interaction.guild, type = discord.AppCommandType.chat_input)
+        command_list = self.bot.tree.flatten_commands(commands_and_groups)
+        if not current:
+            return [
+                       app_commands.Choice(
+                           name = command.qualified_name,
+                           value = command.extras.get(f"mention for {interaction.guild_id}") or command.extras.get("mention", "None")
+                       )
+                       for command in commands_and_groups
+                   ][:25]
+
+        fuzzy_commands = process.extract(current, [command.qualified_name for command in command_list], limit = 25, score_cutoff = 60)
+        fuzzy_commands = [command_name for command_name, _, _ in fuzzy_commands]
+        return [
+            app_commands.Choice(
+                name = command.qualified_name,
+                value = command.extras.get(f"mention for {interaction.guild_id}") or command.extras.get("mention", "None")
+            )
+            for command in command_list if command.qualified_name in fuzzy_commands
+        ]
 
 async def setup(bot):
     await bot.add_cog(BaseCommands(bot))

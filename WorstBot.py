@@ -8,8 +8,9 @@ from logging import ERROR, INFO, DEBUG
 from os import environ, listdir
 
 import discord
-from discord import abc
-from discord.ext import commands as discord_commands
+from discord import abc, app_commands, AppCommandType
+from discord.ext import commands as discord_commands, tasks
+from discord.app_commands import Group, Command, ContextMenu
 
 import asyncpg
 from aiohttp import ClientSession
@@ -40,6 +41,7 @@ class WorstBot(discord_commands.Bot):
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, min_size = 1, max_size = 100, loop = self.loop)
         self.session = ClientSession(loop = self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
+        self.prepare_mentions.start()
 
         for filename in listdir("cogs"):
             if filename.endswith(".py") and not filename.startswith("-"):
@@ -137,7 +139,31 @@ class WorstBot(discord_commands.Bot):
 
         return self._event_toggles[guild_int][event.name]  # returns event bool
 
-class CommandTree(discord.app_commands.CommandTree):
+    @staticmethod
+    async def add_to_extra(command: Command, mention: str, guild_id: Optional[int] = None) -> None:
+        if guild_id:
+            command.extras[f"mention for {guild_id}"] = mention
+        else:
+            command.extras[f"mention"] = mention
+
+    @tasks.loop(count = 1)
+    async def prepare_mentions(self):
+        for guild in [*self.guilds, None]:
+            for fetched_command in await self.tree.fetch_commands(guild = guild):
+                command = self.tree.get_command(fetched_command.name, guild = guild, type = fetched_command.type)
+                if command is None:
+                    self.logger.debug("command not found")
+                    continue
+                await self.add_to_extra(command, fetched_command.mention, None if not guild else guild.id)
+                if isinstance(command, Group):
+                    for child in command.walk_commands():
+                        await self.add_to_extra(child, f"</{child.qualified_name}:{fetched_command.id}>", None if not guild else guild.id)
+
+    @prepare_mentions.before_loop
+    async def before_prepare_mentions(self):
+        await self.wait_until_ready()
+
+class CommandTree(app_commands.CommandTree):
     def __init__(self, bot):
         super().__init__(bot)
 
@@ -146,6 +172,31 @@ class CommandTree(discord.app_commands.CommandTree):
             await interaction.response.send_message("This bot cannot be used in dm's, sorry", ephemeral = True)
             return False
         return True
+
+    def get_command(self, command_name: str, /, *, guild: Optional[abc.Snowflake] = None, type: AppCommandType = AppCommandType.chat_input) -> Optional[Command | ContextMenu | Group]:
+        command = super().get_command(command_name, guild = guild, type = type)
+        if not command:
+            command = super().get_command(command_name, guild = None, type = type)
+        return command
+
+    def get_commands(self, *, guild: Optional[abc.Snowflake] = None, type: Optional[AppCommandType] = None) -> list[Command | ContextMenu | Group]:
+        guild_commands = super().get_commands(guild = guild, type = type)
+        global_commands = super().get_commands(guild = None, type = type)
+        for global_command in global_commands:
+            if global_command.name not in [guild_command.name for guild_command in guild_commands]:
+                guild_commands.append(global_command)
+        return guild_commands
+
+    @staticmethod
+    def flatten_commands(command_list: list[app_commands.Command | app_commands.Group | discord_commands.Command | discord_commands.Group]) -> list[app_commands.Command | discord_commands.Command]:
+        flat_commands = []
+        for command in command_list:
+            if isinstance(command, app_commands.Group | discord_commands.Command):
+                for child in command.walk_commands():
+                    flat_commands.append(child)
+            else:
+                flat_commands.append(command)
+        return flat_commands
 
 async def start() -> typing.NoReturn:
     await asyncio.gather(discord_bot.start(environ.get("discord")), return_exceptions = False)
