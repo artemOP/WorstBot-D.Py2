@@ -154,7 +154,8 @@ class Poll(commands.GroupCog, name = "poll"):
             author = {"name": author or "poll", "url": message.jump_url, "icon_url": None if not author else author.display_avatar.url},
             title = poll["question"],
             fields = [EmbedGen.EmbedField(name = name, value = value) for name, value in counts.items()],
-            image = "attachment://image.png"
+            image = "attachment://image.png",
+            footer = {"text": f"{sum(counts.values())} Total responses"}
         )
         await interaction.followup.send(
             view = view,
