@@ -55,6 +55,7 @@ class HotReload(commands.Cog):
             else:
                 self.bot.logger.info(f"Reloaded extension: {extension}")
                 self.bot.dispatch("cog_reload", root = None, file = f"{extension}.py")
+                await self.bot.prepare_mentions.start()
             finally:
                 self.last_modified_time[extension] = time
 
