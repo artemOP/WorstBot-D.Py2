@@ -1,5 +1,6 @@
 import discord
 from discord.utils import MISSING
+from discord.ext import commands
 from typing import Optional
 from datetime import datetime as dt
 
@@ -57,5 +58,11 @@ def to_datetime(date_str: str, date_format: str) -> dt | None:
         return dt.strptime(date_str, date_format)
     except (ValueError, TypeError):
         return None
+
+def to_command_mention(command: commands.Command, guild: discord.Guild) -> str:
+    mention_str = command.extras.get(f"mention for {guild.id}")
+    if not mention_str:
+        mention_str = command.extras.get("mention", "None")
+    return mention_str or "None"
 
 # todo: integrate ErrorHandler.py

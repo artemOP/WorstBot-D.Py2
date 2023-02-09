@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 import random
 import re
 from rapidfuzz import process
+from modules import Converters
 
 class BaseCommands(commands.Cog):
     def __init__(self, bot: WorstBot):
@@ -97,9 +98,9 @@ class BaseCommands(commands.Cog):
             return [
                        app_commands.Choice(
                            name = command.qualified_name,
-                           value = command.extras.get(f"mention for {interaction.guild_id}") or command.extras.get("mention", "None")
+                           value = Converters.to_command_mention(command, interaction.guild)
                        )
-                       for command in commands_and_groups
+                       for command in command_list
                    ][:25]
 
         fuzzy_commands = process.extract(current, [command.qualified_name for command in command_list], limit = 25, score_cutoff = 60)
@@ -107,7 +108,7 @@ class BaseCommands(commands.Cog):
         return [
             app_commands.Choice(
                 name = command.qualified_name,
-                value = command.extras.get(f"mention for {interaction.guild_id}") or command.extras.get("mention", "None")
+                value = Converters.to_command_mention(command, interaction.guild)
             )
             for command in command_list if command.qualified_name in fuzzy_commands
         ]
