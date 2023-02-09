@@ -90,6 +90,15 @@ class StartPollModal(ui.Modal, title = "Poll"):
     async def on_error(self, interaction: Interaction, error: Exception) -> None:
         raise
 
+class PollResultsView(Paginators.ThemedGraphView):
+    def __init__(self, graphs, responses: dict[str, list[discord.Member]]):
+        super().__init__(graphs, timeout = 600)
+        self.responses = responses
+        self.detailed_poll_response.options = [discord.SelectOption(label = answer) for answer in responses]
+
+    @ui.select(placeholder = "Select an answer to see who voted for it")
+    async def detailed_poll_response(self, interaction: Interaction, select: ui.Select):
+        await interaction.response.send_message(embeds = EmbedGen.SimpleEmbedList(descriptions = "\n".join(member.mention for member in self.responses[select.values[0]])), ephemeral = True)
 
 class Poll(commands.GroupCog, name = "poll"):
 
@@ -142,14 +151,19 @@ class Poll(commands.GroupCog, name = "poll"):
         await interaction.response.defer(ephemeral = ephemeral)
         poll = await self.bot.fetchrow("SELECT vote_id, message_id, channel, question, author FROM votes WHERE vote_id = $1", poll_id)
         answer_table = {answer_id: answer for answer_id, answer in await self.bot.fetch("SELECT answer_id, answer FROM answers WHERE vote_id=$1", poll_id)}
-        counts = {answer: await self.bot.fetchval("SELECT COUNT(*) FROM voters WHERE answer_id=$1", answer_id) for answer_id, answer in answer_table.items()}
+
+        counts, responses = {}, {}
+        for answer_id, answer in answer_table.items():
+            user_list = await self.bot.fetchval("SELECT ARRAY_AGG(member) FROM voters WHERE answer_id=$1", answer_id)
+            responses[answer] = [await self.bot.maybe_fetch_member(interaction.guild, member) for member in user_list]
+            counts[answer] = len(user_list)
 
         chartIO = await Graphs.graph("bar", self.bot.loop, counts)
 
         author = await self.bot.maybe_fetch_member(interaction.guild, poll["author"])
         channel = self.bot.get_partial_messageable(poll["channel"], guild_id = interaction.guild_id)
         message = channel.get_partial_message(poll["message_id"])
-        view = Paginators.ThemedGraphView({"Light": chartIO[0], "Dark": chartIO[1]})
+        view = PollResultsView({"Light": chartIO[0], "Dark": chartIO[1]}, responses)
         embed = EmbedGen.FullEmbed(
             author = {"name": author or "poll", "url": message.jump_url, "icon_url": None if not author else author.display_avatar.url},
             title = poll["question"],
