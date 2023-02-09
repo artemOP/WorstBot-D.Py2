@@ -205,6 +205,7 @@ if __name__ == "__main__":
     load_dotenv()
     discord.utils.setup_logging(level = INFO)
     logging.getLogger("discord.gateway").setLevel(ERROR)
+    logging.getLogger("matplotlib.category").setLevel(ERROR)
     intents = discord.Intents(
         bans = True,
         emojis = True,
