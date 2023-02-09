@@ -187,7 +187,7 @@ class Poll(commands.GroupCog, name = "poll"):
     async def VoteEnd(self, interaction: Interaction, poll_id: int):
         owner = await self.bot.fetchval("SELECT author FROM votes WHERE vote_id=$1", poll_id)
         if interaction.user.id != owner:
-            return await interaction.response.send_message(f"This is not your poll to end, please use {Converters.to_command_mention(self.VoteResults, interaction.guild)}")
+            return await interaction.response.send_message(f"This is not your poll to end, please use {Converters.to_command_mention(self.VoteResults, interaction.guild)}", ephemeral = True)
         await self.results(interaction, poll_id, ephemeral = False)
         channel, message = await self.bot.fetchrow("DELETE FROM votes WHERE vote_id = $1 RETURNING channel, message_id", poll_id)  # type: int, int
         channel: discord.PartialMessageable = self.bot.get_partial_messageable(channel)
