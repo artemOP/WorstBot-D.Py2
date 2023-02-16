@@ -8,6 +8,8 @@ class BaseView(discord.ui.View):
         self.response: discord.InteractionMessage | None = None
 
     async def on_timeout(self) -> None:
+        if not self.response:
+            raise NotImplementedError("A response must be provided for the view to timeout")
         await self.response.edit(view = None)
 
 class ButtonPaginatedEmbeds(BaseView):
