@@ -13,6 +13,8 @@ class BaseView(discord.ui.View):
         await self.response.edit(view = None)
 
     async def interaction_check(self, interaction: Interaction, /) -> bool:
+        if not self.response.interaction:
+            return True
         if self.response.interaction.user != interaction.user:
             await interaction.response.send_message(f"This is not your view, please launch your own", ephemeral = True)
             return False
