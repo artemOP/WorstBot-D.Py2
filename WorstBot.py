@@ -59,8 +59,11 @@ class WorstBot(discord_commands.Bot):
 
     async def get(self, *, url: str, params: dict = None, headers: dict = None) -> dict:
         async with self.session.get(url = url, params = params, headers = headers) as response:
-            content = await response.json()
-            if not isinstance(content, dict):
+            try:
+                content: list | dict = await response.json()
+            except orjson.JSONDecodeError:
+                content = {}
+            if isinstance(content, list):
                 content = {"data": content[0] if len(content) == 1 else content}
             content["status"] = response.status
             return content
