@@ -9,8 +9,14 @@ class BaseView(discord.ui.View):
 
     async def on_timeout(self) -> None:
         if not self.response:
-            raise NotImplementedError("A response must be provided for the view to timeout")
+            raise AttributeError("A response must be provided for the view to timeout")
         await self.response.edit(view = None)
+
+    async def interaction_check(self, interaction: Interaction, /) -> bool:
+        if self.response.interaction.user != interaction.user:
+            await interaction.response.send_message(f"This is not your view, please launch your own", ephemeral = True)
+            return False
+        return True
 
 class ButtonPaginatedEmbeds(BaseView):
     def __init__(self, embed_list, timeout = 30):
