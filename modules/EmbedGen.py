@@ -1,49 +1,95 @@
-import discord
-from discord import Embed, Colour
+from discord import Embed as DiscordEmbed, Colour
 from discord.utils import MISSING, utcnow
 from itertools import islice
-from typing import Optional
+from typing import Optional, Any, Mapping, Self
 from math import ceil
-from pydantic import BaseModel, conint, constr, Field
 from inspect import currentframe, getargvalues
 
 
-class EmbedField(BaseModel):
-    """index: Optional[int] 1-25, name: Str 1-256, value: Str 1-1024, inline: Bool"""
-    index: conint(ge = 1, le = 25) = Field(default = None)
-    name: constr(min_length = 1, curtail_length = 256)
-    value: constr(min_length = 1, curtail_length = 1024)
-    inline: bool = Field(default = True)
+class EmbedField:
+    """A single field within an embed
 
+    :parameter index:
+    """
+
+    def __init__(self, name: Any, value: Any, inline: Optional[bool] = True, index: Optional[int] = None):
+        self._name = self.name = name
+        self._value = self.value = value
+        self.inline = inline
+        self.index = index
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, new_name: Any) -> None:
+        name = str(new_name)
+        if not 0 < len(name) < 256:
+            raise ValueError("Field name is incorrectly sized, length: ", len(name))
+        self._name = name
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @value.setter
+    def value(self, new_value: Any) -> None:
+        value = str(new_value)
+        if not 0 < len(value) < 1024:
+            raise ValueError("Field value is incorrectly sized, length: ", len(value))
+        self._value = value
+
+class Embed(DiscordEmbed):
+    def __init__(self, colour = None, title = None, url = None, description = None, timestamp = None, extras: Mapping[Any, Any] = None):
+        super().__init__(
+            colour = colour,
+            title = title,
+            url = url,
+            description = description,
+            timestamp = timestamp
+        )
+        self.extras = extras or {}
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
+        super().from_dict(data)
+        cls.extras = data.get("extras")
+        return cls
+
+    def add_fields(self, fields: list[EmbedField]):
+        for field in islice(fields, 25):
+            if field.index:
+                self.insert_field_at(field.index, name = field.name, value = field.value, inline = field.inline)
+                continue
+
+            self.add_field(name = field.name, value = field.value, inline = field.inline)
 
 def set_colour(colour: Colour | None):
     return Colour.random() if not colour else colour
 
-def set_author(embed: discord.Embed, author: dict[str, str]) -> discord.Embed:
+def set_author(embed: Embed, author: dict[str, str]) -> Embed:
     if isinstance(author, dict):
         embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
     else:
         raise NotImplementedError
     return embed
 
-
-def set_footer(embed: discord.Embed, footer: dict[str, str]) -> discord.Embed:
+def set_footer(embed: Embed, footer: dict[str, str]) -> Embed:
     if isinstance(footer, dict):
         embed.set_footer(text = footer.get("text"), icon_url = footer.get("icon_url"))
     else:
         raise NotImplementedError
     return embed
 
-
-def set_image(embed: discord.Embed, image: str) -> discord.Embed:
+def set_image(embed: Embed, image: str) -> Embed:
     if isinstance(image, str):
         embed.set_image(url = image)
     else:
         raise NotImplementedError
     return embed
 
-
-def set_thumbnail(embed: discord.Embed, image: str) -> discord.Embed:
+def set_thumbnail(embed: Embed, image: str) -> Embed:
     if isinstance(image, str):
         embed.set_thumbnail(url = image)
     else:
@@ -57,7 +103,8 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
                 image: Optional[str] = None,
                 thumbnail: Optional[str] = None,
                 colour: Optional[Colour] = None,
-                footer: Optional[dict[str, str]] = None) -> Embed:
+                footer: Optional[dict[str, str]] = None,
+                extras: Optional[Mapping[Any, Any]] = None) -> Embed:
     """
     Generates a simple embed with only the description field
 
@@ -68,9 +115,10 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
     :param thumbnail: Embed Thumbnail: Optional str
     :param colour: Embed Colour: Optional colour
     :param footer: Embed footer: Optional dict{text: ..., icon_url: ...}
-    :return: Discord Embed
+    :param extras: extra information that is not sent to discord
+    :return: Embed
     """
-    embed = Embed(title = title, description = text[:4000], colour = set_colour(colour), timestamp = utcnow())
+    embed = Embed(title = title, description = text[:4000], colour = set_colour(colour), timestamp = utcnow(), extras = extras)
     _, _, _, values = getargvalues(currentframe())
     for arg, value in values.items():
         if any(arg in field for field in OPTIONAL_FIELDS) and value:
@@ -86,7 +134,8 @@ def FullEmbed(
         image: Optional[str] = None,
         thumbnail: Optional[str] = None,
         colour: Optional[Colour] = None,
-        footer: Optional[dict[str, str]] = None) -> Embed:
+        footer: Optional[dict[str, str]] = None,
+        extras: Optional[Mapping[Any, Any]] = None) -> Embed:
     """
     Generates an embed with up to 25 title: value fields plus description field.
 
@@ -98,14 +147,11 @@ def FullEmbed(
     :param thumbnail: Embed Thumbnail: Optional str
     :param colour: Embed Colour: Optional colour
     :param footer: Embed footer: Optional dict{text: ..., icon_url: ...}
-    :return: Discord Embed
+    :param extras: extra information that is not sent to discord
+    :return: Embed
     """
-    embed = Embed(title = title, colour = set_colour(colour), description = description, timestamp = utcnow())
-    for field in islice(fields, 25):
-        if field.index:
-            embed.insert_field_at(index = field.index, name = field.name, value = field.value, inline = field.inline)
-        else:
-            embed.add_field(name = field.name, value = field.value, inline = field.inline)
+    embed = Embed(title = title, colour = set_colour(colour), description = description, timestamp = utcnow(), extras = extras)
+    embed.add_fields(fields)
     _, _, _, values = getargvalues(currentframe())
     for arg, value in values.items():
         if any(arg in field for field in OPTIONAL_FIELDS) and value:
@@ -120,7 +166,8 @@ def EmbedFieldList(
         max_fields: Optional[int] = 25,
         description: Optional[list[str]] = None,
         colour: Optional[Colour] = None,
-        footers: Optional[list[dict[str, str]]] | dict[str, str] | None = None) -> list[Embed]:
+        footers: Optional[list[dict[str, str]] | dict[str, str]] = None,
+        extras: Optional[list[Mapping[Any, Any]] | Mapping[Any, Any]] = None) -> list[Embed]:
     """
     Generates list of embed with {max_fields} number of fields per embed.
 
@@ -131,13 +178,15 @@ def EmbedFieldList(
     :param description: Embed descriptions
     :param colour: Colour of embeds
     :param footers: Embed footers, leave blank for page count
+    :param extras: extra information that is not sent to discord
     :return: List of embeds
     """
     embed_list: list[Embed] = [
         Embed(title = title if isinstance(title, str | None) else title[i],
               colour = set_colour(colour),
               description = None if not description else description[i],
-              timestamp = utcnow())
+              timestamp = utcnow(),
+              extras = extras if isinstance(extras, Mapping) else {})
         for i in range(0, max(ceil(len(fields) / max_fields), 1))
     ]
     field_index = 0
@@ -148,6 +197,8 @@ def EmbedFieldList(
                 embed.insert_field_at(index = field.index, name = field.name, value = field.value, inline = field.inline)
             else:
                 embed.add_field(name = field.name, value = field.value, inline = field.inline)
+            if isinstance(extras, list):
+                embed.extras[len(embed.fields)] = extras[field_index]
             field_index += 1
         if author:
             embed.set_author(name = author.get("name"), url = author.get("url"), icon_url = author.get("icon_url"))
@@ -166,7 +217,8 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
                     image: Optional[list[str] | str] = None,
                     thumbnail: Optional[list[str] | str] = None,
                     colour: Optional[Colour] = None,
-                    footer: Optional[list[dict[str, str]] | dict[str, str]] = None) -> list[Embed]:
+                    footer: Optional[list[dict[str, str]] | dict[str, str]] = None,
+                    extras: Optional[list[Mapping[Any, Any]] | Mapping[Any, Any]] = None) -> list[Embed]:
     """
     Generates a list of embeds with only the description field filled
 
@@ -177,6 +229,7 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
     :param thumbnail: image thumbnail(s): list[str] | str
     :param colour: Colour of embed: discord.Colour
     :param footer: Embed footer(s): Optional list[dict] | dict{name: ..., url: ..., icon_url: ...}
+    :param extras: extra information that is not sent to discord
     :return: List of embeds
     """
     if isinstance(descriptions, str):
@@ -185,7 +238,9 @@ def SimpleEmbedList(author: Optional[dict[str, str]] = None,
         Embed(
             title = title if isinstance(title, str | None) else title[index],
             description = description[:4000],
-            colour = set_colour(colour)
+            colour = set_colour(colour),
+            timestamp = utcnow(),
+            extras = extras if isinstance(extras, Mapping | None) else extras[index]
         ) for index, description in enumerate(descriptions)
     ]
     if author:
