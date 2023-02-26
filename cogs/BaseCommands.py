@@ -53,7 +53,8 @@ class BaseCommands(commands.Cog):
     @app_commands.command(name = "emoji")
     @app_commands.default_permissions(manage_emojis = True)
     async def emoji_stealer(self, interaction: Interaction, emoji: str):
-        """"Get emoji from other servers and add it to your own"
+        """Get emoji from other servers and add it to your own
+
         :param interaction: discord model
         :param emoji: Custom Emoji you want to add to your server
         """
