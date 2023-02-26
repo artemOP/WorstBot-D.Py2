@@ -12,7 +12,6 @@ class Reminder(commands.Cog):
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime TIMESTAMP WITH TIME ZONE NOT NULL,message TEXT NOT NULL, jumplink TEXT NOT NULL)")
-        self.ReminderTask.start()
 
     async def cog_unload(self) -> None:
         self.ReminderTask.stop()
@@ -42,27 +41,20 @@ class Reminder(commands.Cog):
         reminder = await self.bot.fetchrow("SELECT * FROM reminder WHERE expiretime = (SELECT MIN(expiretime) FROM reminder)")
 
         if not reminder:
-            self.ReminderTask.stop()
             return
 
         if (reminder["expiretime"] - dt.now(timezone.utc)).days > 7:
-            self.ReminderTask.stop()
-        else:
-            await discord.utils.sleep_until(reminder["expiretime"])
-            user = await self.bot.maybe_fetch_user(reminder["member"])
-            embed = FullEmbed(title = "**Reminder**",
-                              fields = [EmbedField(name = "**original message:**", value = reminder["jumplink"])],
-                              description = f"""You asked to be reminded of: "{reminder["message"]}" """)
-            await user.send(embed = embed)
-            await self.bot.execute("DELETE FROM reminder WHERE expiretime<=NOW()")
+            return
 
-    @tasks.loop(time = time(), reconnect = True)
-    async def RestartTask(self):
-        if not self.ReminderTask.is_running():
-            self.ReminderTask.start()
+        await discord.utils.sleep_until(reminder["expiretime"])
+        user = await self.bot.maybe_fetch_user(reminder["member"])
+        embed = FullEmbed(title = "**Reminder**",
+                          fields = [EmbedField(name = "**original message:**", value = reminder["jumplink"])],
+                          description = f"""You asked to be reminded of: "{reminder["message"]}" """)
+        await user.send(embed = embed)
+        await self.bot.execute("DELETE FROM reminder WHERE jumplink=$1", reminder["jumplink"])
 
     @ReminderTask.before_loop
-    @RestartTask.before_loop
     async def BeforeReminder(self):
         await self.bot.wait_until_ready()
 
