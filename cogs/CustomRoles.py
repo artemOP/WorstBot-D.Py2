@@ -45,7 +45,6 @@ class CustomRoles(commands.GroupCog, name = "role"):
         return role if not None else None
 
     async def CreateRole(self, member: discord.Member, colour: int) -> None:
-        await sleep(10)
         custom_role = await RoleManipulation.role_create(member.guild, name = str(member), colour = discord.Colour(colour))
         position = 1
         for role in member.roles:
@@ -61,6 +60,7 @@ class CustomRoles(commands.GroupCog, name = "role"):
             return
         if (colour := await self.bot.fetchval("SELECT colour FROM customroles WHERE guild = $1 AND member = $2", member.guild.id, member.id)) is None:
             colour = int("0xff00ff", 16)
+        await sleep(10)
         await self.CreateRole(member, colour)
 
     @commands.Cog.listener()
