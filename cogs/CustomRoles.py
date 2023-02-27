@@ -1,15 +1,19 @@
-from abc import ABC
 import discord
 from discord import app_commands, Interaction
+from discord.app_commands import Choice
 from discord.ext import commands
 from WorstBot import WorstBot
 from typing import Optional
 from modules import EmbedGen, RoleManipulation
 from asyncio import sleep
 
-class hexTransformer(app_commands.Transformer, ABC):
+class hexTransformer(app_commands.Transformer):
+    async def autocomplete(self, interaction: Interaction, value: int | float | str, /) -> list[Choice[int | float | str]]:
+        return [Choice(name = "abcdef", value = "abcdef"), Choice(name = "0x012345", value = "0x012345"), Choice(name = "#1120ff", value = "#1120ff")]
+
     @classmethod
     async def transform(cls, interaction: Interaction, value: str) -> int:
+        value = value.removeprefix("#")
         return int(value, 16)
 
 class CustomRoles(commands.GroupCog, name = "role"):

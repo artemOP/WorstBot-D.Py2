@@ -1,8 +1,7 @@
-from abc import ABC
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands, tasks
-from discord.app_commands import Transform, Transformer
+from discord.app_commands import Choice, Transform, Transformer
 from discord.utils import MISSING
 from WorstBot import WorstBot
 from dataclasses import dataclass
@@ -18,7 +17,11 @@ class File:
     blank_lines: int = 0
 
 
-class DateTransformer(Transformer, ABC):
+class DateTransformer(Transformer):
+
+    async def autocomplete(self, interaction: Interaction, value: int | float | str, /) -> list[Choice[int | float | str]]:
+        now_str = datetime.now().strftime("%Y/%m/%d")
+        return [Choice(name = now_str, value = now_str)]
 
     @classmethod
     async def transform(cls, interaction: Interaction, value: str) -> datetime:
