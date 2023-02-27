@@ -89,12 +89,15 @@ class Stats(commands.GroupCog, name = "stats"):
         await interaction.response.defer(ephemeral = True)
 
         usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM usage WHERE guild = $1 AND execution_time BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)
-        chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage})
+        total = sum(row["count"] for row in usage)
+        chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage if (row["count"] / total) * 100 > 3})
         view = Paginators.ThemedGraphView({"Light": chartIO[0], "Dark": chartIO[1]})
         embeds = EmbedGen.SimpleEmbedList(title = "Guild command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']}" for row in usage),
-                                          image = "attachment://image.png")
+                                          image = "attachment://image.png",
+                                          footer = {"text": f"Total uses: {total}"}
+                                          )
         await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[1], filename = "image.png"))
         view.response = await interaction.original_response()
 
@@ -102,13 +105,16 @@ class Stats(commands.GroupCog, name = "stats"):
     async def GloablUsage(self, interaction: Interaction):
         await interaction.response.defer(ephemeral = True)
         usage = await self.bot.fetch("SELECT command, COUNT(*) as count, max(execution_time) as last_usage FROM usage GROUP BY command ORDER BY count DESC")
-        chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage})
+        total = sum(row["count"] for row in usage)
+        chartIO = await Graphs.graph("pie", self.bot.loop, {row["command"]: row["count"] for row in usage if (row["count"] / total) * 100 > 3})
         view = Paginators.ThemedGraphView({"Light": chartIO[0], "Dark": chartIO[1]})
         embeds = EmbedGen.SimpleEmbedList(title = "Global command usage",
                                           descriptions = "\n".join(
                                               f"{row['command']}: {row['count']} (Last used: {row['last_usage'].strftime('%Y/%m/%d')})"
                                               for row in usage),
-                                          image = "attachment://image.png")
+                                          image = "attachment://image.png",
+                                          footer = {"text": f"Total uses: {total}"}
+                                          )
         await interaction.followup.send(view = view, embeds = embeds, file = discord.File(fp = chartIO[1], filename = "image.png"))
         view.response = await interaction.original_response()
 
