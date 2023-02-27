@@ -31,29 +31,30 @@ class Sync(commands.Cog):
             -: Clear Local Sync
         """
         async with ctx.typing(ephemeral = True):
+            await ctx.message.delete(delay = 10)
             match option:
                 case "*":
                     await self.bot.tree.sync(guild = None)
-                    return await ctx.send("Commands synced globally")
-
+                    response_message = "Commands synced globally"
                 case "/":
                     self.bot.tree.clear_commands(guild = None)
                     await self.bot.tree.sync(guild = None)
-                    return await ctx.send("Global commands removed")
+                    response_message = "Global commands removed"
 
                 case "+":
                     self.bot.tree.clear_commands(guild = ctx.guild)
                     self.bot.tree.copy_global_to(guild = ctx.guild)
                     await self.bot.tree.sync(guild = ctx.guild)
-                    return await ctx.send("Commands synced locally")
+                    response_message = "Commands synced locally"
 
                 case "-":
                     self.bot.tree.clear_commands(guild = ctx.guild)
                     await self.bot.tree.sync(guild = ctx.guild)
-                    return await ctx.send("Local commands removed")
+                    response_message = "Local commands removed"
 
                 case _:
-                    return await ctx.send("Invalid option passed")
+                    response_message = "Invalid option passed"
+            return await ctx.send(response_message, delete_after = 10)
 
 async def setup(bot):
     await bot.add_cog(Sync(bot))
