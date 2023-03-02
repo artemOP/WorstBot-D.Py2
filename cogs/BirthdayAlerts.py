@@ -1,11 +1,13 @@
+from datetime import date
+
 import discord
-from discord import app_commands, Interaction
+from asyncpg import Record
+from dateutil.relativedelta import relativedelta
+from discord import Interaction, app_commands
 from discord.app_commands import Range
 from discord.ext import commands, tasks
+
 from WorstBot import WorstBot
-from datetime import date, time
-from dateutil.relativedelta import relativedelta
-from asyncpg import Record
 from modules.EmbedGen import SimpleEmbedList
 from modules.Paginators import ButtonPaginatedEmbeds
 
@@ -55,22 +57,29 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         await interaction.response.send_message(view = view, embed = embed_list[0], ephemeral = True)
         view.response = await interaction.original_response()
 
-    @tasks.loop(time = time(1, 0), reconnect = True)
+    @tasks.loop(hours = 1, reconnect = True)
     async def BirthdayCheck(self):
-        birthdays = await self.bot.fetch("SELECT * FROM birthdays WHERE birthday = NOW()::DATE")
+        birthdays = await self.bot.fetch("SELECT * FROM birthdays WHERE birthday<=NOW()::DATE")
         if not birthdays:
             return
         for birthday in birthdays:
             if await self.bot.events(birthday["guild"], self.bot._events.birthdays) is False:
                 continue
+
             guild = await self.bot.maybe_fetch_guild(birthday["guild"])
             if not guild:
-                await self.bot.execute("DELETE FROM birthdays WHERE guild = $1", birthday["guild"])
                 continue
+
             channel = await self.bot.fetchval("SELECT channel FROM birthdaychannel WHERE guild = $1", guild.id)
             channel = await self.bot.maybe_fetch_channel(channel)
+
             member = await self.bot.maybe_fetch_member(guild, birthday["member"])
-            await channel.send(f"Today is {member.mention}'s birthday, dont forget to send them a happy birthday message")
+            if not (channel and member):
+                continue
+
+            permissions = channel.permissions_for(guild.me)
+            if permissions.send_messages and permissions.view_channel:
+                await channel.send(f"Today is {member.mention}'s birthday, dont forget to send them a happy birthday message")
             await self.bot.execute("UPDATE birthdays SET birthday = birthday + INTERVAL '1 year' WHERE member = $1", member.id)
 
     @BirthdayCheck.before_loop
