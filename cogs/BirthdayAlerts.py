@@ -19,7 +19,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdaychannel(guild BIGINT PRIMARY KEY, channel BIGINT NOT NULL)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdays(guild BIGINT, member BIGINT, birthday DATE, PRIMARY KEY(guild, member))")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdays(guild BIGINT, member BIGINT PRIMARY KEY, birthday DATE)")
         self.BirthdayCheck.start()
 
     async def cog_unload(self) -> None:
@@ -29,7 +29,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
     async def on_ready(self):
         self.bot.logger.info("BirthdayAlert cog online")
 
-    @app_commands.command(name = "alert", description = "Add or remove your Birthday")
+    @app_commands.command(name = "alert", description = "Add or remove your Birthday GLOBALLY")
     async def BirthdayAdd(self, interaction: Interaction, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None):
         if not (month or day):
             await self.bot.execute("DELETE FROM birthdays WHERE member = $1", interaction.user.id)
@@ -37,7 +37,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         birthday = date(year = date.today().year, month = month, day = day)
         if birthday < date.today():
             birthday += relativedelta(years = +1)
-        await self.bot.execute("INSERT INTO birthdays(guild, member, birthday) VALUES($1, $2, $3) ON CONFLICT(guild, member) DO UPDATE SET birthday = excluded.birthday", interaction.guild_id, interaction.user.id, birthday)
+        await self.bot.executemany("INSERT INTO birthdays(guild, member, birthday) VALUES($1, $2, $3) ON CONFLICT(member) DO UPDATE SET birthday = excluded.birthday", [(guild.id, interaction.user.id, birthday) for guild in self.bot.guilds if interaction.user in guild.members])
         await interaction.response.send_message(f"you will be alerted of your birthday on {birthday.strftime('%d/%m/%Y')}", ephemeral = True)
 
     @app_commands.command(name = "list")
