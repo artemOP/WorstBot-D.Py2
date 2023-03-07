@@ -60,7 +60,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
             if user not in interaction.guild.members:
                 continue
 
-            string = f"{user.mention}: {birthday.strftime('%d/%m')}"
+            string = f"{user.mention}: {birthday.strftime('%d/%m')}\n"
             if len(birthdays[-1] + string) < 4000:
                 birthdays[-1] += string
             else:
