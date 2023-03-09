@@ -31,8 +31,8 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         self.bot.logger.info("BirthdayAlert cog online")
 
     @app_commands.command(name = "alert")
-    async def BirthdayAdd(self, interaction: Interaction, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None):  # todo: Timezones
-        """Add or remove your birthday GLOBALLY (based on UTC)
+    async def BirthdayAdd(self, interaction: Interaction, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None):
+        """Add or remove your birthday GLOBALLY
 
         :param interaction: Internal Discord Interaction
         :param month: 1-12: The Month of your birthday
