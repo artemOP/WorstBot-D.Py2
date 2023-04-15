@@ -168,6 +168,7 @@ class Stats(commands.GroupCog, name = "stats"):
         self.bot.logger.debug(f"Event triggered: {root}/{file}")
         if not root:
             root, file = file.split(".", maxsplit = 1)
+        file = file.replace(".", "/")
         if file.startswith("-") or not file.endswith(".py"):
             self.bot.logger.debug(f"Early return on {root}/{file}")
             return
