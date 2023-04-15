@@ -25,6 +25,8 @@ class Events(commands.Cog):
     async def on_scheduled_event_create(self, event: discord.ScheduledEvent):
         if await self.bot.events(event.guild.id, self.bot._events.autoevent) is False:
             return
+        if not event.channel:
+            return
         if event.channel.id != await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild = $1", event.guild_id):
             return
         await self.bot.execute("INSERT INTO scheduled_events(event, guild, expiretime) VALUES($1, $2, $3)", event.id, event.guild_id, event.start_time)

@@ -5,7 +5,8 @@ from typing import Any, Optional
 from enum import StrEnum, auto
 import logging
 from logging import ERROR, INFO, DEBUG
-from os import environ, listdir
+from os import environ
+import pathlib
 
 import discord
 from discord import abc, app_commands, AppCommandType
@@ -37,16 +38,22 @@ class WorstBot(discord_commands.Bot):
         self._event_toggles = {}
         self._events = _events
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.cog_dir = pathlib.Path("./cogs")
 
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, min_size = 1, max_size = 100, loop = self.loop)
         self.session = ClientSession(loop = self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
         self.prepare_mentions.start()
 
-        for filename in listdir("cogs"):
-            if filename.endswith(".py") and not filename.startswith("-"):
-                await self.load_extension(f'cogs.{filename[:-3]}')
-                pass
+        for file in self.collect_cogs(self.cog_dir):
+            await self.load_extension(str(file.relative_to("./")).replace("\\", ".")[:-3])
+
+    def collect_cogs(self, root: pathlib.Path) -> typing.Generator[pathlib.Path, None, None]:
+        for file in root.iterdir():
+            if file.match("[!-]*.py"):
+                yield file
+            elif file.is_dir():
+                yield from self.collect_cogs(file)
 
     async def on_ready(self):
         self.logger.info(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
