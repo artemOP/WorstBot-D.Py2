@@ -46,7 +46,7 @@ class WorstBot(discord_commands.Bot):
         self.prepare_mentions.start()
 
         for file in self.collect_cogs(self.cog_dir):
-            await self.load_extension(f"cogs.{file.name[:-3]}")
+            await self.load_extension(str(file.relative_to("./")).replace("\\", ".")[:-3])
 
     def collect_cogs(self, root: pathlib.Path) -> typing.Generator[pathlib.Path, None, None]:
         for file in root.iterdir():
