@@ -35,6 +35,8 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         if await self.bot.events(member.guild.id, self.bot._events.calls) is False:
             return
+        if member.bot:
+            return
 
         channel_id = await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", member.guild.id)
         base_call: discord.VoiceChannel = await self.bot.maybe_fetch_channel(channel_id)  # type: Ignore
