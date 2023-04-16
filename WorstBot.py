@@ -4,8 +4,7 @@ import typing
 from typing import Any, Optional
 from enum import StrEnum, auto
 import logging
-from logging import ERROR, INFO, DEBUG
-from os import environ
+from logging import ERROR, INFO
 import pathlib
 
 import discord
@@ -15,7 +14,7 @@ from discord.app_commands import Group, Command, ContextMenu
 
 import asyncpg
 from aiohttp import ClientSession
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 import orjson
 
 class _events(StrEnum):
@@ -31,7 +30,7 @@ class _events(StrEnum):
 
 class WorstBot(discord_commands.Bot):
 
-    def __init__(self, command_prefix, activity, intents, owner_id):
+    def __init__(self, command_prefix, activity, intents, owner_id, env_values):
         super().__init__(command_prefix, intents = intents, owner_id = owner_id, activity = activity, tree_cls = CommandTree)
         self.pool: Optional[asyncpg.Pool] = None
         self.session: Optional[ClientSession] = None
@@ -39,9 +38,10 @@ class WorstBot(discord_commands.Bot):
         self._events = _events
         self.logger = logging.getLogger(self.__class__.__name__)
         self.cog_dir = pathlib.Path("./cogs")
+        self.dotenv: dict[str, Optional[str]] = env_values
 
     async def setup_hook(self) -> None:
-        self.pool = await asyncpg.create_pool(database = environ.get("postgresdb"), user = environ.get("postgresuser"), password = environ.get("postgrespassword"), command_timeout = 10, min_size = 1, max_size = 100, loop = self.loop)
+        self.pool = await asyncpg.create_pool(database = self.dotenv.get("postgresdb"), user = self.dotenv.get("postgresuser"), password = self.dotenv.get("postgrespassword"), command_timeout = 10, min_size = 1, max_size = 100, loop = self.loop)
         self.session = ClientSession(loop = self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
         self.prepare_mentions.start()
 
@@ -56,7 +56,7 @@ class WorstBot(discord_commands.Bot):
                 yield from self.collect_cogs(file)
 
     async def on_ready(self):
-        self.logger.info(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
+        self.logger.warning(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
     async def post(self, *, url: str, params: dict = None, headers: dict = None) -> dict:
         async with self.session.post(url = url, params = params, headers = headers) as response:
@@ -100,7 +100,7 @@ class WorstBot(discord_commands.Bot):
                 return await conn.fetchval(sql, *args)
 
     async def executemany(self, sql: str, args: typing.Iterable[typing.Sequence]) -> Optional[Any]:
-        async with self.pool.acquire() as conn:  # type: asyncpg.Connection
+        async with self.pool.acquire() as conn:
             async with conn.transaction():
                 return await conn.executemany(sql, args)
 
@@ -209,10 +209,9 @@ class CommandTree(app_commands.CommandTree):
         return flat_commands
 
 async def start() -> typing.NoReturn:
-    await asyncio.gather(discord_bot.start(environ.get("discord")), return_exceptions = False)
+    await asyncio.gather(discord_bot.start(env_values.get("discord")), return_exceptions = False)
 
 if __name__ == "__main__":
-    load_dotenv()
     discord.utils.setup_logging(level = INFO)
     logging.getLogger("discord.gateway").setLevel(ERROR)
     logging.getLogger("matplotlib.category").setLevel(ERROR)
@@ -228,8 +227,10 @@ if __name__ == "__main__":
         voice_states = True,
         webhooks = True
     )
+    env_values = dotenv_values()
     discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
                            activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
                            intents = intents,
-                           owner_id = int(environ.get("owner")))
+                           owner_id = int(env_values.get("owner")),
+                           env_values = env_values)
     asyncio.run(start())

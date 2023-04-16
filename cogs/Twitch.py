@@ -2,7 +2,6 @@ import discord
 from discord import Interaction, app_commands
 from discord.ext import commands, tasks
 from WorstBot import WorstBot
-from os import environ
 from asyncio import sleep
 from modules import Converters, EmbedGen
 
@@ -10,8 +9,8 @@ from modules import Converters, EmbedGen
 class Twitch(commands.GroupCog, name = "twitch"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
-        self.TwitchClientId = environ.get("twitch_client")
-        self.TwitchSecret = environ.get("twitch_secret")
+        self.TwitchClientId = self.bot.dotenv.get("twitch_client")
+        self.TwitchSecret = self.bot.dotenv.get("twitch_secret")
         self.token = None
         self.streamersTable = None
 

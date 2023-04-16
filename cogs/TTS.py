@@ -3,7 +3,7 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 from discord.app_commands import Range, Choice
 from WorstBot import WorstBot
-from os import environ, remove
+from os import remove
 from aiogtts import aiogTTS
 from asyncio import sleep
 
@@ -11,7 +11,7 @@ from asyncio import sleep
 class TTS(commands.GroupCog, name = "tts"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
-        self.exe = environ.get("ffmpeg")
+        self.exe = self.bot.dotenv.get("ffmpeg")
 
     async def cog_load(self) -> None:
         ...
