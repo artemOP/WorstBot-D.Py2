@@ -6,6 +6,7 @@ from enum import StrEnum, auto
 import logging
 from logging import ERROR, INFO
 import pathlib
+import re
 
 import discord
 from discord import abc, app_commands, AppCommandType
@@ -46,7 +47,9 @@ class WorstBot(discord_commands.Bot):
         self.prepare_mentions.start()
 
         for file in self.collect_cogs(self.cog_dir):
-            await self.load_extension(str(file.relative_to("./")).replace("\\", ".")[:-3])
+            extension = str(file.relative_to("./"))[:-3]
+            extension = re.sub(r"(\\)|(/)", ".", extension)
+            await self.load_extension(extension)
 
     def collect_cogs(self, root: pathlib.Path) -> typing.Generator[pathlib.Path, None, None]:
         for file in root.iterdir():
