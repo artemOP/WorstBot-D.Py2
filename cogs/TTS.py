@@ -49,7 +49,7 @@ class FFmpegPCMAudio(discord.FFmpegPCMAudio):
                 return
 
 
-class TTS(commands.GroupCog, name = "tts2"):
+class TTS(commands.GroupCog, name = "tts"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
 
