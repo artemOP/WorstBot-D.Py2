@@ -217,6 +217,7 @@ async def start() -> typing.NoReturn:
 if __name__ == "__main__":
     discord.utils.setup_logging(level = INFO)
     logging.getLogger("discord.gateway").setLevel(ERROR)
+    logging.getLogger("discord.voice_client").setLevel(ERROR)
     logging.getLogger("matplotlib.category").setLevel(ERROR)
     intents = discord.Intents(
         bans = True,
