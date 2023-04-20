@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, TYPE_CHECKING, Self
 from dataclasses import dataclass
-from datetime import time
+from datetime import datetime
 import random
 
 import discord
@@ -114,7 +114,7 @@ class Economy(commands.GroupCog, name = "economy"):
             self.bot.logger.debug(f"{user_id} {guild_id} {wallet} {bank} {tokens} {multiplier}")
             self.bot.economy[discord.Object(user_id, type = discord.Member)] = Wealth(member_id = user_id, guild_id = guild_id, wallet = wallet, bank = bank, tokens = tokens, multiplier = multiplier)
 
-    @tasks.loop(time = time(1, 0))
+    @tasks.loop(time = datetime.now().time())
     async def create_conversion_rate(self):
         conversion_rate = random.choices(list(self.CONVERSION_WEIGHTS.keys()), list(self.CONVERSION_WEIGHTS.values()))[0]
 
