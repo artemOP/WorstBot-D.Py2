@@ -142,8 +142,7 @@ class Economy(commands.GroupCog, name = "economy"):
         :return:
         """
         economy = await self.bot.fetch("SELECT user_id, wallet+bank as wealth FROM economy WHERE guild_id = $1 ORDER BY wealth DESC LIMIT 500", interaction.guild_id)
-        economy_str = "\n".join([f"{i + 1}) {await self.bot.maybe_fetch_user(user_id)}: {wealth:,}" for
-                                 i, (user_id, wealth) in enumerate(economy)])
+        economy_str = "\n".join([f"{i + 1}) {await self.bot.maybe_fetch_user(user_id)}: W${wealth:,}" for i, (user_id, wealth) in enumerate(economy)])
         embeds = EmbedGen.SimpleEmbedList(
             title = "Economy Leaderboard",
             descriptions = economy_str
