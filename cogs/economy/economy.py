@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, TYPE_CHECKING, Self
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import time
 import random
 
 import discord
@@ -62,7 +62,7 @@ class Economy(commands.GroupCog, name = "economy"):
         "increase": 0.5,
         "boom": 0.005
     }
-    conversion_rate: float = 1.0
+    conversion_rate: float = 0.25
 
     transfer_group = app_commands.Group(name = "transfer", description = "Transfer money")
     gambling_group = app_commands.Group(name = "gamble", description = "Gamble money")
@@ -82,6 +82,7 @@ class Economy(commands.GroupCog, name = "economy"):
         self.bot.logger.debug(f"Conversion rate: {self.conversion_rate}")
         self.load_economy.start()
         self.create_conversion_rate.start()
+        await self.create_conversion_rate()
         self.bot.logger.info("Economy.Economy cog loaded")
 
     async def cog_unload(self) -> None:
@@ -114,7 +115,7 @@ class Economy(commands.GroupCog, name = "economy"):
             self.bot.logger.debug(f"{user_id} {guild_id} {wallet} {bank} {tokens} {multiplier}")
             self.bot.economy[discord.Object(user_id, type = discord.Member)] = Wealth(member_id = user_id, guild_id = guild_id, wallet = wallet, bank = bank, tokens = tokens, multiplier = multiplier)
 
-    @tasks.loop(time = datetime.now().time())
+    @tasks.loop(time = time(1, 0))
     async def create_conversion_rate(self):
         conversion_rate = random.choices(list(self.CONVERSION_WEIGHTS.keys()), list(self.CONVERSION_WEIGHTS.values()))[0]
 
