@@ -264,7 +264,8 @@ class Economy(commands.GroupCog, name = "economy"):
         user = await self.get_wealth(interaction.guild, interaction.user)
         amount = random.randint(100, 1000)
 
-        await user.to_wallet(self.bot, amount)
+        user.wallet += amount
+        await user.sync(self.bot)
         await self.bot.execute("INSERT INTO transactions(user_id, recipient, recipient_id, amount, timestamp) VALUES($1, 'wallet', -1, $2, now()::timestamptz)", interaction.user.id, amount)
 
         await interaction.response.send_message(f"Successfully spawned W${amount:,.2f} into your wallet", ephemeral = True)
