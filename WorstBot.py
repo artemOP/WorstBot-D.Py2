@@ -53,7 +53,7 @@ class WorstBot(discord_commands.Bot):
 
     def collect_cogs(self, root: pathlib.Path) -> typing.Generator[pathlib.Path, None, None]:
         for file in root.iterdir():
-            if file.match("[!-]*.py"):
+            if file.match("[!-|_]*.py"):
                 yield file
             elif file.is_dir():
                 yield from self.collect_cogs(file)
