@@ -52,6 +52,11 @@ class Wealth:
         await self.sync(bot)
         return self
 
+    async def punish(self, bot: WorstBot, amount: float) -> Self:
+        self.wallet -= amount
+        await self.sync(bot)
+        return self
+
 async def get_wealth(bot: WorstBot, guild: Guild, user: Member) -> Wealth:
     wealth: Wealth
     if wealth := bot.economy.get(user):
