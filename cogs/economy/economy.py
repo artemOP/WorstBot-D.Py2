@@ -197,24 +197,6 @@ class Economy(commands.GroupCog, name = "economy"):
         )
         await interaction.response.send_message(embed = embed, ephemeral = True)
 
-    @app_commands.command(name = "spawn_money")
-    @app_commands.checks.cooldown(1, 60, key = lambda i: (i.guild_id, i.user.id))
-    async def spawn_money(self, interaction: Interaction):
-        """Spawn some money for yourself
-
-        :param interaction:
-        :return:
-        """
-        user = await get_wealth(self.bot, interaction.guild, interaction.user)
-        amount = random.randint(100, 1000)
-
-        user.wallet += amount
-        await user.sync(self.bot)
-        await self.bot.execute("INSERT INTO transactions(user_id, recipient, recipient_id, amount, timestamp) VALUES($1, 'wallet', -1, $2, now()::timestamptz)", interaction.user.id, amount)
-
-        await interaction.response.send_message(f"Successfully spawned W${amount:,.2f} into your wallet", ephemeral = True)
-        self.bot.logger.debug(f"{interaction.user.id} spawned W${amount:,.2f} into their wallet")
-
 
 async def setup(bot):
     await bot.add_cog(Economy(bot))
