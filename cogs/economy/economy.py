@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, TYPE_CHECKING, Self
-from dataclasses import dataclass
+from typing import Literal, TYPE_CHECKING
 from datetime import time
 import random
 
@@ -10,49 +9,12 @@ from discord import app_commands, Interaction
 from discord.ext import commands, tasks
 
 from modules import EmbedGen, Paginators, Graphs
+from ._utils import Wealth, get_wealth
 
 if TYPE_CHECKING:
     from WorstBot import WorstBot
 
-@dataclass
-class Wealth:
-    member_id: int
-    guild_id: int
-    wallet: float = 0.0
-    bank: float = 0.0
-    tokens: float = 0.0
-    multiplier: float = 1.0
 
-    async def sync(self, bot: WorstBot) -> None:
-        bot.logger.debug(f"Syncing {self.member_id} {self.guild_id} {self.wallet} {self.bank} {self.tokens} {self.multiplier}")
-        await bot.execute("INSERT INTO economy(user_id, guild_id, wallet, bank, tokens, multiplier) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id, guild_id) DO UPDATE SET wallet=excluded.wallet, bank=excluded.bank, tokens=excluded.tokens, multiplier=excluded.multiplier", self.member_id, self.guild_id, self.wallet, self.bank, self.tokens, self.multiplier)
-
-    async def to_bank(self, bot: WorstBot, amount: float) -> Self:
-        self.wallet -= amount
-        self.bank += amount
-        await self.sync(bot)
-        return self
-
-    async def to_wallet(self, bot: WorstBot, amount: float) -> Self:
-        self.wallet += amount
-        self.bank -= amount
-        await self.sync(bot)
-        return self
-
-    async def to_tokens(self, bot: WorstBot, amount: float, conversion_rate: float) -> Self:
-        self.wallet -= amount
-        self.tokens += amount * conversion_rate
-        await self.sync(bot)
-        return self
-
-    async def to_user(self, bot: WorstBot, amount: float, user: Wealth) -> (Self, Wealth):
-        self.wallet -= amount
-        user.wallet += amount
-
-        await self.sync(bot)
-        await user.sync(bot)
-
-        return self, user
 class Economy(commands.GroupCog, name = "economy"):
     CONVERSION_MAX = 0.5
     CONVERSION_MIN = 0.05
@@ -88,24 +50,6 @@ class Economy(commands.GroupCog, name = "economy"):
     async def cog_unload(self) -> None:
         self.create_conversion_rate.cancel()
         self.bot.logger.info("Economy.Economy cog unloaded")
-
-    async def get_wealth(self, guild: discord.Guild, user: discord.Member) -> Wealth:
-        wealth: Wealth
-        if wealth := self.bot.economy.get(user):
-            self.bot.logger.debug(f"{wealth.member_id} cache hit", )
-            return wealth
-
-        row = await self.bot.fetchrow("SELECT user_id, guild_id, wallet, bank, tokens, multiplier FROM economy WHERE user_id = $1 AND guild_id = $2", user.id, guild.id)
-        if not row:
-            await self.bot.execute("INSERT INTO economy(user_id, guild_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", user.id, guild.id)
-            wealth = Wealth(user.id, guild.id)
-            self.bot.logger.debug(f"New user: {wealth.member_id}", )
-        else:
-            wealth = Wealth(*row)
-            self.bot.logger.debug(f"{wealth.member_id} cache miss", )
-        self.bot.economy[user] = wealth
-
-        return wealth
 
     @tasks.loop(count = 1)
     async def load_economy(self):
@@ -170,7 +114,7 @@ class Economy(commands.GroupCog, name = "economy"):
         :return:
         """
         await interaction.response.defer(ephemeral = True)
-        user = await self.get_wealth(interaction.guild, interaction.user)
+        user = await get_wealth(self.bot, interaction.guild, interaction.user)
         amount = min(amount, user.wallet)
 
         await user.to_tokens(self.bot, amount, self.conversion_rate)
@@ -188,8 +132,8 @@ class Economy(commands.GroupCog, name = "economy"):
         :param user: The user to give it to
         :return:
         """
-        owner = await self.get_wealth(interaction.guild, interaction.user)
-        recipient = await self.get_wealth(interaction.guild, user)
+        owner = await get_wealth(self.bot, interaction.guild, interaction.user)
+        recipient = await get_wealth(self.bot, interaction.guild, user)
         amount = min(amount, owner.wallet)
 
         await owner.to_user(self.bot, amount, recipient)
@@ -206,7 +150,7 @@ class Economy(commands.GroupCog, name = "economy"):
         :param amount: The amount to deposit
         :return:
         """
-        user = await self.get_wealth(interaction.guild, interaction.user)
+        user = await get_wealth(self.bot, interaction.guild, interaction.user)
         amount = min(amount, user.wallet)
 
         await user.to_bank(self.bot, amount)
@@ -223,7 +167,7 @@ class Economy(commands.GroupCog, name = "economy"):
         :param amount: The amount to withdraw
         :return:
         """
-        user = await self.get_wealth(interaction.guild, interaction.user)
+        user = await get_wealth(self.bot, interaction.guild, interaction.user)
         amount = min(amount, user.bank)
 
         await user.to_wallet(self.bot, amount)
@@ -239,7 +183,7 @@ class Economy(commands.GroupCog, name = "economy"):
         :param interaction:
         :return:
         """
-        user = await self.get_wealth(interaction.guild, interaction.user)
+        user = await get_wealth(self.bot, interaction.guild, interaction.user)
         embed = EmbedGen.FullEmbed(
             title = f"{interaction.user.name}'s Wealth",
             fields = [
@@ -261,7 +205,7 @@ class Economy(commands.GroupCog, name = "economy"):
         :param interaction:
         :return:
         """
-        user = await self.get_wealth(interaction.guild, interaction.user)
+        user = await get_wealth(self.bot, interaction.guild, interaction.user)
         amount = random.randint(100, 1000)
 
         user.wallet += amount
