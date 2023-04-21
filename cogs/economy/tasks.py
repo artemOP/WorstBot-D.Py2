@@ -64,7 +64,7 @@ class TickTask(Task):
         await interaction.response.edit_message(view = None, embed = None, content = f"Task Failed, W${self.amount} has been removed from your wallet")
         self.stop()
 
-class Tasks(commands.GroupCog, name = "tasks"):
+class Tasks(commands.Cog):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
@@ -110,6 +110,11 @@ class Tasks(commands.GroupCog, name = "tasks"):
     @app_commands.command(name = "work")
     @app_commands.checks.cooldown(1, 60*60, key = lambda i: (i.guild_id, i.user.id))
     async def work(self, interaction: Interaction):
+        """Complete a task to earn money
+
+        :param interaction:
+        :return:
+        """
         user = await get_wealth(self.bot, interaction.guild, interaction.user)
         view: Task = await choice(self.tasks)(interaction, user)
         await view.wait()
