@@ -18,6 +18,14 @@ from aiohttp import ClientSession
 from dotenv import dotenv_values
 import orjson
 
+emoji_servers = (
+    1099821517350637629,
+    1099836627171430400,
+    1099836647132119062,
+    1099836641570471946,
+    1099836635627126876,
+)
+
 class _events(StrEnum):
     autorole = auto()
     autoevent = auto()
@@ -40,11 +48,13 @@ class WorstBot(discord_commands.Bot):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.cog_dir = pathlib.Path("./cogs")
         self.dotenv: dict[str, Optional[str]] = env_values
+        self.custom_emoji: list[discord.Emoji] = []
 
     async def setup_hook(self) -> None:
         self.pool = await asyncpg.create_pool(database = self.dotenv.get("postgresdb"), user = self.dotenv.get("postgresuser"), password = self.dotenv.get("postgrespassword"), command_timeout = 10, min_size = 1, max_size = 100, loop = self.loop)
         self.session = ClientSession(loop = self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
         self.prepare_mentions.start()
+        self.load_emoji.start()
 
         for file in self.collect_cogs(self.cog_dir):
             extension = str(file.relative_to("./"))[:-3]
@@ -172,7 +182,19 @@ class WorstBot(discord_commands.Bot):
                     for child in command.walk_commands():
                         await self.add_to_extra(child, f"</{child.qualified_name}:{fetched_command.id}>", None if not guild else guild.id)
 
+    @tasks.loop(count = 1)
+    async def load_emoji(self):
+        for guild_id in emoji_servers:
+            guild = self.get_guild(guild_id)
+            if not guild:
+                self.logger.error(f"Failed to get guild {guild_id}")
+                continue
+            for emoji in guild.emojis:
+                self.custom_emoji.append(emoji)
+        self.logger.info(f"Loaded {len(self.custom_emoji)} custom emoji")
+
     @prepare_mentions.before_loop
+    @load_emoji.before_loop
     async def before_prepare_mentions(self):
         await self.wait_until_ready()
 
