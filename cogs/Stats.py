@@ -33,17 +33,16 @@ class Stats(commands.GroupCog, name = "stats"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.line_count: dict[str, File] = {}
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS usage(command TEXT, guild BIGINT, execution_time timestamptz)")
         self.file_finder.start()
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.file_finder.stop()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Stats cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @tasks.loop(count = 1)
     async def file_finder(self):
@@ -51,7 +50,7 @@ class Stats(commands.GroupCog, name = "stats"):
             if directory.startswith((".", "-")):
                 continue
             for file in listdir(directory):
-                self.bot.logger.debug(f"dispatch {file}")
+                self.logger.debug(f"dispatch {file}")
                 self.bot.dispatch("cog_reload", root = directory, file = file)
 
     @file_finder.before_loop
@@ -165,12 +164,12 @@ class Stats(commands.GroupCog, name = "stats"):
 
     @commands.Cog.listener()
     async def on_cog_reload(self, root: str = None, file: str = MISSING):
-        self.bot.logger.debug(f"Event triggered: {root}/{file}")
+        self.logger.debug(f"Event triggered: {root}/{file}")
         if not root:
             root, file = file.split(".", maxsplit = 1)
         file = file.replace(".", "/")
         if file.startswith("-") or not file.endswith(".py"):
-            self.bot.logger.debug(f"Early return on {root}/{file}")
+            self.logger.debug(f"Early return on {root}/{file}")
             return
         with open(f"{root}/{file}", encoding = "utf-8") as f:
             self.line_count[file] = await self.file_analysis(f.readlines())

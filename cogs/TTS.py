@@ -52,12 +52,13 @@ class FFmpegPCMAudio(discord.FFmpegPCMAudio):
 class TTS(commands.GroupCog, name = "tts"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
-        self.bot.logger.info("TTS cog Loaded")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        self.bot.logger.info("TTS cog Unloaded")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     async def get_voice_client(self, channel: discord.VoiceChannel) -> discord.VoiceClient:
         if vc := channel.guild.voice_client:

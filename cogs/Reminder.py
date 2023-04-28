@@ -9,16 +9,15 @@ from modules.EmbedGen import FullEmbed, EmbedField
 class Reminder(commands.Cog):
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS reminder(guild BIGINT NOT NULL, member BIGINT NOT NULL, creationtime TIMESTAMP WITH TIME ZONE NOT NULL, expiretime TIMESTAMP WITH TIME ZONE NOT NULL,message TEXT NOT NULL, jumplink TEXT NOT NULL)")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.ReminderTask.stop()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Reminder cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "remindme", description = "Set a DM reminder for all your important things (all fields are optional)")
     @app_commands.describe(year = "YYYY", month = "MM", day = "DD", hour = "HH", minute = "MM", second = "SS", message = "reminder message")

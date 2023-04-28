@@ -13,19 +13,18 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.TwitchSecret = self.bot.dotenv.get("twitch_secret")
         self.token = None
         self.streamersTable = None
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT NOT NULL, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
         await self.TokenGen()
         await self.streamers()
         self.request.start()
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.request.stop()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Twitch cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     async def streamers(self):
         self.streamersTable = await self.bot.fetch("SELECT * FROM twitch")

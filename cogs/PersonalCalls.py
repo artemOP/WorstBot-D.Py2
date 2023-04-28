@@ -11,18 +11,16 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
     def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS personalcall(guild BIGINT UNIQUE, channel BIGINT UNIQUE)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS callblacklist(guild BIGINT NOT NULL, channel BIGINT UNIQUE)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS userblacklist(guild BIGINT NOT NULL, member BIGINT NOT NULL)")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Personal call cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @staticmethod
     async def text_archive(base_call: discord.VoiceChannel, personal_channel: discord.VoiceChannel) -> None:

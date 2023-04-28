@@ -9,16 +9,14 @@ class ToggleRoles(commands.Cog):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS toggleroles(id SERIAL PRIMARY KEY, guild BIGINT NOT NULL, role1 BIGINT, role2 BIGINT, UNIQUE(role1, role2))")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("ToggleRoles cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "toggle-role-setup", description = "Set two roles that can be toggled between, repeating the command will remove the toggle")
     async def Setup(self, interaction: Interaction, role1: discord.Role, role2: discord.Role):

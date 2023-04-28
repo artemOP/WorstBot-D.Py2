@@ -33,21 +33,20 @@ class ErrorHandler(commands.Cog):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.owner: Optional[discord.User] = None
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         self.owner = await self.bot.maybe_fetch_user(self.bot.owner_id)
         self.bot.tree.on_error = self.on_app_command_error
         self.bot.on_command_error = self.on_command_error
         self.bot.on_error = self.on_error
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.bot.tree.on_error = self.bot.tree.__class__.on_error
         self.bot.on_command_error = self.bot.__class__.on_command_error
         self.bot.on_error = self.bot.__class__.on_error
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Error handling cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @staticmethod
     async def format_traceback(exception_type: type[BaseException], exception: Exception, exception_traceback: Exception.__traceback__) -> str:
@@ -92,7 +91,7 @@ class ErrorHandler(commands.Cog):
                 error: discord.HTTPException
                 if self.owner:
                     await self.send_view(messageable = self.owner, error = error, verbose = True)
-                self.bot.logger.error(await self.format_traceback(type(error), error, error.__traceback__))
+                self.logger.error(await self.format_traceback(type(error), error, error.__traceback__))
 
     async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
         if isinstance(error, commands.NotOwner):
@@ -114,7 +113,7 @@ class ErrorHandler(commands.Cog):
             except:
                 pass
         else:
-            self.bot.logger.error(f"event: {event}\n{args}\n{kwargs}\n{traceback_text}")
+            self.logger.error(f"event: {event}\n{args}\n{kwargs}\n{traceback_text}")
 
 async def setup(bot):
     await bot.add_cog(ErrorHandler(bot))

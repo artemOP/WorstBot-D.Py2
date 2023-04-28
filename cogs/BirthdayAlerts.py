@@ -15,20 +15,19 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.birthdays: dict[discord.User, date] | None = None
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdaychannel(guild BIGINT PRIMARY KEY, channel BIGINT NOT NULL)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS birthdays(member BIGINT PRIMARY KEY, birthday DATE)")
         self.birthdays = {}
         self.populate_birthdays.start()
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         del self.birthdays
         self.birthday_check.stop()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("BirthdayAlert cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "alert")
     async def BirthdayAdd(self, interaction: Interaction, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None):
@@ -77,7 +76,7 @@ class BirthdayAlert(commands.GroupCog, name = "birthday"):
         for user_id, birthday in table:
             user = await self.bot.maybe_fetch_user(user_id)
             self.birthdays[user] = birthday
-        self.bot.logger.debug(self.birthdays)
+        self.logger.debug(self.birthdays)
 
     @tasks.loop(hours = 1)
     async def birthday_check(self):

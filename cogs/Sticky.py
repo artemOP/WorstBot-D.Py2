@@ -6,18 +6,15 @@ from WorstBot import WorstBot
 @app_commands.default_permissions()
 class StickyMessage(commands.GroupCog, name = "sticky"):
     def __init__(self, bot: WorstBot):
-        super().__init__()
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS sticky(channel BIGINT UNIQUE NOT NULL,messageid BIGINT, message TEXT NOT NULL )")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("StickyMessage cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "add", description = "Pin a message to the bottom of a channel")
     async def StickyAdd(self, interaction: discord.Interaction, message: str):

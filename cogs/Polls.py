@@ -105,6 +105,7 @@ class Poll(commands.GroupCog, name = "poll"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.views = []
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS votes(vote_id SERIAL PRIMARY KEY, guild BIGINT, channel BIGINT DEFAULT NULL, message_id BIGINT DEFAULT NULL , question TEXT NOT NULL, author BIGINT, accepted_responses INT)")
@@ -121,14 +122,12 @@ class Poll(commands.GroupCog, name = "poll"):
                     accepted_responses = poll["accepted_responses"])
             )
             self.bot.add_view(view = self.views[-1], message_id = poll["message_id"])
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         for view in self.views:  # type: ui.View
             view.stop()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Polls cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "start", description = "Start a serverwide poll (max of 20 answers)")
     async def VoteStart(self, interaction: Interaction):

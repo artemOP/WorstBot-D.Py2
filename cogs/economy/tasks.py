@@ -68,13 +68,14 @@ class Tasks(commands.Cog):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = bot.logger.getChild(self.qualified_name)
         self.tasks = [self.tick_task, self.keypad_task, self.counting]
 
     async def cog_load(self) -> None:
-        self.bot.logger.info("Economy.Tasks cog loaded")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        self.bot.logger.info("Economy.Tasks cog unloaded")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     async def keypad_task(self, interaction: Interaction, user: Wealth) -> Task:
         code = sample([str(i) for i in range(1, 10)], k = 9)

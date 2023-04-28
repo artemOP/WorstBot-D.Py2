@@ -31,6 +31,7 @@ class Economy(commands.GroupCog, name = "economy"):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
         self.bot.economy: dict[discord.Object, Wealth] = {}
 
     async def cog_load(self) -> None:
@@ -41,22 +42,22 @@ class Economy(commands.GroupCog, name = "economy"):
 
         self.conversion_rate = await self.bot.fetchval("SELECT amount FROM transactions WHERE recipient = 'worstbot' ORDER BY timestamp DESC LIMIT 1") or self.conversion_rate
 
-        self.bot.logger.debug(f"Conversion rate: {self.conversion_rate}")
+        self.logger.debug(f"Conversion rate: {self.conversion_rate}")
         self.load_economy.start()
         self.create_conversion_rate.start()
         await self.create_conversion_rate()
-        self.bot.logger.info("Economy.Economy cog loaded")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.create_conversion_rate.cancel()
-        self.bot.logger.info("Economy.Economy cog unloaded")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @tasks.loop(count = 1)
     async def load_economy(self):
-        self.bot.logger.debug("Loading economy data")
+        self.logger.debug("Loading economy data")
         economy = await self.bot.fetch("SELECT user_id, guild_id, wallet, bank, tokens, multiplier FROM economy")
         for user_id, guild_id, wallet, bank, tokens, multiplier in economy:
-            self.bot.logger.debug(f"{user_id} {guild_id} {wallet} {bank} {tokens} {multiplier}")
+            self.logger.debug(f"{user_id} {guild_id} {wallet} {bank} {tokens} {multiplier}")
             self.bot.economy[discord.Object(user_id, type = discord.Member)] = Wealth(member_id = user_id, guild_id = guild_id, wallet = wallet, bank = bank, tokens = tokens, multiplier = multiplier)
 
     @tasks.loop(time = time(1, 0))
@@ -72,7 +73,7 @@ class Economy(commands.GroupCog, name = "economy"):
         else:
             self.conversion_rate = max(self.conversion_rate - random.uniform(0.01, 0.05), self.CONVERSION_MIN)
         await self.bot.execute("INSERT INTO transactions(recipient, amount, timestamp) VALUES('worstbot', $1, now()::timestamptz)", self.conversion_rate)
-        self.bot.logger.debug(f"Conversion rate changed to {self.conversion_rate * 100:.2f}%")
+        self.logger.debug(f"Conversion rate changed to {self.conversion_rate * 100:.2f}%")
 
     @load_economy.before_loop
     @create_conversion_rate.before_loop
@@ -121,7 +122,7 @@ class Economy(commands.GroupCog, name = "economy"):
         await self.bot.execute("INSERT INTO transactions(user_id, recipient, recipient_id, amount, timestamp) VALUES($1, 'global', 0, $2, now()::timestamptz)", interaction.user.id, amount * self.conversion_rate)
 
         await interaction.followup.send(f"Successfully converted W${amount:,.2f} to {amount * self.conversion_rate:,.2f} tokens", ephemeral = True)
-        self.bot.logger.debug(f"{interaction.user.id} converted W${amount:,.2f} to {amount * self.conversion_rate:,.2f} tokens")
+        self.logger.debug(f"{interaction.user.id} converted W${amount:,.2f} to {amount * self.conversion_rate:,.2f} tokens")
 
     @transfer_group.command(name = "give")
     async def to_user(self, interaction: Interaction, amount: float, user: discord.Member):
@@ -140,7 +141,7 @@ class Economy(commands.GroupCog, name = "economy"):
         await self.bot.execute("INSERT INTO transactions(user_id, recipient, recipient_id, amount, timestamp) VALUES($1, 'user', $2, $3, now()::timestamptz)", interaction.user.id, user.id, amount)
 
         await interaction.response.send_message(f"Successfully gifted W${amount:,.2f} to {user.mention}", ephemeral = True)
-        self.bot.logger.debug(f"{interaction.user.id} gifted W${amount:,.2f} to {user.id}")
+        self.logger.debug(f"{interaction.user.id} gifted W${amount:,.2f} to {user.id}")
 
     @transfer_group.command(name = "deposit")
     async def to_bank(self, interaction: Interaction, amount: float):
@@ -157,7 +158,7 @@ class Economy(commands.GroupCog, name = "economy"):
         await self.bot.execute("INSERT INTO transactions(user_id, recipient, recipient_id, amount, timestamp) VALUES($1, 'bank', 0, $2, now()::timestamptz)", interaction.user.id, amount)
 
         await interaction.response.send_message(f"Successfully deposited W${amount:,.2f} into your bank account", ephemeral = True)
-        self.bot.logger.debug(f"{interaction.user.id} deposited W${amount:,.2f} into their bank account")
+        self.logger.debug(f"{interaction.user.id} deposited W${amount:,.2f} into their bank account")
 
     @transfer_group.command(name = "withdraw")
     async def to_wallet(self, interaction: Interaction, amount: float):
@@ -174,7 +175,7 @@ class Economy(commands.GroupCog, name = "economy"):
         await self.bot.execute("INSERT INTO transactions(user_id, recipient, recipient_id, amount, timestamp) VALUES($1, 'wallet', 0, $2, now()::timestamptz)", interaction.user.id, amount)
 
         await interaction.response.send_message(f"Successfully withdrew W${amount:,.2f} from your bank account", ephemeral = True)
-        self.bot.logger.debug(f"{interaction.user.id} withdrew W${amount:,.2f} from their bank account")
+        self.logger.debug(f"{interaction.user.id} withdrew W${amount:,.2f} from their bank account")
 
     @app_commands.command(name = "balance")
     async def view_wealth(self, interaction: Interaction):

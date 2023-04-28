@@ -78,6 +78,7 @@ class Tag(commands.GroupCog, name = "tag"):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute(
@@ -95,13 +96,10 @@ class Tag(commands.GroupCog, name = "tag"):
             )
             """
         )
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Tag cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     async def OwnerCheck(self, tagid: int, user: int) -> bool:
         select = await self.bot.fetchrow("SELECT owner, public  FROM tags WHERE tagid = $1", tagid)

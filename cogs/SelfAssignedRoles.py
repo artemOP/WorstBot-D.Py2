@@ -34,18 +34,17 @@ class RoleTransformer(Transformer):
 class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Toggle a self assignable role"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS selfroles(guild BIGINT NOT NULL, role BIGINT PRIMARY KEY)")
         self.bot.giveme_roles: dict[discord.Guild, list[discord.Role]] = {}
         self.fetch_giveme_roles.start()
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         del self.bot.giveme_roles
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("SelfAssignableRoles Cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @tasks.loop(count = 1)
     async def fetch_giveme_roles(self):

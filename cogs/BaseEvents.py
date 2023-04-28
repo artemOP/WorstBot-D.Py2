@@ -10,6 +10,7 @@ class BaseEvents(commands.Cog):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute(
@@ -29,13 +30,10 @@ class BaseEvents(commands.Cog):
             )
             """
         )
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("BaseEvents cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @staticmethod
     def Choices() -> list[Choice[str]]:

@@ -75,6 +75,7 @@ class Profile(commands.GroupCog, name = "profile"):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
         self.ContextMenu = app_commands.ContextMenu(
             name = "Profile",
             callback = self.ProfileContextMenu
@@ -83,13 +84,10 @@ class Profile(commands.GroupCog, name = "profile"):
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS profile(member BIGINT NOT NULL, name VARCHAR(256), value VARCHAR(1024), index SMALLINT, UNIQUE(member, index))")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("profile cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     async def FetchProfile(self, user: int) -> discord.Embed:
         rows = await self.bot.fetch("SELECT name, value, index FROM profile WHERE member = $1", user)

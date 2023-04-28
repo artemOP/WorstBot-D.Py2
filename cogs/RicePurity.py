@@ -62,16 +62,14 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
     def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS ricepurity(id BIGINT PRIMARY KEY, score INT)")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("RicePurity cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "test")
     async def test(self, interaction: Interaction):

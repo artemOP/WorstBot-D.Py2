@@ -338,6 +338,7 @@ class Todos(commands.GroupCog, name = "todo"):
         self.context_menu = None
         self.todos: dict[int: list[Todo]] = {}  # {user_id: {todo_id: Todo_}}
         self.reminders = []
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         if not await self.bot.execute("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'todo_status')"):
@@ -348,6 +349,7 @@ class Todos(commands.GroupCog, name = "todo"):
         self.todos = {}
         self.ReminderTask.start()
         self.prepare_views.start()
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.ReminderTask.stop()
@@ -355,10 +357,7 @@ class Todos(commands.GroupCog, name = "todo"):
         del self.todos
         for view in self.todos:  # type: ui.View
             view.stop()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Todo cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @tasks.loop(count = 1)
     async def prepare_views(self):

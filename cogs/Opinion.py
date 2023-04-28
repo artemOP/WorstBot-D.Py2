@@ -8,18 +8,17 @@ from asyncio import sleep
 class Opinion(commands.Cog):
     def __init__(self, bot: WorstBot):
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS Opinion(guild BIGINT NOT NULL, timestamp TIMESTAMP WITH TIME ZONE NOT NULL, content TEXT DEFAULT NULL)")
         await self.bot.execute("CREATE TABLE IF NOT EXISTS PrefixBlacklist(guild BIGINT NOT NULL, prefix TEXT NOT NULL)")
         self.DeleteOld.start()
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.DeleteOld.stop()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("Opinion cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @commands.Cog.listener()
     async def on_message(self, message):

@@ -25,16 +25,14 @@ class CustomRoles(commands.GroupCog, name = "role"):
             callback = self.colourCheck
         )
         self.bot.tree.add_command(self.ContextMenu)
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS customroles(guild BIGINT, member BIGINT, role BIGINT UNIQUE, colour INT, UNIQUE(guild, member))")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("CustomRoles cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     async def FetchRole(self, *, guild: discord.Guild, member: discord.Member) -> Optional[discord.Role]:
 

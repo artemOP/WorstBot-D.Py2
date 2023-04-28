@@ -9,16 +9,14 @@ class AutoRole(commands.GroupCog, name = "autorole"):
     def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
+        self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         await self.bot.execute("CREATE TABLE IF NOT EXISTS autorole(guild BIGINT, role BIGINT UNIQUE )")
+        self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
-        ...
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.logger.info("AutoRole cog online")
+        self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "setup", description = "add or remove role from autorole")
     async def AutoRole(self, interaction: Interaction, role: discord.Role):
