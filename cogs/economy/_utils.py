@@ -19,6 +19,12 @@ class Wealth:
     tokens: float = 0.0
     multiplier: float = 1.0
 
+    def __hash__(self) -> int:
+        return hash(self.member_id)
+
+    def __eq__(self, other) -> bool:
+        return self.member_id == other.member_id and self.guild_id == other.guild_id
+
     async def sync(self, bot: WorstBot) -> None:
         _log.debug(f"Syncing {self.member_id} {self.guild_id} {self.wallet} {self.bank} {self.tokens} {self.multiplier}")
         await bot.execute("INSERT INTO economy(user_id, guild_id, wallet, bank, tokens, multiplier) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id, guild_id) DO UPDATE SET wallet=excluded.wallet, bank=excluded.bank, tokens=excluded.tokens, multiplier=excluded.multiplier", self.member_id, self.guild_id, self.wallet, self.bank, self.tokens, self.multiplier)
