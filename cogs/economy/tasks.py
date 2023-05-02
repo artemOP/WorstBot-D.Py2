@@ -119,7 +119,7 @@ class Tasks(commands.Cog):
         user = await get_wealth(self.bot, interaction.guild, interaction.user)
         view: Task = await choice(self.tasks)(interaction, user)
         await view.wait()
-        await self.bot.execute("INSERT INTO transactions(user_id, recipient, amount, timestamp) VALUES ($1, 'worstbot', $2, now()::timestamptz)", user.member_id, view.amount)
+        await self.bot.execute("INSERT INTO transactions(user_id, recipient, amount, timestamp) VALUES ($1, 'work', $2, now()::timestamptz)", user.member_id, view.amount)
 
 async def setup(bot):
     await bot.add_cog(Tasks(bot))
