@@ -7,6 +7,7 @@ import logging
 from logging import ERROR, INFO
 import pathlib
 import re
+from math import sqrt, floor
 
 import discord
 from discord import abc, app_commands, AppCommandType
@@ -161,6 +162,27 @@ class WorstBot(discord_commands.Bot):
             self._event_toggles[guild_int][event.name] = toggle_value
 
         return self._event_toggles[guild_int][event.name]  # returns event bool
+
+    @staticmethod
+    def pair(guild_id: int, member_id: int) -> int:
+        """Returns a unique id for a guild and member using cantor pairing function
+        
+        :param guild_id: Guild to pair
+        :param member_id: Member to pair
+        :return: combined id
+        """
+        return int((((guild_id + member_id) * (guild_id + member_id + 1)) / 2) + member_id)
+
+    def unpair(self, pair: int) -> tuple[Optional[discord.Guild], Optional[discord.Member]]:
+        """Returns the guild and member from a paired id
+
+        :param pair: Paired id
+        :return: guild, member
+        """
+        w = floor((sqrt(8 * pair + 1) - 1) / 2)
+        y = int(pair - (w ** 2 + w) / 2)
+        x = int(w - y)
+        return self.get_guild(x), self.get_user(y)
 
     @staticmethod
     async def add_to_extra(command: Command, mention: str, guild_id: Optional[int] = None) -> None:

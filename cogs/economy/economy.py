@@ -32,7 +32,7 @@ class Economy(commands.GroupCog, name = "economy"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.logger = self.bot.logger.getChild(self.qualified_name)
-        self.bot.economy: dict[discord.Object, Wealth] = {}
+        self.bot.economy: dict[int, Wealth] = {}
 
     async def cog_load(self) -> None:
         if not await self.bot.execute("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'recipient_type')"):
@@ -58,7 +58,7 @@ class Economy(commands.GroupCog, name = "economy"):
         economy = await self.bot.fetch("SELECT user_id, guild_id, wallet, bank, tokens, multiplier FROM economy")
         for user_id, guild_id, wallet, bank, tokens, multiplier in economy:
             self.logger.debug(f"{user_id} {guild_id} {wallet} {bank} {tokens} {multiplier}")
-            self.bot.economy[discord.Object(user_id, type = discord.Member)] = Wealth(member_id = user_id, guild_id = guild_id, wallet = wallet, bank = bank, tokens = tokens, multiplier = multiplier)
+            self.bot.economy[self.bot.pair(guild_id, user_id)] = Wealth(member_id = user_id, guild_id = guild_id, wallet = wallet, bank = bank, tokens = tokens, multiplier = multiplier)
 
     @tasks.loop(time = time(1, 0))
     async def create_conversion_rate(self):
