@@ -1,1 +1,1 @@
-__all__ = ["Converters", "EmbedGen", "Graphs", "Paginators", "RoleManipulation"]
+__all__ = ["Converters", "EmbedGen", "FFmpeg", "Graphs", "Paginators", "RoleManipulation"]

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import logging
 from asyncio import sleep
 from enum import Enum
-from io import BufferedIOBase, BytesIO
+from io import BytesIO
 from typing import TYPE_CHECKING
 
 import discord
@@ -11,6 +10,8 @@ from aiogtts import aiogTTS
 from discord import Interaction, app_commands
 from discord.app_commands import Range
 from discord.ext import commands
+
+from modules import FFmpeg
 
 if TYPE_CHECKING:
     from WorstBot import WorstBot
@@ -22,31 +23,6 @@ class Accents(Enum):
     United_States = "com",
     Canada = "ca",
     India = "co.in",
-
-
-class FFmpegPCMAudio(discord.FFmpegPCMAudio):
-    _log = logging.getLogger("discord.player")
-    _log.setLevel(logging.ERROR)
-
-    def __init__(self, source, *, executable: str = None, pipe: bool = False, stderr: bool = None, before_options: str = None, options: str = None, **kwargs):
-        super().__init__(source, executable = executable, pipe = pipe, stderr = stderr, before_options = before_options, options = options, **kwargs)
-
-    def _pipe_writer(self, source: BufferedIOBase) -> None:
-        while self._process:
-            # arbitrarily large read size
-            data = source.read(8192)
-            if not data:
-                self._stdin.close()
-                self._process.wait(timeout = 10)
-                return
-            try:
-                if self._stdin is not None:
-                    self._stdin.write(data)
-            except Exception:
-                self._log.debug('Write error for %s, this is probably not a problem', self, exc_info = True)
-                # at this point the source data is either exhausted or the process is fubar
-                self._process.terminate()
-                return
 
 
 class TTS(commands.GroupCog, name = "tts"):
@@ -122,7 +98,7 @@ class TTS(commands.GroupCog, name = "tts"):
         tts = BytesIO()
         await aiogTTS().write_to_fp(message, tts, tld = accent.value[0])
         tts.seek(0)
-        vc.play(FFmpegPCMAudio(tts, executable = self.bot.dotenv.get("ffmpeg"), pipe = True, options = "-vn -loglevel quiet"))
+        vc.play(FFmpeg.FFmpegPCMAudio(tts, executable = self.bot.dotenv.get("ffmpeg"), pipe = True, options = "-vn -loglevel quiet"))
         while vc.is_playing():
             await sleep(0.1)
 
