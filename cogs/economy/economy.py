@@ -8,7 +8,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands, tasks
 
-from modules import EmbedGen, Paginators, Graphs
+from modules import EmbedGen, Paginators, Graphs, Constants
 from ._utils import Wealth, get_wealth
 
 if TYPE_CHECKING:
@@ -189,8 +189,8 @@ class Economy(commands.GroupCog, name = "economy"):
             title = f"{interaction.user.name}'s Wealth",
             fields = [
                 EmbedGen.EmbedField(name = name, value = value) for name, value in zip(
-                    ["Wallet", "Bank", "Tokens", "\u200b", "Multiplier", "\u200b"],
-                    [f"W${user.wallet:,.2f}", f"W${user.bank:,.2f}", f"{user.tokens:,.2f}", "\u200b", f"{user.multiplier * 100:.0f}%", "\u200b"],
+                    ["Wallet", "Bank", "Tokens", Constants.BLANK, "Multiplier", Constants.BLANK],
+                    [f"W${user.wallet:,.2f}", f"W${user.bank:,.2f}", f"{user.tokens:,.2f}", Constants.BLANK, f"{user.multiplier * 100:.0f}%", Constants.BLANK],
                     strict = True
                 )
             ],

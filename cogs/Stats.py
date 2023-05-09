@@ -5,7 +5,7 @@ from discord.app_commands import Choice, Transform, Transformer
 from discord.utils import MISSING
 from WorstBot import WorstBot
 from dataclasses import dataclass
-from modules import EmbedGen, Converters, Graphs, Paginators
+from modules import EmbedGen, Converters, Graphs, Paginators, Constants
 from datetime import date, datetime
 from os import walk, getcwd, listdir
 
@@ -203,7 +203,8 @@ class Stats(commands.GroupCog, name = "stats"):
                 source code: {file.source_lines} ({Converters.to_percent(file.source_lines, file.total_lines)}%)\n
                 comments: {file.comment_lines} ({Converters.to_percent(file.comment_lines, file.total_lines)}%)\n
                 blank: {file.blank_lines} ({Converters.to_percent(file.blank_lines, file.total_lines)}%)\n
-                total: {file.total_lines}\n\u200b
+                total: {file.total_lines}\n
+                {Constants.BLANK}
                 """
 
 

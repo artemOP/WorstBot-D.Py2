@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 import random
 import re
 from rapidfuzz import process
-from modules import Converters
+from modules import Converters, Constants
 
 class BaseCommands(commands.Cog):
     def __init__(self, bot: WorstBot):
@@ -26,7 +26,7 @@ class BaseCommands(commands.Cog):
     @app_commands.command(name = "say")
     @app_commands.default_permissions(manage_messages = True)
     async def say(self, interaction: Interaction, *, arg: str = "what?"):
-        await interaction.response.send_message(ephemeral = True, content = "\u200b")
+        await interaction.response.send_message(ephemeral = True, content = Constants.BLANK)
         await interaction.channel.send(content = arg)
 
     def is_me(self, message: discord.Message) -> bool:

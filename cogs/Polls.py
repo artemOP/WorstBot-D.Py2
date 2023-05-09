@@ -2,7 +2,7 @@ import discord
 from discord import Interaction, app_commands, ui
 from discord.ext import commands
 from WorstBot import WorstBot
-from modules import EmbedGen, Graphs, Paginators, Converters
+from modules import EmbedGen, Graphs, Paginators, Converters, Constants
 
 class Responses(ui.Select):
     def __init__(self, vote_id: int, options: list[discord.SelectOption], accepted_responses: int):
@@ -82,7 +82,7 @@ class StartPollModal(ui.Modal, title = "Poll"):
         embed = EmbedGen.FullEmbed(
             author = {"name": interaction.user.name, "icon_url": interaction.user.display_avatar.url},
             title = self.question.value,
-            fields = [EmbedGen.EmbedField(name = "\u200b", value = answer) for answer in answers]
+            fields = [EmbedGen.EmbedField(name = Constants.BLANK, value = answer) for answer in answers]
         )
         message: discord.Message = await interaction.followup.send(view = RespondPollView(vote_id = self.vote_id, options = options, accepted_responses = accepted_responses), embed = embed)
         await interaction.client.execute("UPDATE votes set channel=$1, message_id=$2 WHERE vote_id=$3", message.channel.id, message.id, self.vote_id)

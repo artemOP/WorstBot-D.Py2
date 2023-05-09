@@ -11,7 +11,7 @@ from discord.utils import MISSING, format_dt, utcnow
 from rapidfuzz import process
 
 from WorstBot import WorstBot
-from modules import EmbedGen, Paginators
+from modules import EmbedGen, Paginators, Constants
 
 BooleanColours = {True: discord.ButtonStyle.green, False: discord.ButtonStyle.red}
 
@@ -453,7 +453,7 @@ class Todos(commands.GroupCog, name = "todo"):
                     name = todo.name,
                     value = f"""
                             status: {todo.status}
-                            deadline: {format_dt(todo.deadline, "R") if todo.deadline else "No deadline!"}\n\u200b
+                            deadline: {format_dt(todo.deadline, "R") if todo.deadline else "No deadline!"}\n{Constants.BLANK}
                             """,
                     inline = False
                 )

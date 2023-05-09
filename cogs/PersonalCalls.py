@@ -2,7 +2,7 @@ import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
 from WorstBot import WorstBot
-from modules import EmbedGen
+from modules import EmbedGen, Constants
 from io import BytesIO
 
 @app_commands.default_permissions(manage_channels = True, ban_members=True)
@@ -79,7 +79,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
         embed = EmbedGen.FullEmbed(
             title = "Protected channels",
-            fields = [EmbedGen.EmbedField(name = str(await self.bot.maybe_fetch_channel(channel["channel"])), value = "\u200b") for channel in channels]
+            fields = [EmbedGen.EmbedField(name = str(await self.bot.maybe_fetch_channel(channel["channel"])), value = Constants.BLANK) for channel in channels]
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
