@@ -43,9 +43,9 @@ class KeypadTask(Task):
         self.stop()
         embed = EmbedGen.SimpleEmbed(
             title = "Task Complete",
-            text = f"Task Successful, W${self.amount} has been added to your wallet",
+            text = f"Task Successful, W${self.amount * self.wealth.multiplier} has been added to your wallet",
         )
-        await self.wealth.reward(interaction.client, self.amount)
+        await self.wealth.reward(interaction.client, self.amount, use_multiplier = True)
         await interaction.response.edit_message(view = None, embed = embed)
 
 class TickTask(Task):
@@ -54,8 +54,8 @@ class TickTask(Task):
 
     @ui.button(emoji = "\U00002705", style = discord.ButtonStyle.green, row = 0)
     async def tick(self, interaction: Interaction, button: ui.Button):
-        await self.wealth.reward(interaction.client, self.amount)
-        await interaction.response.edit_message(view = None, embed = None, content = f"Task Successful, W${self.amount} has been added to your wallet")
+        await self.wealth.reward(interaction.client, self.amount, use_multiplier = True)
+        await interaction.response.edit_message(view = None, embed = None, content = f"Task Successful, W${self.amount * self.wealth.multiplier} has been added to your wallet")
         self.stop()
 
     @ui.button(emoji = "\U0000274c", style = discord.ButtonStyle.red, row = 0)

@@ -56,12 +56,16 @@ class Wealth:
 
         return self, user
 
-    async def reward(self, bot: WorstBot, amount: float) -> Self:
+    async def reward(self, bot: WorstBot, amount: float, *, use_multiplier: bool = False) -> Self:
+        if use_multiplier:
+            amount *= self.multiplier
         self.wallet += amount
         await self.sync(bot)
         return self
 
-    async def punish(self, bot: WorstBot, amount: float) -> Self:
+    async def punish(self, bot: WorstBot, amount: float, *, use_multiplier: bool = False) -> Self:
+        if use_multiplier:
+            amount *= self.multiplier
         self.wallet -= amount
         await self.sync(bot)
         return self
