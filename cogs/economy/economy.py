@@ -87,11 +87,13 @@ class Economy(commands.GroupCog, name = "economy"):
         :param interaction:
         :return:
         """
-        economy = await self.bot.fetch("SELECT user_id, wallet+bank as wealth FROM economy WHERE guild_id = $1 ORDER BY wealth DESC LIMIT 500", interaction.guild_id)
-        economy_str = "\n".join([f"{i + 1}) {await self.bot.maybe_fetch_user(user_id)}: W${wealth:,}" for i, (user_id, wealth) in enumerate(economy)])
-        embeds = EmbedGen.SimpleEmbedList(
+        economy = await self.bot.fetch("SELECT user_id, wallet+bank as wealth FROM economy WHERE guild_id = $1 ORDER BY wealth DESC LIMIT 600", interaction.guild_id)
+        embeds = EmbedGen.EmbedFieldList(
             title = "Economy Leaderboard",
-            descriptions = economy_str
+            fields = [
+                EmbedGen.EmbedField(name = f"{i + 1}: {await self.bot.maybe_fetch_user(user_id)}", value = f"W${wealth:,}") for i, (user_id, wealth) in enumerate(economy)
+            ],
+            max_fields = 12
         )
         view = Paginators.ButtonPaginatedEmbeds(embed_list = embeds)
         await interaction.response.send_message(view = view, embeds = embeds, ephemeral = True)
