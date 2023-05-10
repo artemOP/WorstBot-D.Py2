@@ -72,7 +72,8 @@ class Wealth:
 
 async def get_wealth(bot: WorstBot, guild: Guild, user: Member) -> Wealth:
     wealth: Wealth
-    if wealth := bot.economy.get(user):
+    paired_id = bot.pair(guild.id, user.id)
+    if wealth := bot.economy.get(paired_id):
         _log.debug(f"{wealth.member_id} cache hit", )
         return wealth
 
@@ -84,6 +85,6 @@ async def get_wealth(bot: WorstBot, guild: Guild, user: Member) -> Wealth:
     else:
         wealth = Wealth(*row)
         _log.debug(f"{wealth.member_id} cache miss", )
-    bot.economy[user] = wealth
+    bot.economy[paired_id] = wealth
 
     return wealth
