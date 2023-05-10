@@ -91,7 +91,7 @@ class Economy(commands.GroupCog, name = "economy"):
         embeds = EmbedGen.EmbedFieldList(
             title = "Economy Leaderboard",
             fields = [
-                EmbedGen.EmbedField(name = f"{i + 1}: {await self.bot.maybe_fetch_user(user_id)}", value = f"W${wealth:,}") for i, (user_id, wealth) in enumerate(economy)
+                EmbedGen.EmbedField(name = f"{i + 1}: {await self.bot.maybe_fetch_user(user_id)}", value = f"W${wealth:,}") for i, (user_id, wealth) in enumerate(economy) if wealth > 0
             ],
             max_fields = 12
         )
