@@ -129,7 +129,7 @@ def SimpleEmbed(author: Optional[dict[str, str]] = None,
 def FullEmbed(
         author: Optional[dict[str, str]] = None,
         title: Optional[str] = None,
-        fields: list[EmbedField] = MISSING,
+        fields: Optional[list[EmbedField]] = None,
         description: Optional[str] = None,
         image: Optional[str] = None,
         thumbnail: Optional[str] = None,
@@ -151,7 +151,8 @@ def FullEmbed(
     :return: Embed
     """
     embed = Embed(title = title, colour = set_colour(colour), description = description, timestamp = utcnow(), extras = extras)
-    embed.add_fields(fields)
+    if fields:
+        embed.add_fields(fields)
     _, _, _, values = getargvalues(currentframe())
     for arg, value in values.items():
         if any(arg in field for field in OPTIONAL_FIELDS) and value:
