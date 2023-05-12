@@ -287,8 +287,8 @@ class Blackjack(Game):
             return await interaction.response.send_message("You don't have enough money to double down", ephemeral = True)
         self.player.bet *= 2
 
-        await self.hit.callback(interaction)
         self.player.state = PlayerState.sticking
+        await self.hit.callback(interaction)
         for children in self.children:
             children.disabled = True
         await self.response.edit(view = self, content = "Waiting for other players")
