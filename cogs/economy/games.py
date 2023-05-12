@@ -101,7 +101,7 @@ def blackjack_embed(game: GameManager, cards: list[Emoji]) -> EmbedGen.FullEmbed
 
     return EmbedGen.FullEmbed(title = "Blackjack",
                               fields = [
-                                  EmbedGen.EmbedField(name = "Your Hand", value = "".join(str(card) for card in cards)),
+                                  EmbedGen.EmbedField(name = "Your Hand", value = "".join(f"<:{card.name}:{card.id}>" for card in cards)),
                                   EmbedGen.EmbedField(name = "Your Score", value = f"{score}"),
                                   EmbedGen.EmbedField(name = "Dealer's Hand", value = f"{game.dealer[0]}{game.card_back}")
                               ],
