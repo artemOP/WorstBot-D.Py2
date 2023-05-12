@@ -213,6 +213,7 @@ class WorstBot(discord_commands.Bot):
                 continue
             for emoji in guild.emojis:
                 self.custom_emoji.append(emoji)
+                self.logger.debug(f"Loaded {emoji.name}:{emoji.id} from {guild.name}")
         self.logger.info(f"Loaded {len(self.custom_emoji)} custom emoji")
 
     @prepare_mentions.before_loop
