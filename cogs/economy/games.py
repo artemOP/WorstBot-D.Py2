@@ -322,7 +322,7 @@ class Blackjack(Game):
                                    )
         for player in self.game.players:
             await player.wealth.punish(interaction.client, player.bet)
-            await player.view.response.edit(embed = embed, view = None)
+            await player.view.response.edit(embed = embed, view = None, content = None)
             player.view.stop()
         if winner:
             await winners[0].wealth.reward(interaction.client, winners[0].bet * 2)
