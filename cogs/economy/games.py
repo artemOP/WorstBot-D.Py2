@@ -429,7 +429,7 @@ class Roulette(Game):
 
         embed = EmbedGen.FullEmbed(
             title = "Winners",
-            description = "\n".join([f"{member.mention}" for member in winners]),
+            description = "\n".join([f"{member.mention}" for member in winners]) or "No winners",
             fields = [EmbedGen.EmbedField(name = "Winning combination: ", value = f"{self.winning_number[1].name} {self.winning_number[0]}")],
         )
         for player in self.game.players:
