@@ -18,8 +18,15 @@ class AutoRole(commands.GroupCog, name = "autorole"):
     async def cog_unload(self) -> None:
         self.logger.info(f"{self.qualified_name} cog unloaded")
 
-    @app_commands.command(name = "setup", description = "add or remove role from autorole")
+    @app_commands.command(name = "setup")
     async def AutoRole(self, interaction: Interaction, role: discord.Role):
+        """Add or remove role from autorole.
+        Autoroles are added automatically on user join.
+
+        :param interaction:
+        :param role: The role to add or remove
+        :return:
+        """
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM autorole WHERE guild = $1 AND role = $2)", interaction.guild_id, role.id):
             await self.bot.execute("INSERT INTO autorole(guild, role) VALUES($1, $2) ON CONFLICT (role) DO NOTHING", interaction.guild.id, role.id)
             await interaction.response.send_message(f"{role.name} successfully added to the AutoRole", ephemeral = True)
@@ -29,6 +36,11 @@ class AutoRole(commands.GroupCog, name = "autorole"):
 
     @app_commands.command(name = "list")
     async def AutoRoleList(self, interaction: Interaction):
+        """List all roles that are automatically applied on user join
+
+        :param interaction:
+        :return:
+        """
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", interaction.guild.id)
         embed_list = EmbedGen.EmbedFieldList(
             title = "Automatically applied roles",

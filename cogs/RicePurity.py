@@ -73,12 +73,22 @@ class RicePurity(commands.GroupCog, name = "ricepurity"):  # Main cog class
 
     @app_commands.command(name = "test")
     async def test(self, interaction: Interaction):
+        """Discord interactive rice purity test
+
+        :param interaction:
+        :return:
+        """
         view = PurityButtons(timeout = 30)
         await interaction.response.send_message('Are you ready to begin your rice purity test?', view = view, ephemeral = True)
         view.response = await interaction.original_response()
 
     @app_commands.command(name = "leaderboard")
     async def leaderboard(self, interaction: Interaction):
+        """Rice purity leaderboard
+
+        :param interaction:
+        :return:
+        """
         users = {}
         for member in interaction.guild.members:
             if (score := await self.bot.fetchval("SELECT score FROM ricepurity WHERE id=$1", member.id)) is not None:

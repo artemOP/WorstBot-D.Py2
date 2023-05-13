@@ -21,11 +21,22 @@ class BaseCommands(commands.Cog):
 
     @app_commands.command(name = "ping")
     async def ping(self, interaction: Interaction):
+        """Bot latency
+
+        :param interaction:
+        :return:
+        """
         await interaction.response.send_message(f"Pong!{round(self.bot.latency * 1000)}ms", ephemeral = True)
 
     @app_commands.command(name = "say")
     @app_commands.default_permissions(manage_messages = True)
     async def say(self, interaction: Interaction, *, arg: str = "what?"):
+        """Send a message on WorstBot's behalf
+
+        :param interaction:
+        :param arg:
+        :return:
+        """
         await interaction.response.send_message(ephemeral = True, content = Constants.BLANK)
         await interaction.channel.send(content = arg)
 
@@ -35,13 +46,29 @@ class BaseCommands(commands.Cog):
     @app_commands.command(name = "purge")
     @app_commands.default_permissions(manage_messages = True)
     async def purge(self, interaction: Interaction, amount: app_commands.Range[int, 1, 100] = 1):
+        """Purge 1-100 messages from the channel (Up to 2 weeks old)
+
+        :param interaction:
+        :param amount: The number of messages to purge (default 1)
+        :return:
+        """
         await interaction.response.defer(ephemeral = True)
         deleted = await interaction.channel.purge(limit = amount, check = self.is_me, bulk = True if amount > 1 else False, after = interaction.created_at - relativedelta(weeks = 2), oldest_first = False)
         await interaction.followup.send(content = f"deleted {len(deleted)} messages")
 
     @app_commands.command(name = "rtd", description = "role some dice")
-    @app_commands.describe(dice="number of dice to roll", sides="Number of faces on die, set either this or min+max+step", minimum="lowest number on die", maximum="highest number on die", step="increase on each face", ephemeral="Set to false to be visible by all")
     async def roll_the_dice(self, interaction: Interaction, dice: int = 1, sides: int = 6, minimum: int = None, maximum: int = None, step: int = 1, ephemeral: bool = True):
+        """Simulate dice role
+
+        :param interaction:
+        :param dice: Number of dice to roll
+        :param sides: Number of faces per die, set this or min, max, step
+        :param minimum: Lowest number on each die
+        :param maximum: Highest number on each die
+        :param step: Number to increase by on each face
+        :param ephemeral: Set false to be visible by all
+        :return:
+        """
         if not (minimum or maximum):
             minimum, maximum = 1, sides
         rolls = [str(random.randrange(minimum, maximum+1, step)) for _ in range(dice)]
@@ -86,6 +113,12 @@ class BaseCommands(commands.Cog):
     @app_commands.command(name = "mention-command")
     @app_commands.default_permissions()
     async def mention_command(self, interaction: Interaction, command: str):
+        """Mention a WorstBot command
+
+        :param interaction:
+        :param command: The command to mention
+        :return:
+        """
         await interaction.response.send_message(command)
 
     @mention_command.autocomplete(name = "command")

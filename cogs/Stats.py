@@ -82,9 +82,15 @@ class Stats(commands.GroupCog, name = "stats"):
         await interaction.followup.send(view = view, embed = embed_list[0], content = f"Total commits: {contributors.get('data').get('total')}", ephemeral = True)
         view.response = await interaction.original_response()
 
-    @app_commands.command(name = "server-usage", description = "WorstBot usage on this server")
-    @app_commands.describe(before = "YYYY/MM/DD", after = "YYYY/MM/DD")
+    @app_commands.command(name = "server-usage")
     async def GuildUsage(self, interaction: Interaction, before: Transform[str, DateTransformer] = Converters.to_datetime("2100/01/01", "%Y/%m/%d"), after: Transform[str, DateTransformer] = Converters.to_datetime("1970/01/01", "%Y/%m/%d")):
+        """Find out how much WorstBot is used on this server
+
+        :param interaction:
+        :param before: YYYY/MM/DD
+        :param after: YYYY/MM/DD
+        :return:
+        """
         await interaction.response.defer(ephemeral = True)
 
         usage = await self.bot.fetch("SELECT command, COUNT(*) AS count FROM usage WHERE guild = $1 AND execution_time BETWEEN $2::TIMESTAMP AND $3::TIMESTAMP GROUP BY command ORDER BY count DESC", interaction.guild_id, after, before)

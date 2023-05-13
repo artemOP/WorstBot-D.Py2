@@ -20,8 +20,19 @@ class Reminder(commands.Cog):
         self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "remindme", description = "Set a DM reminder for all your important things (all fields are optional)")
-    @app_commands.describe(year = "YYYY", month = "MM", day = "DD", hour = "HH", minute = "MM", second = "SS", message = "reminder message")
     async def ReminderCreate(self, interaction: discord.Interaction, year: Range[int, dt.now().year, 2030] = None, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None, hour: Range[int, 0, 60] = 0, minute: Range[int, 0, 60] = 0, second: Range[int, 0, 60] = 0, message: str = "..."):
+        """Create a reminder
+
+        :param interaction:
+        :param year: YYYY
+        :param month: MM
+        :param day: DD
+        :param hour: HH
+        :param minute: MM
+        :param second: SS
+        :param message: Reminder content
+        :return:
+        """
         try:
             expiretime = dt(year or dt.now().year, month or dt.now().month, day or dt.now().day, hour, minute, second)
         except ValueError:

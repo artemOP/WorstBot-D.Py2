@@ -60,6 +60,28 @@ def bar(data: dict[str, int], *args, **kwargs) -> list[BytesIO]:
     plt.close()
     return plots
 
+def line(data: dict[str, int], *args, **kwargs) -> list[BytesIO]:
+    """
+    Plot data to line chart
+
+    :param data: {label: line size}
+    :param args:
+    :param kwargs:
+    :return: Line chart BytesIO
+    """
+    plt_props = kwargs.get("plt_props") or [{"label_colour": "black", "bg_colour": "white"}, {"label_colour": "white", "bg_colour": "black"}]
+    fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
+    ax.plot(data.keys(), data.values(), color = [[random(), random(), random()] for _ in data])
+    ax.yaxis.set_major_locator(MaxNLocator(integer = True))
+    fig.autofmt_xdate()
+    plots = []
+    for i in range(2):
+        ax.tick_params(colors = plt_props[i]["label_colour"])
+        fig.set_facecolor(plt_props[i]["bg_colour"])
+        plots.append(save_fig(**kwargs))
+    plt.close()
+    return plots
+
 async def graph(graph_type: typing.Literal["pie", "bar"], loop: asyncio.AbstractEventLoop, data: dict[str, int], *args, **kwargs) -> list[BytesIO] | None:
     if not (graph_type or data):
         return
@@ -67,5 +89,6 @@ async def graph(graph_type: typing.Literal["pie", "bar"], loop: asyncio.Abstract
 
 GRAPH_TYPES = {
     "pie": pie,
-    "bar": bar
+    "bar": bar,
+    "line": line
 }

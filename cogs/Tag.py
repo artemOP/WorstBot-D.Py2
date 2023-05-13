@@ -179,9 +179,14 @@ class Tag(commands.GroupCog, name = "tag"):
             await interaction.followup.send(embed = embed, ephemeral = True)
             await interaction.followup.send(content = text, ephemeral = True)
 
-    @app_commands.command(name = "random", description = "View a tag random tag")
-    @app_commands.describe(tag = "randomly select from tags containing name")
+    @app_commands.command(name = "random")
     async def Random(self, interaction: Interaction, tag: str = None):
+        """View a random tag
+
+        :param interaction:
+        :param tag: Filter tags by name
+        :return:
+        """
         tag = self.bot.current(tag)
         tag = await self.bot.fetchrow("SELECT owner, name, value FROM tags WHERE guild = $1 AND nsfw = FALSE AND private = FALSE AND name LIKE $2 ORDER BY RANDOM() LIMIT 1", interaction.guild_id, f"%{tag}%")
         if not tag:
@@ -193,9 +198,14 @@ class Tag(commands.GroupCog, name = "tag"):
                 title = tag["name"],
                 text = tag["value"]))
 
-    @app_commands.command(name = "list", description = "View all tags by a set user")
-    @app_commands.describe(user = "leave Blank to search your own tags")
+    @app_commands.command(name = "list")
     async def List(self, interaction: Interaction, user: discord.Member = None):
+        """View all tags by an input user
+
+        :param interaction:
+        :param user: Leave blank to search your own tags
+        :return:
+        """
         user = user or interaction.user
         tags = await self.bot.fetch("SELECT name FROM tags WHERE guild = $1 AND owner = $2 AND private = FALSE", interaction.guild_id, user.id)
         if not tags:

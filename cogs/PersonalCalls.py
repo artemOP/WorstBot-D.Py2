@@ -60,13 +60,25 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
 
     @app_commands.command(name = "setup")
     async def PersonalCallSetup(self, interaction: Interaction, channel: discord.VoiceChannel = None):
+        """Set a base call to spawn temporary calls from
+
+        :param interaction:
+        :param channel: The voice channel to set as the base call, leave blank to disable
+        :return:
+        """
         if not channel:
             await self.bot.execute("DELETE FROM personalcall WHERE channel = $1", channel.id)
         await self.bot.execute("INSERT INTO PersonalCall(guild, channel) VALUES($1, $2) ON CONFLICT (guild) DO UPDATE SET channel = EXCLUDED.channel", interaction.guild.id, channel.id)
         await interaction.response.send_message(f"the new base voice call is {channel}", ephemeral = True)
 
-    @app_commands.command(name = "protect", description = "toggles if channel will be deleted when empty")
+    @app_commands.command(name = "protect")
     async def CallBlacklistToggle(self, interaction: Interaction, channel: discord.VoiceChannel):
+        """Prevent WorstBot from deleting the specified channel
+
+        :param interaction:
+        :param channel: The channel to protect
+        :return:
+        """
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM callblacklist WHERE guild = $1 AND channel = $2)", interaction.guild_id, channel.id):
             await self.bot.execute("INSERT INTO CallBlacklist(guild, channel) VALUES($1, $2)", interaction.guild_id, channel.id)
             await interaction.response.send_message(f"{channel} is now protected", ephemeral = True)
@@ -74,8 +86,13 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
             await self.bot.execute("DELETE FROM CallBlacklist WHERE channel=$1", channel.id)
             await interaction.response.send_message(f"{channel} is no longer protected", ephemeral = True)
 
-    @app_commands.command(name="protection-list", description = "Lists out channels blocked from deletion")
+    @app_commands.command(name="protection-list")
     async def CallBlacklistList(self, interaction: Interaction):
+        """List out protected channels
+
+        :param interaction:
+        :return:
+        """
         channels = await self.bot.fetch("SELECT channel FROM CallBlacklist WHERE guild=$1 LIMIT 25", interaction.guild.id)
         embed = EmbedGen.FullEmbed(
             title = "Protected channels",
@@ -83,8 +100,14 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name = "blacklist", description = "toggle a user ban on voice calls")
+    @app_commands.command(name = "blacklist")
     async def UserBlacklist(self, interaction: Interaction, member: discord.Member):
+        """Prevents a user from creating a personal call
+
+        :param interaction:
+        :param member: The member to add/remove from the blacklist
+        :return:
+        """
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM UserBlacklist WHERE guild = $1 AND member = $2)", interaction.guild_id, member.id):
             await self.bot.execute("INSERT INTO UserBlacklist(guild, member) VALUES($1, $2) ON CONFLICT DO NOTHING", interaction.guild_id, member.id)
             await interaction.response.send_message(f"{str(member)} has been added to the blacklist", ephemeral = True)

@@ -67,6 +67,12 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
 
     @app_commands.command(name = "role")
     async def ToggleRole(self, interaction: Interaction, role: Transform[discord.Role, RoleTransformer]):
+        """Give or remove optional roles
+
+        :param interaction:
+        :param role: The role to add or remove
+        :return:
+        """
         if not role:
             return
         if role in interaction.user.roles:
@@ -78,6 +84,11 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
 
     @app_commands.command(name = "list")
     async def ListRole(self, interaction: Interaction):
+        """List all optional roles
+
+        :param interaction:
+        :return:
+        """
         roles = await self.bot.fetch("SELECT role FROM selfroles WHERE guild = $1", interaction.guild_id)
         if not roles:
             return await interaction.response.send_message("no roles", ephemeral = True)
