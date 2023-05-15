@@ -91,9 +91,9 @@ class Economy(commands.GroupCog, name = "economy"):
         embeds = EmbedGen.EmbedFieldList(
             title = "Economy Leaderboard",
             fields = [
-                EmbedGen.EmbedField(name = f"{i + 1}: {await self.bot.maybe_fetch_user(user_id)}", value = f"W${wealth:,}") for i, (user_id, wealth) in enumerate(economy) if wealth > 0
+                EmbedGen.EmbedField(name = f"{i + 1}: {await self.bot.maybe_fetch_user(user_id)}", value = f"W${wealth:,}", inline = False) for i, (user_id, wealth) in enumerate(economy) if wealth > 0
             ],
-            max_fields = 12
+            max_fields = 5
         )
         view = Paginators.ButtonPaginatedEmbeds(embed_list = embeds)
         await interaction.response.send_message(view = view, embeds = embeds, ephemeral = True)
