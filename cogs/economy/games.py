@@ -467,8 +467,8 @@ class Gambling(commands.GroupCog, name = "gambling"):
 
         if game in self.games[interaction.guild] and self.games[interaction.guild][game].state not in (GameState.cancelled, GameState.finished):
             return await interaction.response.send_message(f"{game.name.title()} lobby already open, join it with {Converters.to_command_mention(self.join_lobby, interaction.guild)}", ephemeral = True)
-        elif wealth.wallet < bet * wealth.multiplier:
-            return await interaction.response.send_message(f"You need at least {bet * wealth.multiplier} WorstCoin in your wallet to start a lobby with this bet", ephemeral = True)
+        elif wealth.wallet < bet:
+            return await interaction.response.send_message(f"You need at least {bet} WorstCoin in your wallet to start a lobby with this bet", ephemeral = True)
 
         player = Player(wealth, bet, PlayerState.ready)
         self.games[interaction.guild][game] = game = GameManager(game, self.bot, player)
@@ -506,7 +506,7 @@ class Gambling(commands.GroupCog, name = "gambling"):
         elif self.games[interaction.guild][game].state is GameState.playing:
             return await interaction.response.send_message(f"{game.name.title()} lobby already playing, please wait for it to finish", ephemeral = True)
         elif wealth.wallet < bet:
-            return await interaction.response.send_message(f"You need at least {bet * wealth.multiplier} WorstCoin to join a lobby with this bet", ephemeral = True)
+            return await interaction.response.send_message(f"You need at least {bet} WorstCoin to join a lobby with this bet", ephemeral = True)
 
         player = await self.games[interaction.guild][game].add_player(wealth, bet)
         view = GuestLobby(self.games[interaction.guild][game], player)
