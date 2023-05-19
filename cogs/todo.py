@@ -63,7 +63,7 @@ class Todo(Mapping):
 def create_embed(todo: Todo) -> discord.Embed:
     return EmbedGen.SimpleEmbed(
         author = {"name": todo.owner.display_name, "icon_url": todo.owner.display_avatar},
-        title = f"{todo.name}: {None if not todo.deadline else format_dt(todo.deadline, 'R')}",
+        title = f"{todo.name}: {'' if not todo.deadline else format_dt(todo.deadline, 'R')}",
         text = todo.content
     )
 
