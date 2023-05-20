@@ -60,7 +60,12 @@ class WorstBot(discord_commands.Bot):
         for file in self.collect_cogs(self.cog_dir):
             extension = str(file.relative_to("./"))[:-3]
             extension = re.sub(r"(\\)|(/)", ".", extension)
-            await self.load_extension(extension)
+            try:
+                await self.load_extension(extension)
+            except discord_commands.NoEntryPointError:
+                self.logger.debug("Skipping extension %s", extension)
+            except Exception as e:
+                self.logger.exception(f"Failed to load extension {extension}", exc_info = e)
 
     def collect_cogs(self, root: pathlib.Path) -> typing.Generator[pathlib.Path, None, None]:
         for file in root.iterdir():
