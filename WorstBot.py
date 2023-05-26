@@ -178,16 +178,17 @@ class WorstBot(discord_commands.Bot):
         """
         return int((((guild_id + member_id) * (guild_id + member_id + 1)) / 2) + member_id)
 
-    def unpair(self, pair: int) -> tuple[Optional[discord.Guild], Optional[discord.Member]]:
+    def unpair(self, pair: int, get_objects: bool = True) -> tuple[Optional[discord.Guild], Optional[discord.Member]]:
         """Returns the guild and member from a paired id
 
         :param pair: Paired id
+        :param get_objects: Whether to attempt to get the objects from the cache
         :return: guild, member
         """
         w = floor((sqrt(8 * pair + 1) - 1) / 2)
         y = int(pair - (w ** 2 + w) / 2)
         x = int(w - y)
-        return self.get_guild(x), self.get_user(y)
+        return (self.get_guild(x), self.get_user(y)) if get_objects else (x, y)
 
     @staticmethod
     async def add_to_extra(command: Command, mention: str, guild_id: Optional[int] = None) -> None:
