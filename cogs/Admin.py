@@ -46,13 +46,26 @@ class Admin(commands.GroupCog, name = "admin"):
     #     except:
     #         await interaction.response.send_message(f"{cog.value} is not a valid input", ephemeral = True)
 
-    @app_commands.command(name = "nickname", description = "Change WorstBot's nickname")
+    @app_commands.command(name = "nickname")
     async def nickname(self, interaction: Interaction, nickname: str = ""):
+        """Change WorstBot's nickname
+
+        :param interaction:
+        :param nickname: WorstBot's new name
+        :return:
+        """
         await interaction.guild.me.edit(nick = nickname)
         await interaction.response.send_message(f"nickname set to {nickname}", ephemeral = True)
 
-    @app_commands.command(name = "profile", description = "admin command to remove problematic profiles")
+    @app_commands.command(name = "profile")
     async def ProfileRemove(self, interaction: Interaction, user: discord.User, reason: str = None):
+        """Remove problematic profiles
+
+        :param interaction:
+        :param user: The user profile to remove
+        :param reason: The message sent to the user
+        :return:
+        """
         await self.bot.execute("DELETE FROM profile WHERE member = $1", user.id)
         await interaction.response.send_message(f"{user.name}'s profile has been removed")
         try:
