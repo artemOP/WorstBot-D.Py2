@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import discord
-from discord import app_commands, Interaction
+from discord import app_commands
 from discord.ext import commands
-from WorstBot import WorstBot
+
+if TYPE_CHECKING:
+    from WorstBot import WorstBot
+    from discord import Interaction
 
 @app_commands.default_permissions()
 class Template(commands.GroupCog, name = "template"):
