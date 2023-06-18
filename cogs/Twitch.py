@@ -104,8 +104,6 @@ class Twitch(commands.GroupCog, name = "twitch"):
             guild: discord.Guild = await self.bot.maybe_fetch_guild(user["guild"])
             channel: discord.PartialMessageable = self.bot.get_partial_messageable(user["channel"])
 
-            print(user["role"])
-
             if user["role"] == 0:
                 role_mention = "@everyone"
             elif user["role"] is None:
