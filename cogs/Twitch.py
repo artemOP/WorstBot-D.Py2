@@ -16,7 +16,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT NOT NULL, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
+        await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
         await self.TokenGen()
         await self.streamers()
         self.request.start()
@@ -48,11 +48,13 @@ class Twitch(commands.GroupCog, name = "twitch"):
     @app_commands.command(name = "add", description = "Get live alerts for your selected twitch channel")
     async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str, alert_role: discord.Role = None):
         twitch_user = Converters.to_int(twitch_user)
-        if alert_role:
-            alert_role = alert_role.id
+        if alert_role == interaction.guild.default_role:
+            alert_role_id = 0
+        elif alert_role is None:
+            alert_role_id = None
         else:
-            alert_role = 0
-        await self.bot.execute("INSERT INTO twitch(guild, channel, userid, role) VALUES($1, $2, $3, $4) ON CONFLICT (guild, userid) DO UPDATE SET channel = excluded.channel, role = excluded.role", interaction.guild_id, channel.id, twitch_user, alert_role)
+            alert_role_id = alert_role.id
+        await self.bot.execute("INSERT INTO twitch(guild, channel, userid, role) VALUES($1, $2, $3, $4) ON CONFLICT (guild, userid) DO UPDATE SET channel = excluded.channel, role = excluded.role", interaction.guild_id, channel.id, twitch_user, alert_role_id)
         await self.streamers()
         await interaction.response.send_message("Streamer has been added to the Tracking list", ephemeral = True)
 
@@ -101,7 +103,17 @@ class Twitch(commands.GroupCog, name = "twitch"):
             stream = [dictionary for dictionary in streams["data"] if int(dictionary["user_id"]) == user["userid"]][0]
             guild: discord.Guild = await self.bot.maybe_fetch_guild(user["guild"])
             channel: discord.PartialMessageable = self.bot.get_partial_messageable(user["channel"])
-            role = guild.get_role(user["role"])
+
+            print(user["role"])
+
+            if user["role"] == 0:
+                role_mention = "@everyone"
+            elif user["role"] is None:
+                role_mention = None
+            else:
+                role = guild.get_role(user["role"])
+                role_mention = role.mention
+
             embed = EmbedGen.SimpleEmbed(
                 author = {
                     "name": stream["user_name"],
@@ -112,7 +124,7 @@ class Twitch(commands.GroupCog, name = "twitch"):
                 footer = {"text": stream["started_at"].split("T")[1].split("Z")[0]},
                 image = stream["thumbnail_url"].replace("-{width}x{height}", "")
             )
-            await channel.send(embed=embed, content = "@everyone" if not role else role.mention)
+            await channel.send(embed=embed, content = role_mention)
 
     @request.before_loop
     async def before_my_task(self):
