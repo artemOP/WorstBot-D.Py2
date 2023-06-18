@@ -152,11 +152,12 @@ class SetDeadline(ui.Modal):
         if all((self.year.value, self.month.value, self.day.value, self.hour.value, self.minute.value)):
             try:
                 self.todo.deadline = datetime(int(self.year.value), int(self.month.value), int(self.day.value), int(self.hour.value), int(self.minute.value), tzinfo = timezone.utc)
+                self.todo.status = TodoStatus.on_going
             except ValueError:
                 return await interaction.response.send_message("Invalid deadline set, please try again", ephemeral = True)
         else:
             self.todo.deadline = None
-        await interaction.client.execute("UPDATE todo SET deadline=$1 WHERE todo_id=$2", self.todo.deadline, self.todo.id_)
+        await interaction.client.execute("UPDATE todo SET deadline=$1, status=$2 WHERE todo_id=$3", self.todo.deadline, self.todo.status.value, self.todo.id_)
         view = TodoMenu(self.todo)
         await interaction.response.send_message(view = view, embed = create_embed(self.todo), ephemeral = True)
         view.response = await interaction.original_response()
