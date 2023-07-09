@@ -153,7 +153,7 @@ class Poll(commands.GroupCog, name = "poll"):
 
         counts, responses = {}, {}
         for answer_id, answer in answer_table.items():
-            user_list = await self.bot.fetchval("SELECT ARRAY_AGG(member) FROM voters WHERE answer_id=$1", answer_id)
+            user_list = await self.bot.fetchval("SELECT ARRAY_AGG(member) FROM voters WHERE answer_id=$1", answer_id) or []
             responses[answer] = [await self.bot.maybe_fetch_member(interaction.guild, member) for member in user_list]
             counts[answer] = len(user_list)
 
