@@ -9,7 +9,7 @@ from modules import EmbedGen, Converters, Graphs, Paginators, Constants
 from datetime import date, datetime
 from os import walk, getcwd, listdir
 
-@dataclass()
+@dataclass(slots = True)
 class File:
     total_lines: int
     source_lines: int = 0
