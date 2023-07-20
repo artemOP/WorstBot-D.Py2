@@ -28,6 +28,7 @@ class DateTransformer(Transformer):
         return Converters.to_datetime(value, "%Y/%m/%d")
 
 
+@app_commands.guild_only()
 class Stats(commands.GroupCog, name = "stats"):
 
     def __init__(self, bot: WorstBot):

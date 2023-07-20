@@ -19,6 +19,7 @@ class ToggleRoles(commands.Cog):
         self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "toggle-role-setup", description = "Set two roles that can be toggled between, repeating the command will remove the toggle")
+    @app_commands.guild_only()
     async def Setup(self, interaction: Interaction, role1: discord.Role, role2: discord.Role):
         await interaction.response.defer(ephemeral = True)
         await self.bot.execute("INSERT INTO toggleroles(guild, role1, role2) VALUES($1, $2, $3) ON CONFLICT(role1, role2) DO UPDATE SET guild = 1", interaction.guild_id, role1.id, role2.id)
@@ -26,6 +27,7 @@ class ToggleRoles(commands.Cog):
         await interaction.followup.send(f"{role1.name} <---> {role2.name} Conversion has been added/removed from the setup")
 
     @app_commands.command(name = "toggle-role", description = "Toggles a user between two roles")
+    @app_commands.guild_only()
     async def ToggleRole(self, interaction: Interaction, member: discord.Member, toggle: int):
         await interaction.response.defer(ephemeral = True)
         toggle = await self.bot.fetchrow("SELECT role1, role2 FROM toggleroles WHERE id = $1", toggle)

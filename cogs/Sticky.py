@@ -3,7 +3,9 @@ from discord import app_commands
 from discord.ext import commands
 from WorstBot import WorstBot
 
+
 @app_commands.default_permissions()
+@app_commands.guild_only()
 class StickyMessage(commands.GroupCog, name = "sticky"):
     def __init__(self, bot: WorstBot):
         self.bot = bot

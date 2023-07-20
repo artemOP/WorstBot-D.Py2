@@ -42,6 +42,7 @@ class BaseEvents(commands.Cog):
     @app_commands.command(name = "toggle", description = "toggle automatic events on a server level")
     @app_commands.default_permissions()
     @app_commands.choices(event = Choices())
+    @app_commands.guild_only()
     async def toggle(self, interaction: Interaction, event: Choice[str]):
         await interaction.response.defer(ephemeral = True)
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM events WHERE guild = $1)", interaction.guild_id):

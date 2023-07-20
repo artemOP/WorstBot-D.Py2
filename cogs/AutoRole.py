@@ -4,7 +4,9 @@ from discord.ext import commands
 from WorstBot import WorstBot
 from modules import EmbedGen, Paginators, RoleManipulation
 
+
 @app_commands.default_permissions(manage_roles = True)
+@app_commands.guild_only()
 class AutoRole(commands.GroupCog, name = "autorole"):
     def __init__(self, bot: WorstBot):
         super().__init__()

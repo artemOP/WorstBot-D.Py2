@@ -10,6 +10,7 @@ from WorstBot import WorstBot
 from modules import EmbedGen, Paginators
 
 
+@app_commands.guild_only()
 class BirthdayAlert(commands.GroupCog, name = "birthday"):
 
     def __init__(self, bot: WorstBot):

@@ -16,6 +16,8 @@ class hexTransformer(app_commands.Transformer):
         value = value.removeprefix("#")
         return int(value, 16)
 
+
+@app_commands.guild_only()
 class CustomRoles(commands.GroupCog, name = "role"):
     def __init__(self, bot: WorstBot):
         super().__init__()

@@ -71,6 +71,7 @@ class ProfileView(View):
         await interaction.response.send_message(str(error), ephemeral = True)
 
 
+@app_commands.guild_only()
 class Profile(commands.GroupCog, name = "profile"):
 
     def __init__(self, bot: WorstBot):

@@ -331,7 +331,9 @@ class TodoReminder(Paginators.BaseView):
         self.stop()
         await interaction.response.edit_message(view = self, content = f"{self.todo.name} has been marked as completed")
 
+
 @app_commands.default_permissions()
+@app_commands.guild_only()
 class Todos(commands.GroupCog, name = "todo"):
 
     def __init__(self, bot: WorstBot):

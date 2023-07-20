@@ -6,6 +6,7 @@ from discord.ext import commands
 from WorstBot import WorstBot
 
 @app_commands.default_permissions()
+@app_commands.guild_only()
 class Admin(commands.GroupCog, name = "admin"):
     def __init__(self, bot: WorstBot):
         super().__init__()

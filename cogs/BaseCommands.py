@@ -30,6 +30,7 @@ class BaseCommands(commands.Cog):
 
     @app_commands.command(name = "say")
     @app_commands.default_permissions(manage_messages = True)
+    @app_commands.guild_only()
     async def say(self, interaction: Interaction, *, arg: str = "what?"):
         """Send a message on WorstBot's behalf
 
@@ -45,6 +46,7 @@ class BaseCommands(commands.Cog):
 
     @app_commands.command(name = "purge")
     @app_commands.default_permissions(manage_messages = True)
+    @app_commands.guild_only()
     async def purge(self, interaction: Interaction, amount: app_commands.Range[int, 1, 100] = 1):
         """Purge 1-100 messages from the channel (Up to 2 weeks old)
 
@@ -57,6 +59,7 @@ class BaseCommands(commands.Cog):
         await interaction.followup.send(content = f"deleted {len(deleted)} messages")
 
     @app_commands.command(name = "rtd", description = "role some dice")
+    @app_commands.guild_only()
     async def roll_the_dice(self, interaction: Interaction, dice: int = 1, sides: int = 6, minimum: int = None, maximum: int = None, step: int = 1, ephemeral: bool = True):
         """Simulate dice role
 
@@ -76,6 +79,7 @@ class BaseCommands(commands.Cog):
 
     @app_commands.command(name = "emoji")
     @app_commands.default_permissions(manage_emojis = True)
+    @app_commands.guild_only()
     async def emoji_stealer(self, interaction: Interaction, emoji: str):
         """Get emoji from other servers and add it to your own
 
@@ -98,6 +102,7 @@ class BaseCommands(commands.Cog):
                 await interaction.followup.send(f"{name} could not be addded due to: {e.text}", ephemeral = True)
 
     @app_commands.command(name = "self-mute")
+    @app_commands.guild_only()
     async def self_mute(self, interaction: Interaction, length: app_commands.Range[int, 1, 2_419_200] = None):
         """Mute yourself for a set time period
 
@@ -112,6 +117,7 @@ class BaseCommands(commands.Cog):
 
     @app_commands.command(name = "mention-command")
     @app_commands.default_permissions()
+    @app_commands.guild_only()
     async def mention_command(self, interaction: Interaction, command: str):
         """Mention a WorstBot command
 

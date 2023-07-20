@@ -5,7 +5,9 @@ from WorstBot import WorstBot
 from asyncio import sleep
 from modules import Converters, EmbedGen
 
+
 @app_commands.default_permissions()
+@app_commands.guild_only()
 class Twitch(commands.GroupCog, name = "twitch"):
     def __init__(self, bot: WorstBot):
         self.bot = bot

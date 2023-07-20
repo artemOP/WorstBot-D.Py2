@@ -74,6 +74,7 @@ class TagModal(ui.Modal, title = "tag"):
         # todo: remove last db section and uncomment all code in callback once select modals are reintroduced
 
 
+@app_commands.guild_only()
 class Tag(commands.GroupCog, name = "tag"):
 
     def __init__(self, bot: WorstBot):

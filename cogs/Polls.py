@@ -100,6 +100,8 @@ class PollResultsView(Paginators.ThemedGraphView):
     async def detailed_poll_response(self, interaction: Interaction, select: ui.Select):
         await interaction.response.send_message(embeds = EmbedGen.SimpleEmbedList(descriptions = "\n".join(member.mention for member in self.responses[select.values[0]])), ephemeral = True)
 
+
+@app_commands.guild_only()
 class Poll(commands.GroupCog, name = "poll"):
 
     def __init__(self, bot: WorstBot):

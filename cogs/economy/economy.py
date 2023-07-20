@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from WorstBot import WorstBot
 
 
+@app_commands.guild_only()
 class Economy(commands.GroupCog, name = "economy"):
     CONVERSION_MAX = 0.5
     CONVERSION_MIN = 0.05
@@ -26,8 +27,8 @@ class Economy(commands.GroupCog, name = "economy"):
     }
     conversion_rate: float = 0.25
 
-    transfer_group = app_commands.Group(name = "transfer", description = "Transfer money")
-    gambling_group = app_commands.Group(name = "gamble", description = "Gamble money")
+    transfer_group = app_commands.Group(name = "transfer", description = "Transfer money", guild_only = True)
+    gambling_group = app_commands.Group(name = "gamble", description = "Gamble money", guild_only = True)
 
     def __init__(self, bot: WorstBot):
         self.bot = bot

@@ -25,6 +25,7 @@ class Accents(Enum):
     India = "co.in",
 
 
+@app_commands.guild_only()
 class TTS(commands.GroupCog, name = "tts"):
     def __init__(self, bot: WorstBot):
         self.bot = bot

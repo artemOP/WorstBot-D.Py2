@@ -20,6 +20,7 @@ class Reminder(commands.Cog):
         self.logger.info(f"{self.qualified_name} cog unloaded")
 
     @app_commands.command(name = "remindme", description = "Set a DM reminder for all your important things (all fields are optional)")
+    @app_commands.guild_only()
     async def ReminderCreate(self, interaction: discord.Interaction, year: Range[int, dt.now().year, 2030] = None, month: Range[int, 1, 12] = None, day: Range[int, 1, 31] = None, hour: Range[int, 0, 60] = 0, minute: Range[int, 0, 60] = 0, second: Range[int, 0, 60] = 0, message: str = "..."):
         """Create a reminder
 

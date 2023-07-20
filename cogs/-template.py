@@ -3,7 +3,9 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 from WorstBot import WorstBot
 
+
 @app_commands.default_permissions()
+@app_commands.guild_only()
 class Template(commands.GroupCog, name = "template"):
 
     def __init__(self, bot: WorstBot):

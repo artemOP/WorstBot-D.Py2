@@ -5,7 +5,9 @@ from WorstBot import WorstBot
 from modules import EmbedGen, Constants
 from io import BytesIO
 
+
 @app_commands.default_permissions(manage_channels = True, ban_members=True)
+@app_commands.guild_only()
 class PersonalCalls(commands.GroupCog, name = "personal-call"):
 
     def __init__(self, bot: WorstBot):

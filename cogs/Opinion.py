@@ -37,12 +37,14 @@ class Opinion(commands.Cog):
         await self.bot.execute("INSERT INTO opinion(guild, timestamp, content) VALUES ($1, $2, $3)", message.guild.id, message.created_at, content)
 
     @app_commands.command(name="opinion", description="Ask worst bot for its opinion on your super important questions")
+    @app_commands.guild_only()
     async def opinion(self, interaction: discord.Interaction, opinion: str = None):
         content = await self.bot.fetchval("SELECT content FROM Opinion WHERE GUILD=$1 ORDER BY random() LIMIT 1", interaction.guild.id)
         await interaction.response.send_message(content=f"what is my opinion on `{opinion}`?\n\n{content or 'I have no opinions'}")
 
     @app_commands.command(name = "prefix-blacklist", description = "blacklist prefixes used by other bots in opinion forming")
     @app_commands.default_permissions()
+    @app_commands.guild_only()
     async def PrefixBlacklist(self, interaction: discord.Interaction, prefix: str):
         await self.bot.execute("INSERT INTO prefixblacklist(guild, prefix) VALUES ($1, $2)", interaction.guild_id, prefix)
         await interaction.response.send_message(f"messages starting with {prefix} will be ignored", ephemeral = True)
@@ -55,7 +57,6 @@ class Opinion(commands.Cog):
     async def BeforeDeleteOld(self):
         await self.bot.wait_until_ready()
         await sleep(3)
-
 
 
 async def setup(bot):

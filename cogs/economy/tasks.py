@@ -110,6 +110,7 @@ class Tasks(commands.Cog):
 
     @app_commands.command(name = "work")
     @app_commands.checks.cooldown(1, 60*60, key = lambda i: (i.guild_id, i.user.id))
+    @app_commands.guild_only()
     async def work(self, interaction: Interaction):
         """Complete a task to earn money
 

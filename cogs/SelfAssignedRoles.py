@@ -31,6 +31,7 @@ class RoleTransformer(Transformer):
         return [Choice(name = role.name, value = str(role.id)) for role in roles if role.name in fuzzy_roles]
 
 
+@app_commands.guild_only()
 class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Toggle a self assignable role"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
