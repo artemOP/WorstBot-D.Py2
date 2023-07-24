@@ -14,6 +14,9 @@ from discord import abc, app_commands, AppCommandType
 from discord.ext import commands as discord_commands, tasks
 from discord.app_commands import Group, Command, ContextMenu
 
+import wavelink
+from wavelink.ext import spotify
+
 import asyncpg
 from aiohttp import ClientSession
 from dotenv import dotenv_values
@@ -56,6 +59,10 @@ class WorstBot(discord_commands.Bot):
         self.session = ClientSession(loop = self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
         self.prepare_mentions.start()
         self.load_emoji.start()
+
+        sc = spotify.SpotifyClient(client_id = self.dotenv.get("spotify_id"), client_secret = self.dotenv.get("spotify_secret"))
+        node: wavelink.Node = wavelink.Node(uri = "http://localhost:2333", password = self.dotenv.get("lavalink_password"), id = "WorstBot")
+        await wavelink.NodePool.connect(client = self, nodes = [node], spotify = sc)
 
         for file in self.collect_cogs(self.cog_dir):
             extension = str(file.relative_to("./"))[:-3]
