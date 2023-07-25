@@ -63,7 +63,6 @@ class Lavalink(commands.GroupCog, name = "music"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.logger = self.bot.logger.getChild(self.qualified_name)
-        self.logger.setLevel(logging.DEBUG)
 
     async def cog_load(self) -> None:
         self.logger.info(f"{self.qualified_name} cog loaded")
