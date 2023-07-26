@@ -343,7 +343,7 @@ class Lavalink(commands.GroupCog, name = "music"):
             player.queue.loop_all = False
             return await interaction.response.send_message("Looping the current track", ephemeral = True)
         elif mode == "queue":
-            player.queue.loop = True
+            player.queue.loop = False
             player.queue.loop_all = True
             return await interaction.response.send_message("Looping the queue", ephemeral = True)
         elif mode == "off":
