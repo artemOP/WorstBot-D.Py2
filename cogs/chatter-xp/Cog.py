@@ -56,6 +56,7 @@ class Chatter:
         return self.user == o.user
 
 
+@app_commands.guild_only()
 class ChatterXP(commands.GroupCog, name = "chatter-xp"):
 
     def __init__(self, bot: WorstBot):
