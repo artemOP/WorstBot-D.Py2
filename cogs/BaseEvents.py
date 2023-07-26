@@ -26,7 +26,8 @@ class BaseEvents(commands.Cog):
             calls BOOLEAN DEFAULT TRUE,
             twitch BOOLEAN DEFAULT TRUE,
             textarchive BOOLEAN DEFAULT TRUE,
-            usage BOOLEAN DEFAULT TRUE     
+            usage BOOLEAN DEFAULT TRUE,
+            chatter_xp BOOLEAN DEFAULT TRUE    
             )
             """
         )

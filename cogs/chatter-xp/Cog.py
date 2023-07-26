@@ -106,7 +106,10 @@ class ChatterXP(commands.GroupCog, name = "chatter-xp"):
         if message.guild is None:
             self.logger.debug(f"Message from {message.author} in DMs ignored")
             return
-        if message.author.bot:
+        elif await self.bot.events(message.guild.id, self.bot._events.chatter_xp) is False:
+            self.logger.debug(f"Message from {message.author} in guild {message.guild} ignored due to toggle")
+            return
+        elif message.author.bot:
             self.logger.debug(f"Message from {message.author} bot ignored")
             return
 

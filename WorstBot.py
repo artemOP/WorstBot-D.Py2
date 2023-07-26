@@ -40,6 +40,7 @@ class _events(StrEnum):
     textarchive = auto()
     twitch = auto()
     usage = auto()
+    chatter_xp = auto()
 
 class WorstBot(discord_commands.Bot):
 
