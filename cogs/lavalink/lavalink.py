@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Literal
 from datetime import timedelta
 from enum import Enum
