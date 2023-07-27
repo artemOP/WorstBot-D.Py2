@@ -80,6 +80,11 @@ class ErrorHandler(commands.Cog):
         if isinstance(error, app_commands.CommandInvokeError):
             error: Exception = error.original
 
+        command = interaction.command
+        if command is not None:
+            if command._has_any_error_handlers():
+                return
+
         match error:
             case discord.errors.Forbidden():
                 error: discord.Forbidden
