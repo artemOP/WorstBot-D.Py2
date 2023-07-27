@@ -47,7 +47,7 @@ class CustomSearch(Transformer):
                 return await wavelink.NodePool.get_playlist(value, cls = wavelink.YouTubePlaylist)
             else:
                 tracks = await wavelink.NodePool.get_tracks(value, cls = platform.value)
-        elif platform is any((SearchType.Spotify, SearchType.YouTubePlaylist, SearchType.Generic)):
+        elif platform is any((SearchType.Spotify, SearchType.YouTubePlaylist, SearchType.Generic)) and not value.startswith("https://"):
             raise app_commands.TransformerError("A URL is required for this search type", discord.AppCommandOptionType.string, cls)
         else:
             tracks = await platform.value.search(value)
@@ -445,7 +445,7 @@ class Lavalink(commands.GroupCog, name = "music"):
             elif interaction.response.is_done():
                 return await interaction.followup.send("Unable to find that song", ephemeral = True)
             else:
-                return await interaction.followup.send("Unable to find that song", ephemeral = True)
+                return await interaction.response.send_message("Unable to find that song", ephemeral = True)
 
 async def setup(bot):
     await bot.add_cog(Lavalink(bot))
