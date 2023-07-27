@@ -178,7 +178,7 @@ class Lavalink(commands.GroupCog, name = "music"):
                 delete_after = queue_length / 1000
             )
         else:
-            await player.play(search, volume = 500)
+            await player.play(search, volume = 50)
             self.logger.debug(f"Now playing {title}")
             await interaction.followup.send(f"Now playing {title}", ephemeral = True)
             return await player.channel.send(
@@ -324,7 +324,8 @@ class Lavalink(commands.GroupCog, name = "music"):
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
             return await interaction.followup.send("Unable to change the volume", ephemeral = True)
-        await player.set_volume(volume * 10)
+        await player.set_volume(volume)
+        await interaction.followup.send(f"Set the volume to {volume}%", ephemeral = True)
 
     @app_commands.command(name = "shuffle")
     async def shuffle(self, interaction: Interaction):
