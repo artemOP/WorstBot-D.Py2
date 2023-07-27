@@ -47,6 +47,8 @@ class CustomSearch(Transformer):
                 return await wavelink.NodePool.get_playlist(value, cls = wavelink.YouTubePlaylist)
             else:
                 tracks = await wavelink.NodePool.get_tracks(value, cls = platform.value)
+        elif platform is any((SearchType.Spotify, SearchType.YouTubePlaylist, SearchType.Generic)):
+            raise app_commands.TransformerError("A URL is required for this search type", discord.AppCommandOptionType.string, cls)
         else:
             tracks = await platform.value.search(value)
         return tracks[0]
@@ -109,11 +111,12 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if player is False:
-            return await interaction.response.send_message("Please connect to a voice channel before using music commands", ephemeral = True)
+            return await interaction.followup.send("Please connect to a voice channel before using music commands", ephemeral = True)
         elif player is True:
-            return await interaction.response.send_message("The bot is currently in use, please hold.")
+            return await interaction.followup.send("The bot is currently in use, please hold.")
 
     @app_commands.command(name = "disconnect")
     async def leave_vc(self, interaction: Interaction):
@@ -122,12 +125,13 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if isinstance(player, wavelink.Player):
             await player.disconnect(force = True)
-            return await interaction.response.send_message("Disconnected from voice channel", ephemeral = True)
+            return await interaction.followup.send("Disconnected from voice channel", ephemeral = True)
         else:
-            return await interaction.response.send_message("The bot cannot be disconnected at this time", ephemeral = True)
+            return await interaction.followup.send("The bot cannot be disconnected at this time", ephemeral = True)
 
     @app_commands.command(name = "play")
     async def play(self, interaction: Interaction, search_type: SearchType, search: Transform[Playable, CustomSearch]):
@@ -138,10 +142,11 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param search: A title or URL to search for
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
             print(player)
-            return await interaction.response.send_message("Cannot play the song at this time", ephemeral = True)
+            return await interaction.followup.send("Cannot play the song at this time", ephemeral = True)
 
         try:
             thumbnail = await search.fetch_thumbnail()
@@ -156,7 +161,7 @@ class Lavalink(commands.GroupCog, name = "music"):
             queue_length = sum(track.duration for track in player.queue)
 
             self.logger.debug(f"Added {title} to the queue")
-            await interaction.response.send_message(f"Added {title} to the queue", ephemeral = True)
+            await interaction.followup.send(f"Added {title} to the queue", ephemeral = True)
             return await player.channel.send(
                 embed = EmbedGen.FullEmbed(
                     author = {"name": "Added to queue:", "url": uri},
@@ -175,7 +180,7 @@ class Lavalink(commands.GroupCog, name = "music"):
         else:
             await player.play(search, volume = 500)
             self.logger.debug(f"Now playing {title}")
-            await interaction.response.send_message(f"Now playing {title}", ephemeral = True)
+            await interaction.followup.send(f"Now playing {title}", ephemeral = True)
             return await player.channel.send(
                 embed = EmbedGen.SimpleEmbed(
                     author = {"name": "Now playing:", "url": uri},
@@ -194,14 +199,15 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Cannot pause the player at this time", ephemeral = True)
+            return await interaction.followup.send("Cannot pause the player at this time", ephemeral = True)
         elif player.is_paused:
-            return await interaction.response.send_message("The player is already paused", ephemeral = True)
+            return await interaction.followup.send("The player is already paused", ephemeral = True)
         else:
             await player.pause()
-            return await interaction.response.send_message("Paused the player", ephemeral = True)
+            return await interaction.followup.send("Paused the player", ephemeral = True)
 
     @app_commands.command(name = "resume")
     async def resume(self, interaction: Interaction):
@@ -210,14 +216,15 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Cannot resume the player at this time", ephemeral = True)
+            return await interaction.followup.send("Cannot resume the player at this time", ephemeral = True)
         elif player.is_paused:
             await player.resume()
-            return await interaction.response.send_message("Resumed the player", ephemeral = True)
+            return await interaction.followup.send("Resumed the player", ephemeral = True)
         else:
-            return await interaction.response.send_message("The player is already paused", ephemeral = True)
+            return await interaction.followup.send("The player is already paused", ephemeral = True)
 
     @app_commands.command(name = "stop")
     async def stop(self, interaction: Interaction):
@@ -226,9 +233,10 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Cannot stop the player at this time", ephemeral = True)
+            return await interaction.followup.send("Cannot stop the player at this time", ephemeral = True)
 
         player.queue.clear()
         player.auto_queue.clear()
@@ -237,7 +245,7 @@ class Lavalink(commands.GroupCog, name = "music"):
         player.queue.loop_all = False
         await player.stop()
 
-        return await interaction.response.send_message("Stopped the player", ephemeral = True)
+        return await interaction.followup.send("Stopped the player", ephemeral = True)
 
     @app_commands.command(name = "skip")
     async def skip(self, interaction: Interaction, amount: int = 1):
@@ -247,9 +255,10 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param amount:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Unable to skip", ephemeral = True)
+            return await interaction.followup.send("Unable to skip", ephemeral = True)
         count = 1
         if amount > 1:
             async for _ in player.queue:
@@ -258,7 +267,7 @@ class Lavalink(commands.GroupCog, name = "music"):
                 if amount <= 1:
                     break
         await player.stop(force = True)
-        return await interaction.response.send_message(f"Skipped {count} song", ephemeral = True)
+        return await interaction.followup.send(f"Skipped {count} song", ephemeral = True)
 
     @app_commands.command(name = "move_to")
     async def move_to(self, interaction: Interaction, channel: discord.VoiceChannel = None):
@@ -268,15 +277,16 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param channel: The OPTIONAL channel to move into
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if player is True:
-            return await interaction.response.send_message("The bot is currently in use, please hold.", ephemeral = True)
+            return await interaction.followup.send("The bot is currently in use, please hold.", ephemeral = True)
         elif player is False:
             player = self.get_player(interaction.guild_id)
             if len(player.channel.members) == 1:
                 await player.move_to(interaction.user.voice.channel)
                 return player
-            return await interaction.response.send_message("The bot is currently in use, please hold.", ephemeral = True)
+            return await interaction.followup.send("The bot is currently in use, please hold.", ephemeral = True)
         else:
             await player.move_to(channel or interaction.user.voice.channel)
 
@@ -289,17 +299,18 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param position: The number of second to jump by
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Unable to seek", ephemeral = True)
+            return await interaction.followup.send("Unable to seek", ephemeral = True)
         if direction == "forward":
             await player.seek(int(player.position + (position * 1000)))
         elif direction == "backward":
             await player.seek(int(player.position - (position * 1000)))
         else:
-            return await interaction.response.send_message("Invalid direction", ephemeral = True)
+            return await interaction.followup.send("Invalid direction", ephemeral = True)
 
-        return await interaction.response.send_message(f"Seeked to {player.position}", ephemeral = True)
+        return await interaction.followup.send(f"Seeked to {player.position}", ephemeral = True)
 
     @app_commands.command(name = "volume")
     async def volume(self, interaction: Interaction, volume: Range[int, 0, 100]):
@@ -309,9 +320,10 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param volume:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Unable to change the volume", ephemeral = True)
+            return await interaction.followup.send("Unable to change the volume", ephemeral = True)
         await player.set_volume(volume * 10)
 
     @app_commands.command(name = "shuffle")
@@ -321,11 +333,12 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Unable to shuffle", ephemeral = True)
+            return await interaction.followup.send("Unable to shuffle", ephemeral = True)
         player.queue.shuffle()
-        return await interaction.response.send_message("Shuffled the queue", ephemeral = True)
+        return await interaction.followup.send("Shuffled the queue", ephemeral = True)
 
     @app_commands.command(name = "loop")
     async def loop(self, interaction: Interaction, mode: Literal["track", "queue", "off"]):
@@ -335,23 +348,24 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param mode: Loop type
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Unable to loop", ephemeral = True)
+            return await interaction.followup.send("Unable to loop", ephemeral = True)
         if mode == "track":
             player.queue.loop = True
             player.queue.loop_all = False
-            return await interaction.response.send_message("Looping the current track", ephemeral = True)
+            return await interaction.followup.send("Looping the current track", ephemeral = True)
         elif mode == "queue":
             player.queue.loop = False
             player.queue.loop_all = True
-            return await interaction.response.send_message("Looping the queue", ephemeral = True)
+            return await interaction.followup.send("Looping the queue", ephemeral = True)
         elif mode == "off":
             player.queue.loop = False
             player.queue.loop_all = False
-            return await interaction.response.send_message("Disabled looping", ephemeral = True)
+            return await interaction.followup.send("Disabled looping", ephemeral = True)
         else:
-            return await interaction.response.send_message("Invalid loop type", ephemeral = True)
+            return await interaction.followup.send("Invalid loop type", ephemeral = True)
 
     @app_commands.command(name = "current")
     async def current_song(self, interaction: Interaction):
@@ -360,10 +374,11 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player) or not player.current:
-            return await interaction.response.send_message("No song is currently playing", ephemeral = True)
-        return await interaction.response.send_message(getattr(player.current, "uri", player.current.title), ephemeral = True)
+            return await interaction.followup.send("No song is currently playing", ephemeral = True)
+        return await interaction.followup.send(getattr(player.current, "uri", player.current.title), ephemeral = True)
 
     @app_commands.command(name = "queue")
     async def queue(self, interaction: Interaction):
@@ -372,9 +387,10 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("No songs in queue", ephemeral = True)
+            return await interaction.followup.send("No songs in queue", ephemeral = True)
 
         embed_list = EmbedGen.EmbedFieldList(
             title = "Queue",
@@ -382,7 +398,7 @@ class Lavalink(commands.GroupCog, name = "music"):
             max_fields = 5
         )
         view = Paginators.ButtonPaginatedEmbeds(embed_list)
-        await interaction.response.send_message(view = view, embed = embed_list[0], ephemeral = True)
+        await interaction.followup.send(view = view, embed = embed_list[0], ephemeral = True)
         view.response = await interaction.original_response()
 
     @app_commands.command(name = "autoplay")
@@ -393,11 +409,12 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param enabled: True | False
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("Unable to change autoplay", ephemeral = True)
+            return await interaction.followup.send("Unable to change autoplay", ephemeral = True)
         player.queue.autoplay = enabled
-        return await interaction.response.send_message(f"Autoplay is now {enabled}", ephemeral = True)
+        return await interaction.followup.send(f"Autoplay is now {enabled}", ephemeral = True)
 
     @app_commands.command(name = "history")
     async def history(self, interaction: Interaction):
@@ -406,9 +423,10 @@ class Lavalink(commands.GroupCog, name = "music"):
         :param interaction:
         :return:
         """
+        await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            return await interaction.response.send_message("No songs in history", ephemeral = True)
+            return await interaction.followup.send("No songs in history", ephemeral = True)
 
         embed_list = EmbedGen.EmbedFieldList(
             title = "Queue",
@@ -416,7 +434,7 @@ class Lavalink(commands.GroupCog, name = "music"):
             max_fields = 5
         )
         view = Paginators.ButtonPaginatedEmbeds(embed_list)
-        await interaction.response.send_message(view = view, embed = embed_list[0], ephemeral = True)
+        await interaction.followup.send(view = view, embed = embed_list[0], ephemeral = True)
         view.response = await interaction.original_response()
 
     @play.error
@@ -427,7 +445,7 @@ class Lavalink(commands.GroupCog, name = "music"):
             elif interaction.response.is_done():
                 return await interaction.followup.send("Unable to find that song", ephemeral = True)
             else:
-                return await interaction.response.send_message("Unable to find that song", ephemeral = True)
+                return await interaction.followup.send("Unable to find that song", ephemeral = True)
 
 async def setup(bot):
     await bot.add_cog(Lavalink(bot))
