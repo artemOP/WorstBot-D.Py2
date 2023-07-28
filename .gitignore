@@ -1,3 +1,4 @@
 /venv/
-/Tokens.py
 /.env
+/lavalink/application.yml
+/lavalink/logs/
