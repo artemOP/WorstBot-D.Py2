@@ -116,6 +116,8 @@ class Lavalink(commands.GroupCog, name = "music"):
             return await interaction.followup.send("Please connect to a voice channel before using music commands", ephemeral = True)
         elif player is True:
             return await interaction.followup.send("The bot is currently in use, please hold.")
+        else:
+            await interaction.followup.send(f"Connected to {interaction.user.voice.channel.name}", ephemeral = True)
 
     @app_commands.command(name = "disconnect")
     async def leave_vc(self, interaction: Interaction):
