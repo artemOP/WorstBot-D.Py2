@@ -11,6 +11,8 @@ from discord import Interaction, app_commands
 from discord.app_commands import Range
 from discord.ext import commands
 
+from wavelink import Player
+
 from modules import FFmpeg
 
 if TYPE_CHECKING:
@@ -42,7 +44,7 @@ class TTS(commands.GroupCog, name = "tts"):
             if vc.channel == channel:
                 return vc
             await vc.disconnect(force = True)
-        return await channel.connect(self_deaf = True, timeout = 2)
+        return await channel.connect(cls = Player, self_deaf = True, timeout = 2)
 
     @staticmethod
     def is_user_connected():

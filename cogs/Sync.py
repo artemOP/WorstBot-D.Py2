@@ -51,6 +51,7 @@ class Sync(commands.Cog):
 
                 case _:
                     response_message = "Invalid option passed"
+            await self.bot.prepare_mentions.start()
             return await ctx.send(response_message, delete_after = 10)
 
 async def setup(bot):

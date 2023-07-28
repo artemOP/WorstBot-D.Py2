@@ -89,8 +89,14 @@ class CustomRoles(commands.GroupCog, name = "role"):
         await interaction.followup.send(content = f'your role colour has now been set to {hex(colour)}', ephemeral = True)
 
     @app_commands.command(name = "check")
-    async def colourCheckCommand(self, interaction: Interaction, arg: Optional[discord.User] = None):
-        await self.colourCheck(interaction, arg)
+    async def colourCheckCommand(self, interaction: Interaction, user: Optional[discord.User] = None):
+        """See what colour a user's custom role is
+
+        :param interaction:
+        :param user: The user to check the colour of (defaults to yourself)
+        :return:
+        """
+        await self.colourCheck(interaction, user)
 
     async def colourCheck(self, interaction: Interaction, arg: discord.User = None):
         await interaction.response.defer(ephemeral = True)
