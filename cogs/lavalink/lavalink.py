@@ -85,6 +85,13 @@ class Lavalink(commands.GroupCog, name = "music"):
         else:
             await payload.player.play(track)
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if player := self.get_player(member.guild.id) is MISSING:
+            return
+        if not player.channel.members:
+            await player.disconnect(force = True)
+
     @staticmethod
     def get_player(guild_id: int) -> wavelink.Player | MISSING:
         return wavelink.NodePool.get_node().get_player(guild_id) or MISSING
