@@ -18,7 +18,7 @@ import wavelink
 from wavelink.ext import spotify
 
 import asyncpg
-from aiohttp import ClientSession
+from aiohttp import ClientSession, client_exceptions
 from dotenv import dotenv_values
 import orjson
 
@@ -62,8 +62,11 @@ class WorstBot(discord_commands.Bot):
         self.load_emoji.start()
 
         sc = spotify.SpotifyClient(client_id = self.dotenv.get("spotify_id"), client_secret = self.dotenv.get("spotify_secret"))
-        node: wavelink.Node = wavelink.Node(uri = "http://localhost:2333", password = self.dotenv.get("lavalink_password"), id = "WorstBot")
-        await wavelink.NodePool.connect(client = self, nodes = [node], spotify = sc)
+        node: wavelink.Node = wavelink.Node(uri = "http://localhost:2333", password = self.dotenv.get("lavalink_password"), id = "WorstBot", retries = 0 if self.dotenv.get("lavalink_retries") else None)
+        try:
+            await wavelink.NodePool.connect(client = self, nodes = [node], spotify = sc)
+        except client_exceptions.ClientConnectorError:
+            pass
 
         for file in self.collect_cogs(self.cog_dir):
             extension = str(file.relative_to("./"))[:-3]
