@@ -321,11 +321,11 @@ class Lavalink(commands.GroupCog, name = "music"):
         return await interaction.followup.send(f"Seeked to {player.position}", ephemeral = True)
 
     @app_commands.command(name = "volume")
-    async def volume(self, interaction: Interaction, volume: Range[int, 0, 100]):
+    async def volume(self, interaction: Interaction, volume: Range[int, 0, 1000]):
         """Set a new volume for the current player (as a %)
 
         :param interaction:
-        :param volume:
+        :param volume: 0 - 1000% (become quite distorted past 100%)
         :return:
         """
         await interaction.response.defer(ephemeral = True)
