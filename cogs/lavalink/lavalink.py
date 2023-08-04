@@ -87,9 +87,9 @@ class Lavalink(commands.GroupCog, name = "music"):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-        if player := self.get_player(member.guild.id) is MISSING:
+        if (player := self.get_player(member.guild.id)) is MISSING:
             return
-        if not player.channel.members:
+        if player.channel.members == [self.bot.user]:
             await player.disconnect(force = True)
 
     @staticmethod
