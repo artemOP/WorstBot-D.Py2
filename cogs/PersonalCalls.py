@@ -36,8 +36,6 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         if await self.bot.events(member.guild.id, self.bot._events.calls) is False:
             self.logger.debug(f"{member.guild.id} does not have calls enabled")
             return
-        if member.bot:
-            return
 
         channel_id = await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", member.guild.id)
         base_call: discord.VoiceChannel = await self.bot.maybe_fetch_channel(channel_id)  # type: Ignore
