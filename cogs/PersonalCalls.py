@@ -34,6 +34,7 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         if await self.bot.events(member.guild.id, self.bot._events.calls) is False:
+            self.logger.debug(f"{member.guild.id} does not have calls enabled")
             return
         if member.bot:
             return
@@ -41,23 +42,29 @@ class PersonalCalls(commands.GroupCog, name = "personal-call"):
         channel_id = await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", member.guild.id)
         base_call: discord.VoiceChannel = await self.bot.maybe_fetch_channel(channel_id)  # type: Ignore
         if base_call is None:
+            self.logger.debug(f"{member.guild.id} does not have a base call set")
             return
 
         call_blacklist = await self.bot.fetch("SELECT channel FROM callblacklist WHERE guild=$1", member.guild.id)
         user_blacklist = await self.bot.fetch("SELECT member FROM userblacklist WHERE guild=$1", member.guild.id)
         if any(member.id == record["member"] for record in user_blacklist):
+            self.logger.debug(f"{member} is blacklisted from personal calls")
             await member.edit(voice_channel = None)
 
         if after.channel == base_call:
+            self.logger.debug(f"call created in {member.guild} for {member}")
             personal_call = await base_call.category.create_voice_channel(name = member.name, user_limit = 99, bitrate = member.guild.bitrate_limit)
             await member.move_to(personal_call, reason = "WorstBot Personal Calls")
 
         if before.channel not in (base_call, None):
             if any(before.channel.id == record["channel"] for record in call_blacklist) or before.channel.members:
+                self.logger.debug(f"{before.channel} is protected or has members")
                 return
 
             # if await self.bot.events(member.guild.id, self.bot._events.textarchive):  # Disabled until message intent re-enabled
+            #     self.logger.debug(f"archiving {before.channel} messages")
             #     await self.text_archive(base_call, before.channel)
+            self.logger.debug(f"deleting {before.channel}")
             await before.channel.delete()
 
     @app_commands.command(name = "setup")
