@@ -153,7 +153,6 @@ class Lavalink(commands.GroupCog, name = "music"):
         await interaction.response.defer(ephemeral = True)
         player: wavelink.Player | bool = await self.voice_check(interaction)
         if not isinstance(player, wavelink.Player):
-            print(player)
             return await interaction.followup.send("Cannot play the song at this time", ephemeral = True)
 
         try:
@@ -178,9 +177,9 @@ class Lavalink(commands.GroupCog, name = "music"):
                     fields = [
                         EmbedGen.EmbedField(name = "Duration", value = timedelta(milliseconds = getattr(search, 'duration', 0))),
                         EmbedGen.EmbedField(name = "Position", value = len(player.queue) + 1),
-                        EmbedGen.EmbedField(name = "Estimated time until playing", value = format_dt(utcnow() + timedelta(milliseconds = queue_length)))
+                        EmbedGen.EmbedField(name = "Estimated time until playing", value = format_dt(utcnow() + timedelta(milliseconds = queue_length), style = "R"))
                     ],
-                    footer = {"text": f"Requested by: {interaction.user.mention}"}
+                    footer = {"text": f"Requested by: {interaction.user.display_name}"}
                 ),
                 allowed_mentions = discord.AllowedMentions.none(),
                 delete_after = queue_length / 1000
@@ -194,7 +193,7 @@ class Lavalink(commands.GroupCog, name = "music"):
                     author = {"name": "Now playing:", "url": uri},
                     title = title,
                     thumbnail = thumbnail,
-                    footer = {"text": f"Requested by: {interaction.user.mention}"}
+                    footer = {"text": f"Requested by: {interaction.user.display_name}"}
                 ),
                 allowed_mentions = discord.AllowedMentions.none(),
                 delete_after = search.duration / 1000
