@@ -52,6 +52,8 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
         role_ids = await self.bot.fetch("Select guild, array_agg(role) as roles FROM selfroles GROUP BY guild")
         for row in role_ids:
             guild = self.bot.get_guild(row["guild"])
+            if not guild:
+                continue
             self.bot.giveme_roles[guild] = [guild.get_role(role_id) for role_id in row["roles"]]
 
     @fetch_giveme_roles.before_loop
