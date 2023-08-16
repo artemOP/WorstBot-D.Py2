@@ -74,6 +74,7 @@ class StartPollModal(ui.Modal, title = "Poll"):
             self.vote_id = await interaction.client.fetchval("INSERT INTO votes(guild, question, author, accepted_responses) VALUES($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING vote_id", interaction.guild_id, self.question.value, interaction.user.id, accepted_responses)
 
         for answer in answers:
+            answer = answer.strip()
             answer_id = await interaction.client.execute("INSERT INTO answers(vote_id, answer) VALUES($1, $2) ON CONFLICT(vote_id, answer) DO NOTHING RETURNING answer_id", self.vote_id, answer)
             if not answer_id:
                 continue
@@ -98,7 +99,7 @@ class PollResultsView(Paginators.ThemedGraphView):
 
     @ui.select(placeholder = "Select an answer to see who voted for it")
     async def detailed_poll_response(self, interaction: Interaction, select: ui.Select):
-        await interaction.response.send_message(embeds = EmbedGen.SimpleEmbedList(descriptions = "\n".join(member.mention for member in self.responses[select.values[0]])), ephemeral = True)
+        await interaction.response.send_message(embeds = EmbedGen.SimpleEmbedList(descriptions = "\n".join(str(member) for member in self.responses[select.values[0]]) or "No votes"), ephemeral = True)
 
 
 @app_commands.guild_only()
@@ -156,7 +157,7 @@ class Poll(commands.GroupCog, name = "poll"):
         counts, responses = {}, {}
         for answer_id, answer in answer_table.items():
             user_list = await self.bot.fetchval("SELECT ARRAY_AGG(member) FROM voters WHERE answer_id=$1", answer_id) or []
-            responses[answer] = [await self.bot.maybe_fetch_member(interaction.guild, member) for member in user_list]
+            responses[answer] = [await self.bot.maybe_fetch_member(interaction.guild, member) or "<MISSING MEMBER>" for member in user_list]
             counts[answer] = len(user_list)
 
         chartIO = await Graphs.graph("bar", self.bot.loop, counts)
