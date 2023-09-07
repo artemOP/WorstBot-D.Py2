@@ -3,7 +3,7 @@ from discord import app_commands, utils
 from discord.app_commands import Range
 from discord.ext import commands, tasks
 from WorstBot import WorstBot
-from datetime import datetime as dt, timezone, time
+from datetime import datetime as dt, timezone
 from modules.EmbedGen import FullEmbed, EmbedField
 
 class Reminder(commands.Cog):
