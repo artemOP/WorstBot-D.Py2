@@ -80,17 +80,22 @@ class BaseCommands(commands.Cog):
     @app_commands.command(name = "emoji")
     @app_commands.default_permissions(manage_emojis = True)
     @app_commands.guild_only()
-    async def emoji_stealer(self, interaction: Interaction, emoji: str):
+    @app_commands.rename(original_name = "name")
+    async def emoji_stealer(self, interaction: Interaction, emoji: str, original_name: str = None):
         """Get emoji from other servers and add it to your own
 
         :param interaction: discord model
         :param emoji: Custom Emoji you want to add to your server
+        :param original_name: Optional name for the emoji (defaults to original name)
         """
         await interaction.response.defer(ephemeral = True)
         emoji_strings: list[str] = re.findall("<(?P<animated>a?):(?P<name>[a-zA-Z0-9_]{2,32}):(?P<id>[0-9]{18,22})>", emoji)
         if not emoji_strings:
             return await interaction.followup.send("Please enter a custom emoji into the emoji parameter")
+        if original_name:
+            original_name = original_name.replace(" ", "_")
         for animated, name, _id in emoji_strings:
+            name = original_name or name
             partial_emoji = discord.PartialEmoji.with_state(state = self.bot._connection, name = name, animated = animated, id = _id)
             if not partial_emoji.is_custom_emoji():
                 interaction.followup.send("Please enter a custom emoji into into the emoji parameter")
