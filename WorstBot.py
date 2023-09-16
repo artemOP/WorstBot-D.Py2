@@ -202,7 +202,7 @@ class WorstBot(discord_commands.Bot):
         return (self.get_guild(x), self.get_user(y)) if get_objects else (x, y)
 
     @staticmethod
-    async def add_to_extra(command: Command, mention: str, guild_id: Optional[int] = None) -> None:
+    async def add_to_extra(command: Command | ContextMenu, mention: str, guild_id: Optional[int] = None) -> None:
         if guild_id:
             command.extras[f"mention for {guild_id}"] = mention
         else:
