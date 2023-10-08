@@ -34,24 +34,30 @@ class Events(commands.Cog):
     async def on_scheduled_event_delete(self, event: discord.ScheduledEvent):
         await self.bot.execute("DELETE FROM scheduled_events WHERE event = $1", event.id)
 
-    @tasks.loop(minutes = 1)
+    @commands.Cog.listener()
+    async def on_scheduled_event_update(self, before: discord.ScheduledEvent, after: discord.ScheduledEvent):
+        if after.status is discord.EventStatus.active and after.start_time != discord.utils.utcnow():
+            return await self.bot.execute("DELETE FROM scheduled_events WHERE event = $1", after.id)
+        await self.bot.execute("UPDATE scheduled_events SET expiretime = $1 WHERE event = $2", after.start_time, before.id)
+
+    @tasks.loop(seconds = 1)
     async def Channel_Create(self):
         events: list[Record] = await self.bot.fetch("SELECT * FROM scheduled_events WHERE expiretime = (SELECT MIN(expiretime) FROM scheduled_events)")
         if not events:
             return
 
-        for event in events:  # type: Record
-            if await self.bot.events(event["guild"], self.bot._events.autoevent) is False:
+        for row in events:  # type: Record
+            if await self.bot.events(row["guild"], self.bot._events.autoevent) is False:
                 continue
-            if (event["expiretime"] - dt.now(timezone.utc)).days > 7:
+            if (row["expiretime"] - dt.now(timezone.utc)).days > 7:
                 continue
 
-            await discord.utils.sleep_until((event["expiretime"] - timedelta(minutes = 10)))
+            await discord.utils.sleep_until((row["expiretime"] - timedelta(minutes = 10)))
 
-            guild: discord.Guild = self.bot.get_guild(event["guild"])
-            event: discord.ScheduledEvent = await self.bot.maybe_fetch_event(guild, event["event"])
+            guild: discord.Guild = self.bot.get_guild(row["guild"])
+            event: discord.ScheduledEvent = await self.bot.maybe_fetch_event(guild, row["event"])
             base_call_id = await self.bot.fetchval("SELECT channel FROM personalcall WHERE guild=$1", event.guild_id)
-            base_call: discord.VoiceChannel = await self.bot.maybe_fetch_channel(base_call_id)
+            base_call: discord.VoiceChannel = await self.bot.maybe_fetch_channel(base_call_id)  # type: ignore
             if not base_call:
                 return await self.bot.execute("DELETE FROM scheduled_events WHERE event = $1", event.id)
             category: discord.CategoryChannel = base_call.category
