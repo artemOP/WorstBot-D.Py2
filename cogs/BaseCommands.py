@@ -132,6 +132,8 @@ class BaseCommands(commands.Cog):
         :param message: An optional message to send with the mention, use {} to indicate where the mention should be
         :return:
         """
+        if r"{}" not in message:
+            message += r":\n{}"
         await interaction.response.send_message(message.replace(r"{}", command))
 
 
