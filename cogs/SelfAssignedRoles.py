@@ -26,9 +26,9 @@ class RoleTransformer(Transformer):
         if not current:
             return [Choice(name = role.name, value = str(role.id)) for role in roles][:25]
 
-        fuzzy_roles = process.extract(current, [role.name for role in roles], limit = 25, score_cutoff = 40)
+        fuzzy_roles = process.extract(current.lower(), [role.name.lower() for role in roles], limit = 25, score_cutoff = 40)
         fuzzy_roles = [role_name for role_name, _, _ in fuzzy_roles]
-        return [Choice(name = role.name, value = str(role.id)) for role in roles if role.name in fuzzy_roles]
+        return [Choice(name = role.name, value = str(role.id)) for role in roles if role.name.lower() in fuzzy_roles]
 
 
 @app_commands.guild_only()
