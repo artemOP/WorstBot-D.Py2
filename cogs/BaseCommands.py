@@ -1,3 +1,4 @@
+from typing import Optional
 import discord
 from discord import app_commands, Interaction, utils
 from discord.ext import commands
@@ -123,14 +124,16 @@ class BaseCommands(commands.Cog):
     @app_commands.command(name = "mention-command")
     @app_commands.default_permissions()
     @app_commands.guild_only()
-    async def mention_command(self, interaction: Interaction, command: str):
+    async def mention_command(self, interaction: Interaction, command: str, message: Optional[str] = r"{}"):
         """Mention a WorstBot command
 
         :param interaction:
         :param command: The command to mention
+        :param message: An optional message to send with the mention, use {} to indicate where the mention should be
         :return:
         """
-        await interaction.response.send_message(command)
+        await interaction.response.send_message(message.replace(r"{}", command))
+
 
     @mention_command.autocomplete(name = "command")
     async def mention_command_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
