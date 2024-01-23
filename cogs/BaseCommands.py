@@ -133,7 +133,7 @@ class BaseCommands(commands.Cog):
         :return:
         """
         if r"{}" not in message:
-            message += r":\n{}"
+            message += "\n" + r"{}"
         await interaction.response.send_message(message.replace(r"{}", command))
 
 
