@@ -1,19 +1,16 @@
-from __future__ import annotations
-
+import asyncio
 import logging
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from .. import Bot
 
 
 class QueueHandler(logging.Handler):
+    queue: asyncio.Queue
+
     def __init__(self, **kwargs):
-        print(kwargs)
-        super().__init__(logging.ERROR)
-        # self.bot = bot
+        super().__init__(level=kwargs.get("level", logging.ERROR))
 
     def emit(self, record: logging.LogRecord) -> None:
         # self.bot.logging_queue.put_nowait(record)
-        ...
+        if not self.queue:
+            raise ValueError("Queue has not been passed to handler yet")  # todo: raise custom error
+
+        self.queue.put_nowait(record)

@@ -11,10 +11,10 @@ from .tree import CommandTree
 
 if TYPE_CHECKING:
     from asyncio import Queue
-    from logging import LogRecord
-
+    from logging import LogRecord, Logger
     from typing import Any, Generator, Iterator, TypeAlias
 
+    from aiohttp import ClientSession
     from discord import BaseActivity, Guild, Intents, Object, Emoji
     from discord.app_commands import AppCommand, Command, ContextMenu
 
@@ -27,10 +27,10 @@ if TYPE_CHECKING:
 
 
 class Bot(commands.Bot):
-    log_handler: ...
+    log_handler: Logger["WorstBot"]
     logging_queue: Queue[LogRecord]
     pool: Pool
-    # http_session: ClientSession # TOOD: Expose routed http_session, no raw ClientSession
+    http_session: ClientSession
     tree: CommandTree
 
     def __init__(
@@ -69,7 +69,7 @@ class Bot(commands.Bot):
                 self.log_handler.exception(f"Failed to load extension {extension}", exc_info=e)
 
     async def on_ready(self) -> None:
-        print()
+        self.log_handler.info("Bot Ready")
 
     def collect_cogs(self, root: Path) -> Generator[Path, None, None]:
         for file in root.iterdir():

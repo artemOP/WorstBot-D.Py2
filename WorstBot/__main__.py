@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 import orjson
 
-from . import Bot, QueueHandler, Pool
+from . import Bot, Pool
 
 
 async def main():
@@ -15,7 +15,6 @@ async def main():
         config = tomllib.load(f)
     with open("WorstBot/core/configs/logging.toml", "rb") as f:
         logging.config.dictConfig(tomllib.load(f))
-        print(logging.getLogger().handlers)
     intents = discord.Intents(
         bans=True,
         emojis=True,
@@ -50,8 +49,10 @@ async def main():
         ) as bot,
     ):
         bot.logging_queue = asyncio.Queue()
-        bot.log_handler = ...
+        bot.log_handler = logging.getLogger("WorstBot")
+        logging.getLogger().handlers[0].queue = bot.logging_queue
         bot.pool = pool
+        bot.http_session = http_session
 
         token = config["discord"]["token"]
         await bot.start(token)
