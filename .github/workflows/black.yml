@@ -10,4 +10,4 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "--check -l 120 --target-version py310"
-          src: "./ttinfo"
+          src: "./WorstBot"
