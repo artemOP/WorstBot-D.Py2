@@ -1,4 +1,9 @@
-/venv/
+/.venv/
 /.env
 /lavalink/application.yml
 /lavalink/logs/
+*.toml
+__pycache__
+.vscode
+.idea
+*.session.sql
