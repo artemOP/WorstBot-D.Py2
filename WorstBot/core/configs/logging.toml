@@ -1,0 +1,40 @@
+version = 1
+disable_existing_loggers = false
+
+[formatters]
+    [formatters.simple]
+        format = '[{asctime}] [{levelname:<8}] {name}: {message}'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+        style = "{"
+    [formatters.colour]
+        "()" = "discord.utils._ColourFormatter"
+
+[handlers]
+    [handlers.stderr]
+        class = "logging.StreamHandler"
+        formatter = "colour"
+        level = "INFO"
+        stream = "ext://sys.stderr"
+    [handlers.file]
+        class = "logging.handlers.RotatingFileHandler"
+        formatter = "simple"
+        level = "INFO"
+        filename = "WorstBot/logs/bot.log"
+        encoding = "utf-8"
+        maxBytes = 10_000_000     
+    [handlers.queue_handler]
+        class = "WorstBot.core.utils.log_handler.QueueHandler"
+        level = "ERROR"
+
+[loggers]
+    [loggers.root]
+        level = "DEBUG"
+        handlers = ["queue_handler", "file", "stderr"]
+    [loggers.WorstBot]
+        level = "INFO"
+    [loggers.discord.gateway]
+        level = "ERROR"
+    [loggers.discord.voice_client]
+        level = "ERROR"
+    [loggers.matplotlib.category]
+        level = "ERROR"
