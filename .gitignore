@@ -2,7 +2,7 @@
 /.env
 /lavalink/application.yml
 /lavalink/logs/
-*.toml
+config.toml
 __pycache__
 .vscode
 .idea

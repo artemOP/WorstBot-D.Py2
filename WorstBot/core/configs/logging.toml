@@ -13,7 +13,7 @@ disable_existing_loggers = false
     [handlers.stderr]
         class = "logging.StreamHandler"
         formatter = "colour"
-        level = "WARNING"
+        level = "INFO"
         stream = "ext://sys.stderr"
     [handlers.file]
         class = "logging.handlers.RotatingFileHandler"
@@ -24,20 +24,17 @@ disable_existing_loggers = false
         maxBytes = 10_000_000     
     [handlers.queue_handler]
         class = "WorstBot.core.utils.log_handler.QueueHandler"
-        handlers = ["file", "stderr"]
-        respect_handler_level = true
-        webhook = "https://discord.com/api/webhooks/1207810300573651024/ztgzRNCp9UiTsmEpQ4-YHkeprmb7yPOLgFyiBJUUqVPempL0WdyND5g_PbGwYeXJgj1O"
+        level = "ERROR"
 
 [loggers]
     [loggers.root]
         level = "DEBUG"
-        handlers = ["queue_handler"]
+        handlers = ["queue_handler", "file", "stderr"]
+    [loggers.WorstBot]
+        level = "INFO"
     [loggers.discord.gateway]
         level = "ERROR"
-        handlers = ["queue_handler"]
     [loggers.discord.voice_client]
         level = "ERROR"
-        handlers = ["queue_handler"]
     [loggers.matplotlib.category]
         level = "ERROR"
-        handlers = ["queue_handler"]
