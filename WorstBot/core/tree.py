@@ -18,10 +18,11 @@ class CommandTree(app_commands.CommandTree):
 
     async def interaction_check(self, interaction: Interaction[Bot], /) -> bool:
         assert interaction.client.owner_ids
+        await interaction.response.defer(ephemeral=True)
         if interaction.user.id in interaction.client.owner_ids:
             return True
         if not interaction.guild:
-            await interaction.response.send_message("This bot cannot be used in dm's, sorry", ephemeral=True)
+            await interaction.followup.send("This bot cannot be used in dm's, sorry", ephemeral=True)
             return False
         return True
 
