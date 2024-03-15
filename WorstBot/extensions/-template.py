@@ -17,7 +17,7 @@ class Template(commands.GroupCog, name="template"):
 
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.logger = self.bot.logger.getChild(self.qualified_name)
+        self.logger = self.bot.log_handler.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
         self.logger.info(f"{self.qualified_name} cog loaded")
