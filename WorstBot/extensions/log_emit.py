@@ -41,7 +41,7 @@ class Logging(commands.Cog):
 
     @tasks.loop(seconds=0)
     async def logging_loop(self) -> None:
-        assert self.webhook
+        assert self.webhook, "Config webhook not set"
         to_log = await self.bot.logging_queue.get()
         if "rate limited" in to_log.message:
             return

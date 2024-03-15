@@ -55,7 +55,7 @@ class Bot(commands.Bot):
         self.custom_emoji: list[Emoji] = []
 
     async def setup_hook(self) -> None:
-        assert self.config["discord"]["extension_path"]
+        assert self.config["discord"]["extension_path"], "Config extension path not set"
         cog_dir = Path(self.config["discord"]["extension_path"])
 
         for file in self.collect_cogs(cog_dir):
@@ -79,7 +79,7 @@ class Bot(commands.Bot):
                 yield from self.collect_cogs(file)
 
     async def event_enabled(self, guild: Object, event: _events) -> bool:
-        assert self.config["discord"]["toggles"]["tasks"]
+        assert self.config["discord"]["toggles"]["tasks"], "Config toggles not set"
         if not self.config["discord"]["toggles"]["tasks"]:
             return False
 
@@ -87,15 +87,14 @@ class Bot(commands.Bot):
             self._event_toggles[guild] = {}
 
         if event not in self._event_toggles[guild]:
-            toggles = await self.pool.fetchrow("SELECT * FROM event_toggles WHERE guild_id = $1", guild.id)
-            assert toggles
+            toggles = await self.pool.fetchrow("SELECT * FROM event_toggles WHERE guild_id = $1", guild.id) or {}
             self._event_toggles[guild][event] = toggles.get(event, False)
 
         return self._event_toggles[guild][event]
 
     @tasks.loop(count=1)
     async def prepare_emoji(self) -> None:
-        assert self.config["discord"]["emoji_server_ids"]
+        assert self.config["discord"]["emoji_server_ids"], "Config emoji servers not set"
 
         for guild_id in self.config["discord"]["emoji_server_ids"]:
             guild: Guild | None = self.get_guild(guild_id)
