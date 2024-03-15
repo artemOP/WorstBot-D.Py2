@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class Bot(commands.Bot):
-    log_handler: Logger["WorstBot"]
+    log_handler: Logger
     logging_queue: Queue[LogRecord]
     pool: Pool
     http_session: ClientSession
