@@ -2,3 +2,5 @@
 /.env
 /lavalink/application.yml
 /lavalink/logs/
+__pycache__
+output.txt

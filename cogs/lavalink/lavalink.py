@@ -94,10 +94,7 @@ class Lavalink(commands.GroupCog, name = "music"):
 
     @staticmethod
     def get_player(guild_id: int) -> wavelink.Player | MISSING:
-        node = wavelink.NodePool.get_node()
-        if not node:
-            return MISSING
-        return node.get_player(guild_id) or MISSING
+        return wavelink.NodePool.get_node().get_player(guild_id) or MISSING
 
     async def voice_check(self, interaction: Interaction) -> wavelink.Player | bool:
         if not interaction.user.voice:
