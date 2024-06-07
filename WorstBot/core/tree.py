@@ -17,7 +17,7 @@ class CommandTree(app_commands.CommandTree):
         super().__init__(bot)
 
     async def interaction_check(self, interaction: Interaction[Bot], /) -> bool:
-        assert interaction.client.owner_ids
+        assert interaction.client.owner_ids, "Config owners not set"
         await interaction.response.defer(ephemeral=True)
         if interaction.user.id in interaction.client.owner_ids:
             return True

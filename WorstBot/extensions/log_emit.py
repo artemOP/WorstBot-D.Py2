@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import textwrap
-from asyncio import QueueEmpty
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING
 
 import discord
@@ -42,12 +41,12 @@ class Logging(commands.Cog):
 
     @tasks.loop(seconds=0)
     async def logging_loop(self) -> None:
-        assert self.webhook
+        assert self.webhook, "Config webhook not set"
         to_log = await self.bot.logging_queue.get()
         if "rate limited" in to_log.message:
             return
         emoji = self.attributes.get(to_log.levelname, "\N{CROSS MARK}")
-        dt = datetime.utcfromtimestamp(to_log.created)
+        dt = datetime.fromtimestamp(to_log.created, UTC)
 
         message = textwrap.shorten(f"{emoji} {format_dt(dt)}\n{to_log.message}", width=1990)
         embed = to_log.__dict__.get("embed") or MISSING
