@@ -12,7 +12,7 @@ from discord.utils import MISSING, format_dt
 if TYPE_CHECKING:
     from discord import User
 
-    from .. import Bot
+    from WorstBot import Bot
 
 
 class Logging(commands.Cog):
