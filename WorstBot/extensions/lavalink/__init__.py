@@ -26,9 +26,9 @@ def humanize_ms(time: float | int) -> str:
 
     hours = time // 3600
     minutes = (time % 3600) // 60
-    seconds = time % 60
+    seconds = round(time % 60)
 
     if hours == 0:
-        return f"{minutes:n}M:{seconds:n}S"
+        return f"{minutes:n}:{seconds:n}"
     else:
-        return f"{hours:n}H:{minutes:n}M:{seconds:n}S"
+        return f"{hours:n}:{minutes:n}:{seconds:n}"
