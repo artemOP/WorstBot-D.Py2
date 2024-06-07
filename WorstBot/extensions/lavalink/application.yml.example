@@ -27,26 +27,43 @@ plugins:
       silence: 250
       speed: 1.0
       audioFormat: "mp3"
+  youtube:
+    enabled: true
+    allowSearch: true
+    allowDirectVideoIds: true
+    allowDirectPlaylistIds: true
+    clients:
+      - MUSIC
+      - ANDROID_TESTSUITE
+      - TVHTML5EMBEDDED
+      - WEB
+  MUSIC:
+    playback: true
+  ANDROID_TESTSUITE:
+    playlistLoading: false
+  WEB:
+    playback: false
+  TVHTML5EMBEDDED:
+    videoLoading: false
 
-#  name: # Name of the plugin
-#    some_key: some_value # Some key-value pair for the plugin
-#    another_key: another_value
 lavalink:
   plugins:
-    - dependency: "com.github.topi314.sponsorblock:sponsorblock-plugin:3.0.0"
-    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.0.1"
-  #  /pluginsDir: "./plugins" # optional, defaults to "./plugins"
-  #  defaultPluginRepository: "https://maven.lavalink.dev/releases" # optional, defaults to the Lavalink release repository
-  #  defaultPluginSnapshotRepository: "https://maven.lavalink.dev/snapshots" # optional, defaults to the Lavalink snapshot repository
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:VERSION"
+      repository: https://maven.lavalink.dev/releases
+    - dependency: "dev.lavalink.youtube:youtube-plugin:VERSION"
+    - dependency: "com.github.topi314.sponsorblock:sponsorblock-plugin:VERSION"
+ 
   server:
     password: ""
     sources:
-      youtube: true
+      # The default Youtube source is now deprecated and won't receive further updates. Please use https://github.com/lavalink-devs/youtube-source#plugin instead.
+      youtube: false
       bandcamp: true
       soundcloud: true
       twitch: true
       vimeo: true
-      http: true
+      nico: true
+      http: false # warning: keeping HTTP enabled without a proxy configured could expose your server's IP address.
       local: false
     filters: # All filters are enabled by default
       volume: true
@@ -62,7 +79,7 @@ lavalink:
     bufferDurationMs: 400 # The duration of the NAS buffer. Higher values fare better against longer GC pauses. Duration <= 0 to disable JDA-NAS. Minimum of 40ms, lower values may introduce pauses.
     frameBufferDurationMs: 5000 # How many milliseconds of audio to keep buffered
     opusEncodingQuality: 10 # Opus encoder quality. Valid values range from 0 to 10, where 10 is best quality but is the most expensive on the CPU.
-    resamplingQuality: LOW # Quality of resampling operations. Valid values are LOW, MEDIUM and HIGH, where HIGH uses the most CPU.
+    resamplingQuality: HIGH # Quality of resampling operations. Valid values are LOW, MEDIUM and HIGH, where HIGH uses the most CPU.
     trackStuckThresholdMs: 10000 # The threshold for how long a track can be stuck. A track is stuck if does not return any audio data.
     useSeekGhosting: true # Seek ghosting is the effect where whilst a seek is in progress, the audio buffer is read from until empty, or until seek is ready.
     youtubePlaylistLoadLimit: 6 # Number of pages at 100 each
@@ -70,9 +87,6 @@ lavalink:
     youtubeSearchEnabled: true
     soundcloudSearchEnabled: true
     gc-warnings: true
-    youtubeConfig: # Required for avoiding all age restrictions by YouTube, some restricted videos still can be played without.
-      email: "" # Email of Google account
-      password: "" # Password of Google account
 
 metrics:
   prometheus:
@@ -105,4 +119,4 @@ logging:
   logback:
     rollingpolicy:
       max-file-size: 1GB
-      max-history: 10
+      max-history: 5
