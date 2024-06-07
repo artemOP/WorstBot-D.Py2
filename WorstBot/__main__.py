@@ -50,7 +50,7 @@ async def main():
     ):
         bot.logging_queue = asyncio.Queue()
         bot.log_handler = logging.getLogger("WorstBot")
-        logging.getLogger().handlers[0].queue = bot.logging_queue
+        logging.getLogger().handlers[0].queue = bot.logging_queue  # type: ignore
         bot.pool = pool
         bot.http_session = http_session
 
