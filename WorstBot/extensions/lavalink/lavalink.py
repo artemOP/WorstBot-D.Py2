@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from WorstBot import Bot
 
 
-@app_commands.default_permissions()
 @app_commands.guild_only()
 class Music(commands.GroupCog, name="music"):
 
