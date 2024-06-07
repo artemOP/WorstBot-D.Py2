@@ -31,7 +31,9 @@ password = ""
 
 
 [lavalink]
+enabled = true
 password = ""
+uri = ""
 
 [lavalink.spotify]
 id = ""

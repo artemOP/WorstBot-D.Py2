@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 from discord.app_commands import Group
 from discord.ext import commands, tasks
 
+import wavelink
+
 from .tree import CommandTree
 
 if TYPE_CHECKING:
@@ -67,6 +69,10 @@ class Bot(commands.Bot):
                 self.log_handler.debug("Skipping extension %s", extension)
             except Exception as e:
                 self.log_handler.exception(f"Failed to load extension {extension}", exc_info=e)
+
+        if self.config["lavalink"]["enabled"] is True:
+            nodes = [wavelink.Node(uri=self.config["lavalink"]["uri"], password=self.config["lavalink"]["password"])]
+            await wavelink.Pool.connect(nodes=nodes, client=self, cache_capacity=100)
 
     async def on_ready(self) -> None:
         self.log_handler.info("Bot Ready")
