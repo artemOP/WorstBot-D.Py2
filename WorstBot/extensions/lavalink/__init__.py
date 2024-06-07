@@ -29,6 +29,6 @@ def humanize_ms(time: float | int) -> str:
     seconds = time % 60
 
     if hours == 0:
-        return f"{minutes:02d}M:{seconds:02d}S"
+        return f"{minutes:n}M:{seconds:n}S"
     else:
-        return f"{hours:02d}H:{minutes:02d}M:{seconds:02d}S"
+        return f"{hours:n}H:{minutes:n}M:{seconds:n}S"
