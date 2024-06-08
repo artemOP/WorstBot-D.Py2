@@ -397,6 +397,11 @@ class Music(commands.GroupCog, name="music"):
         self,
         interaction: Interaction[Bot],
     ):
+        """Configure which segments are skipped by SponsorBlock
+
+        Args:
+            interaction (Interaction[Bot]): _description_
+        """
         assert interaction.guild
         segments: Segments | None = await utils.fetch_segments(interaction)
         if not segments:
