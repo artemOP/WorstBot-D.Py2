@@ -403,7 +403,7 @@ class Music(commands.GroupCog, name="music"):
 
     async def set_segments(self, segments: Segments) -> None:
         await self.bot.pool.execute(
-            "INSERT INTO sponsor_block VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (guild_id) DO UPDATE SET sponsor=EXCLUDED.sponsor, self_promo=EXCLUDED.self_promo, interaction=EXCLUDED.interaction, intro=EXCLUDED.intro, outro=EXCLUDED.outro, preview=EXCLUDED.preview, music_offtopic=EXCLUDED.music_offtopic, filler=EXCLUDED.filler",
+            "INSERT INTO sponsor_block VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (guild_id) DO UPDATE SET sponsor=EXCLUDED.sponsor, selfpromo=EXCLUDED.selfpromo, interaction=EXCLUDED.interaction, intro=EXCLUDED.intro, outro=EXCLUDED.outro, preview=EXCLUDED.preview, music_offtopic=EXCLUDED.music_offtopic, filler=EXCLUDED.filler",
             *segments.values(),
         )
 
