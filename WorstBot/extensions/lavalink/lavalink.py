@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands
 
-from . import Seek, get_player, humanize_ms
+from . import Config, Seek, utils
 
 if TYPE_CHECKING:
     from discord import Guild, Interaction, Member, Message, VoiceState
@@ -28,11 +28,6 @@ if TYPE_CHECKING:
 
 @app_commands.guild_only()
 class Music(commands.GroupCog, name="music"):
-    SponsorBlock = app_commands.Group(
-        name="sponsor_block",
-        description="Toggle sponsor block segments",
-        guild_only=True,
-    )
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -49,9 +44,9 @@ class Music(commands.GroupCog, name="music"):
     async def interaction_check(self, interaction: Interaction[Bot]) -> bool:
         assert interaction.guild_id
         assert isinstance(interaction.user, discord.Member)
-        assert isinstance(interaction.command, app_commands.Command)
+        assert interaction.command
 
-        if interaction.command.parent and interaction.command.parent is self.SponsorBlock:
+        if interaction.command.extras.get("skip_check", False):
             return True
 
         if self.bot.config["lavalink"]["enabled"] is False:
@@ -61,7 +56,7 @@ class Music(commands.GroupCog, name="music"):
 
         assert interaction.user.voice.channel
 
-        player = get_player(interaction.guild_id)
+        player = utils.get_player(interaction.guild_id)
 
         if player is False:
             return False
@@ -74,7 +69,7 @@ class Music(commands.GroupCog, name="music"):
             player.autoplay = wavelink.AutoPlayMode.partial
 
             assert player.guild
-            segemnts = await self.fetch_segments(player.guild)
+            segemnts = await utils.fetch_segments(interaction)
             if segemnts:
                 await player.node.send(
                     "PUT",
@@ -87,7 +82,7 @@ class Music(commands.GroupCog, name="music"):
         interaction.extras["player"] = player
         return True
 
-    async def cog_app_command_error(self, interaction: Interaction, error: Exception):
+    async def cog_app_command_error(self, interaction: Interaction[Bot], error: Exception):
         if isinstance(error, app_commands.CommandInvokeError):
             error = error.original
         print(type(error))
@@ -101,7 +96,7 @@ class Music(commands.GroupCog, name="music"):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
-        if not (player := get_player(member.guild.id)):
+        if not (player := utils.get_player(member.guild.id)):
             return
 
         if all([user.bot for user in player.channel.members]):
@@ -153,7 +148,7 @@ class Music(commands.GroupCog, name="music"):
             category = payload.data["segment"]["category"]
             time_saved = payload.data["segment"]["end"] - payload.data["segment"]["start"]
             await payload.player.channel.send(
-                f"Skipped segment ({category}) saving {humanize_ms(time_saved)}s", delete_after=15
+                f"Skipped segment ({category}) saving {utils.humanize_ms(time_saved)}s", delete_after=15
             )
         except:
             pass
@@ -225,22 +220,22 @@ class Music(commands.GroupCog, name="music"):
             await player.play(player.queue.get(), volume=50)
 
     @app_commands.command(name="pause")
-    async def pause(self, interaction: Interaction):
+    async def pause(self, interaction: Interaction[Bot]):
         """Toggle pause/unpause
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         player: Player = interaction.extras["player"]
         await player.pause(not player.paused)
         await interaction.followup.send(f"The player is now {'paused' if player.paused else 'unpaused'}")
 
     @app_commands.command(name="stop")
-    async def stop(self, interaction: Interaction):
+    async def stop(self, interaction: Interaction[Bot]):
         """Stop the currently playing song and clear the queue
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         player: Player = interaction.extras["player"]
         player = await self.reset_player(player)
@@ -260,11 +255,11 @@ class Music(commands.GroupCog, name="music"):
         await interaction.followup.send("The song has been skipped")
 
     @app_commands.command(name="move_to")
-    async def move_to(self, interaction: Interaction, channel: discord.VoiceChannel):
+    async def move_to(self, interaction: Interaction[Bot], channel: discord.VoiceChannel):
         """Move the player to a new channel, this will clear the queue.
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
             channel (discord.VoiceChannel): _description_
         """
         player: Player = interaction.extras["player"]
@@ -274,11 +269,11 @@ class Music(commands.GroupCog, name="music"):
         await interaction.followup.send(f"player has now moved to {player.channel.mention}")
 
     @app_commands.command(name="seek")
-    async def seek(self, interaction: Interaction, direction: Seek, position: int):
+    async def seek(self, interaction: Interaction[Bot], direction: Seek, position: int):
         """Seek the current track
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
             direction (SeekType): Skip forwards, backwards or to a specific time
             position (int): The position to seek to
         """
@@ -301,15 +296,15 @@ class Music(commands.GroupCog, name="music"):
                 return await interaction.followup.send("Invalid seek type", ephemeral=True)
 
         await player.pause(False)
-        new_position = humanize_ms(player.position)
+        new_position = utils.humanize_ms(player.position)
         await interaction.followup.send(f"Seeked to {new_position}", ephemeral=True)
 
     @app_commands.command(name="volume")
-    async def volume(self, interaction: Interaction, volume: Range[int, 1, 1000]):
+    async def volume(self, interaction: Interaction[Bot], volume: Range[int, 1, 1000]):
         """Set the volume of the player
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
             volume (int): The volume to set, 1-1000 (can be distorted past 100)
         """
         player: Player = interaction.extras["player"]
@@ -317,11 +312,11 @@ class Music(commands.GroupCog, name="music"):
         await interaction.followup.send(f"Volume set to {volume}")
 
     @app_commands.command(name="shuffle")
-    async def shuffle(self, interaction: Interaction):
+    async def shuffle(self, interaction: Interaction[Bot]):
         """Shuffle the queue
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         player: Player = interaction.extras["player"]
         player.queue.shuffle()
@@ -329,11 +324,11 @@ class Music(commands.GroupCog, name="music"):
         await interaction.followup.send("Queue has been shuffled")
 
     @app_commands.command(name="loop")
-    async def loop(self, interaction: Interaction, mode: wavelink.QueueMode):
+    async def loop(self, interaction: Interaction[Bot], mode: wavelink.QueueMode):
         """Set the loop mode
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
             mode (Repeat): The loop mode
         """
         player: Player = interaction.extras["player"]
@@ -341,11 +336,11 @@ class Music(commands.GroupCog, name="music"):
         await interaction.followup.send(f"Loop mode set to {mode.name}")
 
     @app_commands.command(name="current")
-    async def current_song(self, interaction: Interaction):
+    async def current_song(self, interaction: Interaction[Bot]):
         """Get the current song
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         player: Player = interaction.extras["player"]
         playing = player.current
@@ -354,38 +349,38 @@ class Music(commands.GroupCog, name="music"):
             return await interaction.followup.send("No track is currently playing", ephemeral=True)
 
     @app_commands.command(name="queue")
-    async def queue(self, interaction: Interaction):
+    async def queue(self, interaction: Interaction[Bot]):
         """View the current queue
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         ...
 
     @app_commands.command(name="auto-queue")
-    async def auto_queue(self, interaction: Interaction):
+    async def auto_queue(self, interaction: Interaction[Bot]):
         """View the suggestions queue
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         ...
 
     @app_commands.command(name="history")
-    async def history(self, interaction: Interaction):
+    async def history(self, interaction: Interaction[Bot]):
         """Get the history of the player
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         ...
 
     @app_commands.command(name="autoplay")
-    async def autoplay(self, interaction: Interaction):
+    async def autoplay(self, interaction: Interaction[Bot]):
         """Toggle autoplay suggested content
 
         Args:
-            interaction (Interaction): _description_
+            interaction (Interaction[Bot]): _description_
         """
         player: Player = interaction.extras["player"]
         if player.autoplay == wavelink.AutoPlayMode.partial:
@@ -397,76 +392,29 @@ class Music(commands.GroupCog, name="music"):
             player.autoplay = wavelink.AutoPlayMode.partial
             await interaction.followup.send("Autoplay disabled")
 
-    async def fetch_segments(self, guild: Guild) -> Segments | None:
-        segments: Segments = await self.bot.pool.fetchrow("SELECT * FROM sponsor_block WHERE guild_id = $1", guild.id)
-        return segments
-
-    async def set_segments(self, segments: Segments) -> None:
-        await self.bot.pool.execute(
-            "INSERT INTO sponsor_block VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (guild_id) DO UPDATE SET sponsor=EXCLUDED.sponsor, selfpromo=EXCLUDED.selfpromo, interaction=EXCLUDED.interaction, intro=EXCLUDED.intro, outro=EXCLUDED.outro, preview=EXCLUDED.preview, music_offtopic=EXCLUDED.music_offtopic, filler=EXCLUDED.filler",
-            *segments.values(),
-        )
-
-    def format_segments(self, segments: Segments) -> str:
-        return "".join(f"{key}: {value}\n" for key, value in segments.items())
-
-    @SponsorBlock.command(name="set")
-    @app_commands.rename(_interaction="interaction")
+    @app_commands.command(name="sponsorblock", extras={"skip_check": True})
     async def toggle_segments(
         self,
-        interaction: Interaction,
-        sponsor: bool = True,
-        self_promo: bool = True,
-        _interaction: bool = True,
-        intro: bool = True,
-        outro: bool = True,
-        preview: bool = True,
-        music_offtopic: bool = True,
-        filler: bool = False,
+        interaction: Interaction[Bot],
     ):
-        """Toggle segments to automatically skip, updates when the player is first connected
-
-        Args:
-            interaction (Interaction): _description_
-            sponsor (bool, optional): Skip sponsor segments. Defaults to True.
-            self_promo (bool, optional): Skip self promotion segments. Defaults to True.
-            _interaction (bool, optional): Skip interaction reminders. Defaults to True.
-            intro (bool, optional): Skip intros. Defaults to True.
-            outro (bool, optional): Skip outros. Defaults to True.
-            preview (bool, optional): Skip previews. Defaults to True.
-            music_offtopic (bool, optional): Skip off topic music. Defaults to True.
-            filler (bool, optional): Skip filler. Defaults to False.
-        """
-        assert interaction.guild_id
-        segments: Segments = {
-            "guild": interaction.guild_id,
-            "sponsor": sponsor,
-            "selfpromo": self_promo,
-            "interaction": _interaction,
-            "intro": intro,
-            "outro": outro,
-            "preview": preview,
-            "music_offtopic": music_offtopic,
-            "filler": filler,
-        }
-        await self.set_segments(segments)
-        await interaction.followup.send(f"Segments set to:\n{self.format_segments(segments)}")
-
-    @SponsorBlock.command(name="view")
-    async def view_segments(self, interaction: Interaction):
-        """View the current SponsorBlock configuration
-
-        Args:
-            interaction (Interaction): _description_
-
-        Returns:
-            _type_: _description_
-        """
         assert interaction.guild
-        segments = await self.fetch_segments(interaction.guild)
+        segments: Segments | None = await utils.fetch_segments(interaction)
         if not segments:
-            return await interaction.followup.send("No segments set")
-        await interaction.followup.send(f"Segments set to:\n{self.format_segments(segments)}")
+            segments = {
+                "guild": interaction.guild.id,
+                "sponsor": False,
+                "selfpromo": False,
+                "interaction": False,
+                "intro": False,
+                "outro": False,
+                "preview": False,
+                "music_offtopic": False,
+                "filler": False,
+            }
+
+        view = Config(segments)
+        await interaction.followup.send("Select the segments you want to toggle", view=view, ephemeral=True)
+        view.response = await interaction.original_response()
 
 
 async def setup(bot: Bot):

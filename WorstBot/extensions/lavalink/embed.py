@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from discord import Colour, Embed
 
-from . import humanize_ms
+from . import utils
 
 if TYPE_CHECKING:
     from wavelink import Playable, Queue
@@ -20,7 +20,7 @@ async def generate_current_song(song: Playable) -> Embed:
     embed.set_thumbnail(url=song.artwork)
     embed.add_field(name="Author", value=song.author)
     embed.add_field(name="Requested by", value=song.extras.requester)
-    embed.add_field(name="Duration", value=humanize_ms(song.length))
+    embed.add_field(name="Duration", value=utils.humanize_ms(song.length))
 
     return embed
 

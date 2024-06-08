@@ -1,39 +1,7 @@
-import logging
-from typing import Literal
-
-import wavelink
-
+from . import utils
 from .enums import Seek
 from .models import Segments
-
-__all__ = ("Seek", "Segments", "get_player", "humanize_ms")
-
-
-def get_player(guild_id: int) -> wavelink.Player | None | Literal[False]:
-    try:
-        node = wavelink.Pool.get_node()
-    except wavelink.InvalidNodeException as e:
-        logging.getLogger("wavelink.node").exception(e)
-        return False
-    return node.get_player(guild_id)
+from .views import Config
 
 
-def humanize_ms(time: float | int) -> str:
-    """Convert milliseconds to human readable time.
-
-    Args:
-        time (float | int): ms to convert.
-
-    Returns:
-        str: HH:MM:SS or MM:SS format.
-    """
-    time /= 1000
-
-    hours = time // 3600
-    minutes = (time % 3600) // 60
-    seconds = round(time % 60)
-
-    if hours == 0:
-        return f"{minutes:n}:{seconds:n}"
-    else:
-        return f"{hours:n}:{minutes:n}:{seconds:n}"
+__all__ = ("Seek", "Segments", "Config", "utils")
