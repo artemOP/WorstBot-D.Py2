@@ -23,9 +23,16 @@ if TYPE_CHECKING:
 
     from WorstBot import Bot
 
+    from . import Segments
+
 
 @app_commands.guild_only()
 class Music(commands.GroupCog, name="music"):
+    SponsorBlock = app_commands.Group(
+        name="sponsor_block",
+        description="Toggle sponsor block segments",
+        guild_only=True,
+    )
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -42,6 +49,10 @@ class Music(commands.GroupCog, name="music"):
     async def interaction_check(self, interaction: Interaction[Bot]) -> bool:
         assert interaction.guild_id
         assert isinstance(interaction.user, discord.Member)
+        assert isinstance(interaction.command, app_commands.Command)
+
+        if interaction.command.parent and interaction.command.parent is self.SponsorBlock:
+            return True
 
         if self.bot.config["lavalink"]["enabled"] is False:
             return False
@@ -61,12 +72,15 @@ class Music(commands.GroupCog, name="music"):
                 return False
 
             player.autoplay = wavelink.AutoPlayMode.partial
+
             assert player.guild
-            await player.node.send(
-                "PUT",
-                path=f"v4/sessions/{player.node.session_id}/players/{player.guild.id}/sponsorblock/categories",
-                data=["sponsor", "selfpromo", "interaction", "intro", "outro", "preview", "music_offtopic"],
-            )
+            segemnts = await self.fetch_segments(player.guild)
+            if segemnts:
+                await player.node.send(
+                    "PUT",
+                    path=f"v4/sessions/{player.node.session_id}/players/{player.guild.id}/sponsorblock/categories",
+                    data=[key for key, value in segemnts.items() if value is True],
+                )
 
         elif player.channel != interaction.user.voice.channel:
             return False
@@ -247,6 +261,12 @@ class Music(commands.GroupCog, name="music"):
 
     @app_commands.command(name="move_to")
     async def move_to(self, interaction: Interaction, channel: discord.VoiceChannel):
+        """Move the player to a new channel, this will clear the queue.
+
+        Args:
+            interaction (Interaction): _description_
+            channel (discord.VoiceChannel): _description_
+        """
         player: Player = interaction.extras["player"]
         player = await self.reset_player(player)
 
@@ -377,7 +397,77 @@ class Music(commands.GroupCog, name="music"):
             player.autoplay = wavelink.AutoPlayMode.partial
             await interaction.followup.send("Autoplay disabled")
 
+    async def fetch_segments(self, guild: Guild) -> Segments | None:
+        segments: Segments = await self.bot.pool.fetchrow("SELECT * FROM sponsor_block WHERE guild_id = $1", guild.id)
+        return segments
+
+    async def set_segments(self, segments: Segments) -> None:
+        await self.bot.pool.execute(
+            "INSERT INTO sponsor_block VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (guild_id) DO UPDATE SET sponsor=EXCLUDED.sponsor, self_promo=EXCLUDED.self_promo, interaction=EXCLUDED.interaction, intro=EXCLUDED.intro, outro=EXCLUDED.outro, preview=EXCLUDED.preview, music_offtopic=EXCLUDED.music_offtopic, filler=EXCLUDED.filler",
+            *segments.values(),
+        )
+
+    def format_segments(self, segments: Segments) -> str:
+        return "".join(f"{key}: {value}\n" for key, value in segments.items())
+
+    @SponsorBlock.command(name="set")
+    @app_commands.rename(_interaction="interaction")
+    async def toggle_segments(
+        self,
+        interaction: Interaction,
+        sponsor: bool = True,
+        self_promo: bool = True,
+        _interaction: bool = True,
+        intro: bool = True,
+        outro: bool = True,
+        preview: bool = True,
+        music_offtopic: bool = True,
+        filler: bool = False,
+    ):
+        """Toggle segments to automatically skip, updates when the player is first connected
+
+        Args:
+            interaction (Interaction): _description_
+            sponsor (bool, optional): Skip sponsor segments. Defaults to True.
+            self_promo (bool, optional): Skip self promotion segments. Defaults to True.
+            _interaction (bool, optional): Skip interaction reminders. Defaults to True.
+            intro (bool, optional): Skip intros. Defaults to True.
+            outro (bool, optional): Skip outros. Defaults to True.
+            preview (bool, optional): Skip previews. Defaults to True.
+            music_offtopic (bool, optional): Skip off topic music. Defaults to True.
+            filler (bool, optional): Skip filler. Defaults to False.
+        """
+        assert interaction.guild_id
+        segments: Segments = {
+            "guild": interaction.guild_id,
+            "sponsor": sponsor,
+            "selfpromo": self_promo,
+            "interaction": _interaction,
+            "intro": intro,
+            "outro": outro,
+            "preview": preview,
+            "music_offtopic": music_offtopic,
+            "filler": filler,
+        }
+        await self.set_segments(segments)
+        await interaction.followup.send(f"Segments set to:\n{self.format_segments(segments)}")
+
+    @SponsorBlock.command(name="view")
+    async def view_segments(self, interaction: Interaction):
+        """View the current SponsorBlock configuration
+
+        Args:
+            interaction (Interaction): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        assert interaction.guild
+        segments = await self.fetch_segments(interaction.guild)
+        if not segments:
+            return await interaction.followup.send("No segments set")
+        await interaction.followup.send(f"Segments set to:\n{self.format_segments(segments)}")
+
 
 async def setup(bot: Bot):
-
     await bot.add_cog(Music(bot))
