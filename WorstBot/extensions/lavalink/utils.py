@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import wavelink
 
@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from discord import Interaction
 
     from WorstBot import Bot
+
     from . import Segments
 
 
