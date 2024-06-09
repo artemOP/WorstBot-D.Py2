@@ -1,11 +1,11 @@
 import asyncio
 import logging.config
-import tomllib
 
 import aiohttp
 import discord
-from discord.ext import commands
 import orjson
+import tomllib
+from discord.ext import commands
 
 from . import Bot, Pool
 

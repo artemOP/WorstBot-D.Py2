@@ -1,5 +1,5 @@
-from .database import Pool
 from .core import Bot
+from .database import Pool
 
 # from .http import ...
 

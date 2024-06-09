@@ -8,8 +8,9 @@ from discord import app_commands
 from discord.ext import commands
 
 if TYPE_CHECKING:
-    from WorstBot import Bot
     from discord.ext.commands import Context
+
+    from WorstBot import Bot
 
 
 class SyncOptions(Enum):

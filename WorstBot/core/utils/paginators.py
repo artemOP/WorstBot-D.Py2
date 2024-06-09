@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import discord
-from discord import ui, ButtonStyle
-
+from discord import ButtonStyle, ui
 
 if TYPE_CHECKING:
     from discord import Embed, Interaction, InteractionMessage

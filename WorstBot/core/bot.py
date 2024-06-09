@@ -1,29 +1,27 @@
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+import wavelink
 from discord.app_commands import Group
 from discord.ext import commands, tasks
-
-import wavelink
 
 from .tree import CommandTree
 
 if TYPE_CHECKING:
     from asyncio import Queue
-    from logging import LogRecord, Logger
+    from logging import Logger, LogRecord
     from typing import Any, Generator, Iterator, TypeAlias
 
     from aiohttp import ClientSession
-    from discord import BaseActivity, Guild, Intents, Object, Emoji
+    from discord import BaseActivity, Emoji, Guild, Intents, Object
     from discord.app_commands import AppCommand, Command, ContextMenu
-
-    from .enums import _events
-    from .. import Pool
-
     from discord.ext.commands._types import MaybeAwaitableFunc
+
+    from .. import Pool
+    from .enums import _events
 
     Prefix: TypeAlias = str | Iterator[str] | MaybeAwaitableFunc
 

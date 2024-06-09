@@ -7,8 +7,9 @@ from discord import app_commands
 from discord.ext import commands
 
 if TYPE_CHECKING:
-    from .. import Bot
     from discord import Interaction
+
+    from .. import Bot
 
 
 @app_commands.default_permissions()

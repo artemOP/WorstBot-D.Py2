@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from discord import app_commands, AppCommandType
+from discord import AppCommandType, app_commands
 
 if TYPE_CHECKING:
     from discord import Interaction
-    from discord.ext import commands
     from discord.abc import Snowflake
+    from discord.ext import commands
 
     from .bot import Bot
 
