@@ -8,13 +8,17 @@ from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands
 
+from WorstBot.core.utils.paginators import ButtonPaginatedEmbeds
+
 from . import Config, Seek, utils
+from .embed import generate_current_song, generate_queue
 
 if TYPE_CHECKING:
-    from discord import Guild, Interaction, Member, Message, VoiceState
+    from discord import Embed, Guild, Interaction, Member, Message, VoiceState
     from wavelink import (
         ExtraEventPayload,
         Player,
+        Queue,
         TrackEndEventPayload,
         TrackExceptionEventPayload,
         TrackStartEventPayload,
@@ -46,7 +50,10 @@ class Music(commands.GroupCog, name="music"):
         assert isinstance(interaction.user, discord.Member)
         assert interaction.command
 
+        player = utils.get_player(interaction.guild_id)
+
         if interaction.command.extras.get("skip_check", False):
+            interaction.extras["player"] = player
             return True
 
         if self.bot.config["lavalink"]["enabled"] is False:
@@ -55,8 +62,6 @@ class Music(commands.GroupCog, name="music"):
             return False
 
         assert interaction.user.voice.channel
-
-        player = utils.get_player(interaction.guild_id)
 
         if player is False:
             return False
@@ -85,7 +90,6 @@ class Music(commands.GroupCog, name="music"):
     async def cog_app_command_error(self, interaction: Interaction[Bot], error: Exception):
         if isinstance(error, app_commands.CommandInvokeError):
             error = error.original
-        print(type(error))
         match error:
             case app_commands.CheckFailure():
                 await interaction.followup.send("Unable to complete this action", ephemeral=True)
@@ -202,12 +206,9 @@ class Music(commands.GroupCog, name="music"):
             return await interaction.followup.send("No tracks found")
 
         if isinstance(tracks, wavelink.Playlist):
-            map(
-                lambda track: setattr(
-                    track, "extras", wavelink.ExtrasNamespace({"requester": interaction.user.mention})
-                ),
-                tracks,
-            )
+            for track in tracks:
+                track.extras = {"requester": interaction.user.mention}
+
             added: int = await player.queue.put_wait(tracks)
             await interaction.followup.send(f"Added {added} tracks to the queue")
         else:
@@ -335,45 +336,86 @@ class Music(commands.GroupCog, name="music"):
         player.queue.mode = mode
         await interaction.followup.send(f"Loop mode set to {mode.name}")
 
-    @app_commands.command(name="current")
+    @app_commands.command(name="current", extras={"skip_check": True})
     async def current_song(self, interaction: Interaction[Bot]):
         """Get the current song
 
         Args:
             interaction (Interaction[Bot]): _description_
         """
-        player: Player = interaction.extras["player"]
+        player: Player | None = interaction.extras.get("player")
+        if not player:
+            return await interaction.followup.send("No player is currently connected", ephemeral=True)
+
         playing = player.current
 
         if not playing:
             return await interaction.followup.send("No track is currently playing", ephemeral=True)
 
-    @app_commands.command(name="queue")
+        embed = await generate_current_song(playing)
+        await interaction.followup.send(embed=embed)
+
+    async def generate_queue_embed(self, queue: Queue, max_len: int = 100) -> tuple[ButtonPaginatedEmbeds, Embed]:
+        embeds = await generate_queue(queue, max_len)
+        view = ButtonPaginatedEmbeds(embeds)
+
+        return view, embeds[0]
+
+    @app_commands.command(name="queue", extras={"skip_check": True})
     async def queue(self, interaction: Interaction[Bot]):
         """View the current queue
 
         Args:
             interaction (Interaction[Bot]): _description_
         """
-        ...
+        player: Player | None = interaction.extras.get("player")
+        if not player:
+            return await interaction.followup.send("No player is currently connected", ephemeral=True)
+        elif not player.queue:
+            return await interaction.followup.send("The queue is empty", ephemeral=True)
 
-    @app_commands.command(name="auto-queue")
+        view, embed = await self.generate_queue_embed(player.queue)
+
+        await interaction.followup.send(view=view, embed=embed)
+        view.response = await interaction.original_response()
+
+    @app_commands.command(name="auto-queue", extras={"skip_check": True})
     async def auto_queue(self, interaction: Interaction[Bot]):
         """View the suggestions queue
 
         Args:
             interaction (Interaction[Bot]): _description_
         """
-        ...
+        player: Player | None = interaction.extras.get("player")
+        if not player:
+            return await interaction.followup.send("No player is currently connected", ephemeral=True)
 
-    @app_commands.command(name="history")
+        if not player.auto_queue:
+            # todo: command mention
+            return await interaction.followup.send("No suggestions, try enabling autoplay", ephemeral=True)
+
+        view, embed = await self.generate_queue_embed(player.auto_queue)
+
+        await interaction.followup.send(view=view, embed=embed)
+        view.response = await interaction.original_response()
+
+    @app_commands.command(name="history", extras={"skip_check": True})
     async def history(self, interaction: Interaction[Bot]):
         """Get the history of the player
 
         Args:
             interaction (Interaction[Bot]): _description_
         """
-        ...
+        player: Player | None = interaction.extras.get("player")
+        if not player:
+            return await interaction.followup.send("No player is currently connected", ephemeral=True)
+        if not player.queue.history:
+            return await interaction.followup.send("No history", ephemeral=True)
+
+        view, embed = await self.generate_queue_embed(player.queue.history)
+
+        await interaction.followup.send(view=view, embed=embed)
+        view.response = await interaction.original_response()
 
     @app_commands.command(name="autoplay")
     async def autoplay(self, interaction: Interaction[Bot]):
