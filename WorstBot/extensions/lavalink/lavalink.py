@@ -165,6 +165,9 @@ class Music(commands.GroupCog, name="music"):
         # clear filters
         await player.set_filters()
 
+        # reset autoplay
+        player.autoplay = wavelink.AutoPlayMode.partial
+
         # skip current song
         await player.stop()
 
