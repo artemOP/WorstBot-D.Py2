@@ -149,8 +149,15 @@ class Music(commands.GroupCog, name="music"):
 
         try:
             assert payload.player
+            assert payload.player.guild
             category = payload.data["segment"]["category"]
             time_saved = payload.data["segment"]["end"] - payload.data["segment"]["start"]
+            await self.bot.pool.execute(
+                "INSERT INTO sponsor_block_history(guild_id, segment, time_saved) values($1, $2, $3)",
+                payload.player.guild.id,
+                category,
+                time_saved,
+            )
             await payload.player.channel.send(
                 f"Skipped segment ({category}) saving {utils.humanize_ms(time_saved)}s", delete_after=15
             )

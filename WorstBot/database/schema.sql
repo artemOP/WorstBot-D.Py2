@@ -19,6 +19,12 @@ CREATE TABLE IF NOT EXISTS sponsor_block(
     filler BOOLEAN NOT null
 );
 
+CREATE TABLE IF NOT EXISTS sponsor_block_history(
+    guild_id BIGINT,
+    segment TEXT,
+    time_saved REAL,
+)
+
 CREATE TABLE IF NOT EXISTS lavalink_history(
     requester MEMBER NOT null,
     uri TEXT,
