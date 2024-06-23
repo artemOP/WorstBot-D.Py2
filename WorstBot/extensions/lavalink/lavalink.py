@@ -212,11 +212,26 @@ class Music(commands.GroupCog, name="music"):
             for track in tracks:
                 track.extras = {"requester": interaction.user.mention}
 
+            await self.bot.pool.executemany(
+                "INSERT INTO lavalink_history(requester, uri, request_time) values($1, $2, now())",
+                [
+                    (
+                        (interaction.guild_id, interaction.user.id),
+                        song.uri,
+                    )
+                    for song in tracks
+                ],
+            )
             added: int = await player.queue.put_wait(tracks)
             await interaction.followup.send(f"Added {added} tracks to the queue")
         else:
             track = tracks[0]
             track.extras = {"requester": interaction.user.mention}
+            await self.bot.pool.execute(
+                "INSERT INTO lavalink_history(requester, uri, request_time) values($1, $2, now())",
+                (interaction.guild_id, interaction.user.id),
+                track.uri,
+            )
             await player.queue.put_wait(track)
             await interaction.followup.send(f"Added {track.title} to the queue")
 

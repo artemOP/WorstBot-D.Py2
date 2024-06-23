@@ -18,3 +18,9 @@ CREATE TABLE IF NOT EXISTS sponsor_block(
     music_offtopic BOOLEAN NOT null,
     filler BOOLEAN NOT null
 );
+
+CREATE TABLE IF NOT EXISTS lavalink_history(
+    requester MEMBER NOT null,
+    uri TEXT,
+    request_time TIMESTAMP NOT null
+);
