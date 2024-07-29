@@ -1,9 +1,9 @@
 from enum import StrEnum, auto
 
-__all__ = ("_events",)
+__all__ = ("events_",)
 
 
-class _events(StrEnum):
+class events_(StrEnum):
     autorole = auto()
     autoevent = auto()
     birthdays = auto()

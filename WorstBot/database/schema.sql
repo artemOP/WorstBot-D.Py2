@@ -18,3 +18,9 @@ CREATE TABLE IF NOT EXISTS sponsor_block(
     music_offtopic BOOLEAN NOT null,
     filler BOOLEAN NOT null
 );
+
+CREATE TABLE event_toggles(
+    guild_id BIGINT PRIMARY KEY,
+    event_name TEXT NOT NULL,
+    event_value BOOLEAN DEFAULT TRUE
+);
