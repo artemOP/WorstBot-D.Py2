@@ -24,3 +24,8 @@ CREATE TABLE event_toggles(
     event_name TEXT NOT NULL,
     event_value BOOLEAN DEFAULT TRUE
 );
+
+CREATE TABLE IF NOT EXISTS chatter(
+    member MEMBER NOT NULL,
+    message_timestamp TIMESTAMPTZ DEFAULT NOW()
+);
