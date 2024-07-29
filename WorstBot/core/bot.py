@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from discord.ext.commands._types import MaybeAwaitableFunc
 
     from .. import Pool
-    from .enums import events_
+    from .enums import Events_
 
     Prefix: TypeAlias = str | Iterator[str] | MaybeAwaitableFunc
 
@@ -51,7 +51,7 @@ class Bot(commands.Bot):
             **kwargs,
         )
         self.config = config
-        self._event_toggles: dict[Object, dict[events_, bool]] = {}
+        self.event_toggles: dict[Guild, dict[Events_, bool]] = {}
         self.custom_emoji: list[Emoji] = []
 
     async def setup_hook(self) -> None:
@@ -82,19 +82,26 @@ class Bot(commands.Bot):
             elif file.is_dir():
                 yield from self.collect_cogs(file)
 
-    async def event_enabled(self, guild: Object, event: events_) -> bool:
+    async def event_enabled(self, guild: Guild, event: Events_) -> bool:
         assert self.config["discord"]["toggles"]["tasks"], "Config toggles not set"
         if not self.config["discord"]["toggles"]["tasks"]:
             return False
 
-        if guild not in self._event_toggles:
-            self._event_toggles[guild] = {}
+        if guild not in self.event_toggles:
+            self.event_toggles[guild] = {}
 
-        if event not in self._event_toggles[guild]:
-            toggles = await self.pool.fetchrow("SELECT * FROM event_toggles WHERE guild_id = $1", guild.id) or {}
-            self._event_toggles[guild][event] = toggles.get(event, False)
+        if event not in self.event_toggles[guild]:
+            toggle = (
+                await self.pool.fetchval(
+                    "SELECT event_value FROM event_toggles WHERE (guild_id = $1 AND event_name=$2)",
+                    guild.id,
+                    event.name,
+                )
+                or True
+            )
+            self.event_toggles[guild][event] = toggle
 
-        return self._event_toggles[guild][event]
+        return self.event_toggles[guild][event]
 
     @tasks.loop(count=1)
     async def prepare_emoji(self) -> None:
