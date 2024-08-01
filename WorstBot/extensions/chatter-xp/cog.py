@@ -8,18 +8,21 @@ from discord.ext import commands
 
 from ...core._types import LRU
 from ...core.enums import Events_
+from ...core.utils.paginators import ButtonPaginatedEmbeds
 from . import Chatter
+from .embeds import CurrentXP, Leaderboard, LevelUp
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import Any
+    from typing import Any, Generator
 
-    from discord import Guild, Interaction, Member, Message, TextChannel
+    from discord import Embed, Interaction, Member, Message
 
     from WorstBot import Bot
 
 LEADERBOARD_SIZE: int = 99
 LOG_STR: str = "{user_name} (id: {user_id}), {guild_name} (id: {guild_id}) found in {source}"
+PAGE_SIZE: int = 10
 
 with open("WorstBot/extensions/chatter-xp/leaderboard.sql", "r") as f:
     leaderboard_sql = f.read()
@@ -98,31 +101,27 @@ class ChatterXP(commands.GroupCog, name="chatter"):
 
         return chatter
 
-    async def prepare_leaderboard(self, user: discord.Member) -> dict[int, Chatter]:
+    def prepare_pages(self, data: list[Chatter]) -> Generator[list[Chatter], None, None]:
+        for i in range(0, len(data), PAGE_SIZE):
+            yield data[i : i + PAGE_SIZE]
+
+    async def prepare_leaderboard(self, user: discord.Member) -> list[list[Chatter]]:
+        assert user.guild
+
         data = await self.bot.pool.fetch(leaderboard_sql, user.guild.id, user.id, LEADERBOARD_SIZE)
 
         if not data:
-            return {}
+            return []
 
-        leaderboard: dict[int, Chatter] = {}
+        chatters: list[Chatter] = []
         for row in data:
-            print(row)
             member = user.guild.get_member(row["user_id"])
             if not member:
                 continue
 
-            chatter = Chatter(member, row["xp"], row["last_message"])
-            if chatter not in self.chatters:
-                self.chatters[chatter] = chatter.last_message
+            chatters.append(Chatter(member, row["xp"], row["last_message"]))
 
-            leaderboard[row["rank"]] = chatter
-        return leaderboard
-
-    async def send_level_up(self, channel: TextChannel, author: Member, xp: int, level: int) -> None: ...
-
-    async def send_current(self) -> None: ...
-
-    async def send_leaderboard(self) -> None: ...
+        return [page for page in self.prepare_pages(chatters)]
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):
@@ -147,20 +146,25 @@ class ChatterXP(commands.GroupCog, name="chatter"):
         await self.set_chatter_info(message.author, message.created_at)
         level_up: bool = chatter.add_xp(1)
         if level_up:
-            await self.send_level_up(message.channel, message.author, chatter.xp, chatter.level)
+            embed = LevelUp(chatter)
+            await message.channel.send(embed=embed, delete_after=60)
 
     @app_commands.command(name="xp")
     async def current(self, interaction: Interaction[Bot]):
         assert isinstance(interaction.user, discord.Member)
         chatter = await self.get_chatter(interaction.user)
-        next_level_xp = Chatter.level_to_xp(chatter.level + 1)
-        # todo: send embed
+        embed = CurrentXP(chatter)
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     @app_commands.command(name="leaderboard")
     async def leaderboard(self, interaction: Interaction[Bot]):
         assert isinstance(interaction.user, discord.Member)
         leaderboard = await self.prepare_leaderboard(interaction.user)
-        # todo: Send paginated embed
+
+        embeds: list[Embed] = [Leaderboard(chatters, i * PAGE_SIZE) for i, chatters in enumerate(leaderboard)]
+        view = ButtonPaginatedEmbeds(embeds)
+        await interaction.followup.send(view=view, embed=embeds[0], ephemeral=True)
+        view.response = await interaction.original_response()
 
 
 async def setup(bot: Bot):
