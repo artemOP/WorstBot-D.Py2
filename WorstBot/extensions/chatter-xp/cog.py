@@ -151,6 +151,11 @@ class ChatterXP(commands.GroupCog, name="chatter"):
 
     @app_commands.command(name="xp")
     async def current(self, interaction: Interaction[Bot]):
+        """View your current XP and level
+
+        Args:
+            interaction (Interaction[Bot]): _description_
+        """
         assert isinstance(interaction.user, discord.Member)
         chatter = await self.get_chatter(interaction.user)
         embed = CurrentXP(chatter)
@@ -158,6 +163,11 @@ class ChatterXP(commands.GroupCog, name="chatter"):
 
     @app_commands.command(name="leaderboard")
     async def leaderboard(self, interaction: Interaction[Bot]):
+        """Compete with friends to see who chats the most (1 xp/message/min)
+
+        Args:
+            interaction (Interaction[Bot]): _description_
+        """
         assert isinstance(interaction.user, discord.Member)
         leaderboard = await self.prepare_leaderboard(interaction.user)
 
