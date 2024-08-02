@@ -3,23 +3,27 @@ from __future__ import annotations
 from math import sqrt
 from typing import TYPE_CHECKING
 
+from ...core._types import HashableMember
+
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from discord import Member, User
+    from discord import Member
 
 
-class Chatter:
+class Chatter(HashableMember):
     XP_STEP: int = 5
 
-    def __init__(self, user: User | Member, xp: int, last_message: datetime) -> None:
-        self._user: User | Member = user
+    __slots__ = ("_member", "_xp", "_last_message")
+
+    def __init__(self, member: Member, xp: int, last_message: datetime) -> None:
+        self._member: Member = member
         self._xp: int = xp
         self._last_message: datetime = last_message
 
     @property
-    def user(self) -> User | Member:
-        return self._user
+    def member(self) -> Member:
+        return self._member
 
     @property
     def xp(self) -> int:
@@ -34,18 +38,10 @@ class Chatter:
         return self._last_message
 
     def __repr__(self) -> str:
-        return f"<Chatter user={self.user} xp={self.xp} level={self.level} last_message={self.last_message}>"
+        return f"<Chatter member={self.member} xp={self.xp} level={self.level} last_message={self.last_message}>"
 
     def __str__(self) -> str:
-        return f"{self.user} has {self.xp} xp and is level {self.level}"
-
-    def __hash__(self) -> int:
-        return hash(self.user)
-
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, Chatter):
-            return False
-        return self.user == o.user
+        return f"{self.member} has {self.xp} xp and is level {self.level}"
 
     @classmethod
     def xp_to_level(cls, xp: int) -> int:
