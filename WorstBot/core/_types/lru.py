@@ -48,7 +48,7 @@ class LRU(UserDict[T, datetime]):
         self.hits += 1
         return value
 
-    def get(self, value: T, default: Any = None) -> T:
+    def get(self, value: Hashable, default: Any = None) -> T:
         for key in self.data.keys():
             if hash(key) == hash(value):
                 return key
