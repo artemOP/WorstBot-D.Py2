@@ -29,3 +29,18 @@ CREATE TABLE IF NOT EXISTS chatter(
     member MEMBER NOT NULL,
     message_timestamp TIMESTAMPTZ DEFAULT NOW()
 );
+
+DO $$ BEGIN
+    CREATE TYPE TRANSACTION_TYPE AS ENUM ('DEPOSIT', 'WITHDRAW', 'ASCEND', 'GIVE', 'RECEIVE', 'GAMBLE', 'WORK', 'CONVERSION_RATE');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS economy(
+    member MEMBER,
+    transaction TRANSACTION_TYPE NOT NULL,
+    amount NUMERIC(1000, 2) NOT NULL,
+    recipient MEMBER,
+    transaction_id SERIAL,
+    transaction_timestamp TIMESTAMPTZ DEFAULT NOW()
+);
