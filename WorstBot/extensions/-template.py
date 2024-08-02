@@ -9,7 +9,7 @@ from discord.ext import commands
 if TYPE_CHECKING:
     from discord import Interaction
 
-    from .. import Bot
+    from WorstBot import Bot
 
 
 @app_commands.default_permissions()
@@ -30,5 +30,5 @@ class Template(commands.GroupCog, name="template"):
     async def template(self, interaction: Interaction[Bot]): ...
 
 
-async def setup(bot):
+async def setup(bot: Bot) -> None:
     await bot.add_cog(Template(bot))
