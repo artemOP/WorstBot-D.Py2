@@ -10,7 +10,7 @@ class HashableMember:
     _member: Member
 
     def __hash__(self) -> int:
-        return hash((self._member, self._member.guild)) << 22
+        return hash(self._member)
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, self.__class__):

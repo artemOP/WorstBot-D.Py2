@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from datetime import datetime
     from typing import Any, Generator
 
-    from discord import Embed, Interaction, Member, Message
+    from discord import Embed, Guild, Interaction, Member, Message
 
     from WorstBot import Bot
 
@@ -34,8 +34,7 @@ class ChatterXP(commands.GroupCog, name="chatter"):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.logger = self.bot.log_handler.getChild(self.qualified_name)
-        self.logger.setLevel(10)
-        self.chatters: LRU[Chatter] = LRU(max_size=50)
+        self.chatters: dict[Guild, LRU[Chatter]] = {}
 
     async def cog_load(self) -> None:
         self.logger.info(f"{self.qualified_name} cog loaded")
@@ -61,7 +60,11 @@ class ChatterXP(commands.GroupCog, name="chatter"):
             return {}
 
     async def get_chatter(self, member: discord.Member) -> Chatter:
-        if chatter := self.chatters.get(member):  # type: ignore
+        guild = member.guild
+        if guild not in self.chatters:
+            self.chatters[guild] = LRU(max_size=50)
+
+        if chatter := self.chatters[guild].get(member):  # type: ignore
             self.logger.debug(
                 LOG_STR.format(
                     user_name=member.name,
@@ -84,10 +87,12 @@ class ChatterXP(commands.GroupCog, name="chatter"):
                     source="database",
                 )
             )
-            return Chatter(member, chatter_info["xp"], chatter_info["last_message"])
+            chatter = Chatter(member, chatter_info["xp"], chatter_info["last_message"])
+            self.chatters[guild][chatter] = utils.utcnow()
+            return chatter
 
         chatter = Chatter(member, 0, utils.utcnow())
-        self.chatters[chatter] = utils.utcnow()
+        self.chatters[guild][chatter] = utils.utcnow()
         await self.set_chatter_info(member)
         self.logger.debug(
             LOG_STR.format(
