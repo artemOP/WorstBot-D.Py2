@@ -18,7 +18,7 @@ class Fields(TypedDict):
 class LevelUp(Embed):
     def __init__(self, chatter: Chatter):
         super().__init__(title="Level Up!", colour=Colour.random())
-        self.set_author(name=chatter.user.display_name, icon_url=chatter.user.display_avatar.url)
+        self.set_author(name=chatter.member.display_name, icon_url=chatter.member.display_avatar.url)
         self._fields: list[Fields] = [
             {"name": "Level", "value": str(chatter.level), "inline": True},
             {"name": "XP", "value": str(chatter.xp), "inline": True},
@@ -28,7 +28,7 @@ class LevelUp(Embed):
 class CurrentXP(Embed):
     def __init__(self, chatter: Chatter):
         super().__init__(title="Current XP", colour=Colour.random())
-        self.set_author(name=chatter.user.display_name, icon_url=chatter.user.display_avatar.url)
+        self.set_author(name=chatter.member.display_name, icon_url=chatter.member.display_avatar.url)
         self._fields: list[Fields] = [
             {"name": "Level", "value": str(chatter.level), "inline": True},
             {"name": "XP", "value": str(chatter.xp), "inline": True},
@@ -41,7 +41,7 @@ class Leaderboard(Embed):
         super().__init__(title="Leaderboard", colour=Colour.random())
         self._fields: list[Fields] = [
             {
-                "name": f"{offset + i + 1}: {chatter.user.display_name}",
+                "name": f"{offset + i + 1}: {chatter.member.display_name}",
                 "value": f"Level: {chatter.level} ({chatter.xp} xp)",
                 "inline": False,
             }
