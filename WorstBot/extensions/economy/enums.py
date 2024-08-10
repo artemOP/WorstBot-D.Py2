@@ -1,17 +1,12 @@
-from enum import Enum
-from typing import Any
+from enum import StrEnum
 
 
-class CONVERSION_WEIGHTS(Enum):
-    crash = 0.005
-    decrease = 0.5
-    increase = 0.5
-    boom = 0.005
-
-    @classmethod
-    def keys(cls) -> list[str]:
-        return [key for key in cls.__members__.keys()]
-
-    @classmethod
-    def values(cls) -> list[Any]:
-        return [value for value in cls.__members__.values()]
+class Transactions(StrEnum):
+    deposit = "DEPOSIT"
+    withdraw = "WITHDRAW"
+    ascend = "ASCEND"
+    give = "GIVE"
+    receive = "RECEIVE"
+    gamble = "GAMBLE"
+    work = "WORK"
+    conversion_rate = "CONVERSION_RATE"
