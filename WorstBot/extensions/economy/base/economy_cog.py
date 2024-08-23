@@ -9,8 +9,8 @@ from discord import app_commands
 from discord.app_commands import Range
 from discord.ext import commands, tasks
 
-from ...core.utils import paginators
-from . import (
+from ....core.utils import paginators
+from .. import (
     BASE_RATE,
     CONVERSION_MAX,
     CONVERSION_MIN,
@@ -21,11 +21,11 @@ from . import (
     Wealth,
     ascend,
     deposit,
-    embeds,
     get_wealth,
     transfer,
     withdraw,
 )
+from . import embeds
 
 if TYPE_CHECKING:
     from discord import Embed, Interaction, Member

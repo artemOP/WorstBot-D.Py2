@@ -7,14 +7,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from . import embeds, get_wealth, tasks
+from .. import get_wealth, tasks
+from . import embeds
 
 if TYPE_CHECKING:
     from discord import Interaction
 
     from WorstBot import Bot
 
-    from . import Wealth
+    from .. import Wealth
 
 
 class Tasks(commands.Cog):
