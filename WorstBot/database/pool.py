@@ -23,7 +23,7 @@ class Pool:
 
     async def __aenter__(self):
         record_class = self.kwargs.pop("record_class", Record)
-        self._pool = await asyncpg.create_pool(*self.args, record_class=record_class, **self.kwargs)  # type: ignore
+        self._pool = await asyncpg.create_pool(*self.args, record_class=record_class, setup=self._setup, **self.kwargs)  # type: ignore
         return self
 
     async def __aexit__(
@@ -36,6 +36,10 @@ class Pool:
 
     def __str__(self) -> str:
         return "Custom asyncpg connection pool"
+
+    async def _setup(self, conn: asyncpg.Connection) -> asyncpg.Connection:
+        await conn.set_type_codec("numeric", encoder=str, decoder=float, schema="pg_catalog", format="text")
+        return conn
 
     async def fetch(self, sql: str, *args) -> list[Record] | None:
         async with self._pool.acquire() as conn:

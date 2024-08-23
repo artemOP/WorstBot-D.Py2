@@ -2,17 +2,39 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import discord
 from discord import Colour, Embed
 
+from ...core import constants
+
 if TYPE_CHECKING:
+    from ...core.utils import embeds
     from . import Wealth
 
 
-class Leaderboard(Embed): ...
+class Leaderboard(Embed):
+    def __init__(self, wealths: list[Wealth], offset: int):
+        super().__init__(title="Leaderboard", colour=Colour.random())
+        self._fields: list[embeds.Fields] = [
+            {
+                "name": f"{offset + i + 1}: {wealth.member.display_name}",
+                "value": f"W${wealth.wallet}",
+                "inline": False,
+            }
+            for i, wealth in enumerate(wealths)
+        ]
 
-
-class Balance(Embed): ...
+class Balance(Embed): 
+    def __init__(self, wealth: Wealth):
+        super().__init__(title="Balance", colour=Colour.random())
+        self.set_author(name=wealth.member.display_name, icon_url=wealth.member.display_avatar.url)
+        self._fields: list[embeds.Fields] = [
+            {"name": "Wallet", "value": str(wealth.wallet), "inline": True},
+            {"name": "Bank", "value": str(wealth.bank), "inline": True},
+            {"name": "Tokens", "value": str(wealth.tokens), "inline": True},
+            {"name": constants.BLANK, "value": constants.BLANK, "inline": True},
+            {"name": "Multiplier", "value": str(wealth.multiplier), "inline": True},
+            {"name": constants.BLANK, "value": constants.BLANK, "inline": True},
+        ]
 
 
 class KeypadTask(Embed):
