@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
     from WorstBot import Bot
 
-with open("WorstBot/extensions/economy/leaderboard.sql", "r") as f:
+with open("WorstBot/extensions/economy/base/leaderboard.sql", "r") as f:
     leaderboard_sql = f.read()
 
 
