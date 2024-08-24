@@ -25,6 +25,7 @@ class Punish(Embed):
             colour=Colour.random(),
         )
 
+
 class KeypadTask(Embed):
     def __init__(self, code: list[str]):
         super().__init__(
