@@ -6,7 +6,16 @@ import discord
 from discord import ButtonStyle, ui
 
 if TYPE_CHECKING:
+    from typing import Generator, TypeVar
+
     from discord import Embed, Interaction, InteractionMessage
+
+    T = TypeVar("T")
+
+
+def prepare_pages(data: list[T], page_size: int) -> Generator[list[T], None, None]:
+    for i in range(0, len(data), page_size):
+        yield data[i : i + page_size]
 
 
 class BaseView(ui.View):
@@ -24,11 +33,11 @@ class BaseView(ui.View):
             pass
 
     async def interaction_check(self, interaction: Interaction, /) -> bool:
-        assert self.response.interaction, "Response is missing an interaction"
+        assert self.response.interaction_metadata, "Response is missing an interaction"
 
-        if not self.response or not getattr(self.response, "interaction", None):
+        if not self.response or not hasattr(self.response, "interaction_metadata"):
             return True
-        if self.response.interaction.user != interaction.user:
+        if self.response.interaction_metadata.user != interaction.user:
             await interaction.response.send_message("This is not your view, please launch your own", ephemeral=True)
             return False
         return True
