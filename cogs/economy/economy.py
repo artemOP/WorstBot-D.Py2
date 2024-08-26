@@ -97,7 +97,7 @@ class Economy(commands.GroupCog, name = "economy"):
             max_fields = 5
         )
         view = Paginators.ButtonPaginatedEmbeds(embed_list = embeds)
-        await interaction.response.send_message(view = view, embeds = embeds, ephemeral = True)
+        await interaction.response.send_message(view = view, embed = embeds[0], ephemeral = True)
         view.response = await interaction.original_response()
 
     @app_commands.command(name = "stats")
