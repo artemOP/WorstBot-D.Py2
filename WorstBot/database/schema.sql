@@ -19,14 +19,28 @@ CREATE TABLE IF NOT EXISTS sponsor_block(
     filler BOOLEAN NOT null
 );
 
-CREATE TABLE IF NOT EXISTS sponsor_block_history(
-    guild_id BIGINT,
-    segment TEXT,
-    time_saved REAL,
-)
+CREATE TABLE event_toggles(
+    guild_id BIGINT PRIMARY KEY,
+    event_name TEXT NOT NULL,
+    event_value BOOLEAN DEFAULT TRUE
+);
 
-CREATE TABLE IF NOT EXISTS lavalink_history(
-    requester MEMBER NOT null,
-    uri TEXT,
-    request_time TIMESTAMP NOT null
+CREATE TABLE IF NOT EXISTS chatter(
+    member MEMBER NOT NULL,
+    message_timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+DO $$ BEGIN
+    CREATE TYPE TRANSACTION_TYPE AS ENUM ('DEPOSIT', 'WITHDRAW', 'ASCEND', 'GIVE', 'RECEIVE', 'GAMBLE', 'WORK', 'CONVERSION_RATE');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS economy(
+    member MEMBER,
+    transaction TRANSACTION_TYPE NOT NULL,
+    amount NUMERIC(1000, 2) NOT NULL,
+    recipient MEMBER,
+    transaction_id SERIAL,
+    transaction_timestamp TIMESTAMPTZ DEFAULT NOW()
 );
