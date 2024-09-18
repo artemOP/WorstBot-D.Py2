@@ -41,7 +41,11 @@ async def paginate_blackjack(dealer_cards: list[Emoji], dealer_score: int, winne
 
     for page, players in enumerate(pages):
         fields: list[Fields] = [
-            {"name": "Dealer's hand", "value": f"{dealer_score} | {"".join(str(card) for card in dealer_cards)}", "inline": True}
+            {
+                "name": "Dealer's hand",
+                "value": f"{dealer_score} | {"".join(str(card) for card in dealer_cards)}",
+                "inline": True,
+            }
         ]
         for i, player in enumerate(players):
             fields.append(
