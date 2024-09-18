@@ -52,7 +52,7 @@ class Bot(commands.Bot):
         )
         self.config = config
         self.event_toggles: dict[Guild, dict[Events_, bool]] = {}
-        self.custom_emoji: list[Emoji] = []
+        self.app_emoji: list[Emoji] = []
 
     async def setup_hook(self) -> None:
         assert self.config["discord"]["extension_path"], "Config extension path not set"
@@ -72,12 +72,17 @@ class Bot(commands.Bot):
             nodes = [wavelink.Node(uri=self.config["lavalink"]["uri"], password=self.config["lavalink"]["password"])]
             await wavelink.Pool.connect(nodes=nodes, client=self, cache_capacity=100)
 
+        self.app_emoji = await self.fetch_emojis()
+        self.prepare_mentions.start()
+
     async def on_ready(self) -> None:
         self.log_handler.info("Bot Ready")
 
     def collect_cogs(self, root: Path) -> Generator[Path, None, None]:
         for file in root.iterdir():
-            if file.match("[!-|_]*.py"):
+            if file.match("[-|_]*"):
+                continue
+            if file.match("*.py"):
                 yield file
             elif file.is_dir():
                 yield from self.collect_cogs(file)
@@ -102,20 +107,6 @@ class Bot(commands.Bot):
             self.event_toggles[guild][event] = toggle
 
         return self.event_toggles[guild][event]
-
-    @tasks.loop(count=1)
-    async def prepare_emoji(self) -> None:
-        assert self.config["discord"]["emoji_server_ids"], "Config emoji servers not set"
-
-        for guild_id in self.config["discord"]["emoji_server_ids"]:
-            guild: Guild | None = self.get_guild(guild_id)
-
-            if guild is None:
-                self.log_handler.warning("Guild with ID %s not found", guild_id)
-                continue
-
-            self.custom_emoji.extend(guild.emojis)
-        self.log_handler.debug(f"{len(self.custom_emoji)} custom emoji loaded")
 
     @tasks.loop(count=1)
     async def prepare_mentions(self) -> None:
@@ -155,7 +146,6 @@ class Bot(commands.Bot):
         else:
             command.extras["mention"] = mention
 
-    @prepare_emoji.before_loop
     @prepare_mentions.before_loop
     async def before_task(self) -> None:
         await self.wait_until_ready()

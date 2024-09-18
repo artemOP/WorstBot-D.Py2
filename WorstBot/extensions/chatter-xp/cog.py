@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from ...core._types import LRU
 from ...core.enums import Events_
-from ...core.utils.paginators import ButtonPaginatedEmbeds
+from ...core.utils.paginators import ButtonPaginatedEmbeds, prepare_pages
 from . import Chatter
 from .embeds import CurrentXP, Leaderboard, LevelUp
 
@@ -64,7 +64,7 @@ class ChatterXP(commands.GroupCog, name="chatter"):
         if guild not in self.chatters:
             self.chatters[guild] = LRU(max_size=50)
 
-        if chatter := self.chatters[guild].get(member):  # type: ignore
+        if chatter := self.chatters[guild].get(member):
             self.logger.debug(
                 LOG_STR.format(
                     user_name=member.name,
@@ -106,10 +106,6 @@ class ChatterXP(commands.GroupCog, name="chatter"):
 
         return chatter
 
-    def prepare_pages(self, data: list[Chatter]) -> Generator[list[Chatter], None, None]:
-        for i in range(0, len(data), PAGE_SIZE):
-            yield data[i : i + PAGE_SIZE]
-
     async def prepare_leaderboard(self, user: discord.Member) -> list[list[Chatter]]:
         assert user.guild
 
@@ -126,7 +122,7 @@ class ChatterXP(commands.GroupCog, name="chatter"):
 
             chatters.append(Chatter(member, row["xp"], row["last_message"]))
 
-        return [page for page in self.prepare_pages(chatters)]
+        return [page for page in prepare_pages(chatters, PAGE_SIZE)]
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):
