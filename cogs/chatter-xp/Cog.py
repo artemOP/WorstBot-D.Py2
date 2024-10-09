@@ -13,9 +13,11 @@ from discord.utils import utcnow
 from modules import EmbedGen, Paginators
 
 if TYPE_CHECKING:
-    from WorstBot import WorstBot
-    from discord import User, Member, Interaction, Guild
     from datetime import datetime
+
+    from discord import Guild, Interaction, Member, User
+
+    from WorstBot import WorstBot
 
 
 class Chatter:
@@ -168,26 +170,33 @@ class ChatterXP(commands.GroupCog, name="chatter-xp"):
         )
 
     @app_commands.command(name="leaderboard")
-    async def leaderboard(self, interaction: Interaction):
+    async def leaderboard(self, interaction: Interaction[WorstBot]):
         """Earn xp by sending messages, view your spot on the leaderboard here.
 
         :param interaction:
         :return:
         """
         await interaction.response.defer(ephemeral=True)
+        assert interaction.guild
         chatters = await self.prepare_guild(interaction.guild)
         chatters.sort(key=lambda chatter: chatter.xp, reverse=True)
 
-        embed_list = EmbedGen.EmbedFieldList(
-            title="Leaderboard",
-            fields=[
+        fields = []
+        for i, chatter in enumerate(chatters):
+            member = interaction.guild.get_member(chatter.user.id)
+            if not member:
+                continue
+            fields.append(
                 EmbedGen.EmbedField(
-                    name=f"{i + 1}: {chatter.user.display_name}",
+                    name=f"{i + 1}: {member.display_name}",
                     value=f"Level {chatter.level} ({chatter.xp} xp)",
                     inline=False,
                 )
-                for i, chatter in enumerate(chatters)
-            ],
+            )
+
+        embed_list = EmbedGen.EmbedFieldList(
+            title="Leaderboard",
+            fields=fields,
             max_fields=10,
         )
         view = Paginators.ButtonPaginatedEmbeds(embed_list)
