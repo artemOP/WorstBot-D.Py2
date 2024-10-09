@@ -7,6 +7,7 @@ from modules import EmbedGen, Converters, RoleManipulation
 from typing import Optional
 from rapidfuzz import process
 
+
 class RoleTransformer(Transformer):
 
     @staticmethod
@@ -24,15 +25,15 @@ class RoleTransformer(Transformer):
         if not roles:
             return []
         if not current:
-            return [Choice(name = role.name, value = str(role.id)) for role in roles][:25]
+            return [Choice(name=role.name, value=str(role.id)) for role in roles][:25]
 
-        fuzzy_roles = process.extract(current.lower(), [role.name.lower() for role in roles], limit = 25, score_cutoff = 40)
+        fuzzy_roles = process.extract(current.lower(), [role.name.lower() for role in roles], limit=25, score_cutoff=40)
         fuzzy_roles = [role_name for role_name, _, _ in fuzzy_roles]
-        return [Choice(name = role.name, value = str(role.id)) for role in roles if role.name.lower() in fuzzy_roles]
+        return [Choice(name=role.name, value=str(role.id)) for role in roles if role.name.lower() in fuzzy_roles]
 
 
 @app_commands.guild_only()
-class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Toggle a self assignable role"):
+class SelfAssignableRoles(commands.GroupCog, name="giveme", description="Toggle a self assignable role"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.logger = self.bot.logger.getChild(self.qualified_name)
@@ -47,7 +48,7 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
         del self.bot.giveme_roles
         self.logger.info(f"{self.qualified_name} cog unloaded")
 
-    @tasks.loop(count = 1)
+    @tasks.loop(count=1)
     async def fetch_giveme_roles(self):
         role_ids = await self.bot.fetch("Select guild, array_agg(role) as roles FROM selfroles GROUP BY guild")
         for row in role_ids:
@@ -68,7 +69,7 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
     async def on_guild_remove(self, guild: discord.Guild):
         del self.bot.giveme_roles[guild]
 
-    @app_commands.command(name = "role")
+    @app_commands.command(name="role")
     async def ToggleRole(self, interaction: Interaction, role: Transform[discord.Role, RoleTransformer]):
         """Give or remove optional roles
 
@@ -80,12 +81,12 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
             return
         if role in interaction.user.roles:
             await RoleManipulation.role_remove(interaction.user, role, "WorstBot Giveme Role")
-            await interaction.response.send_message(f"You have removed the {role.name} role", ephemeral = True)
+            await interaction.response.send_message(f"You have removed the {role.name} role", ephemeral=True)
         else:
             await RoleManipulation.role_add(interaction.user, role, "WorstBot Giveme Role")
-            await interaction.response.send_message(f"You have added the {role.name} role", ephemeral = True)
+            await interaction.response.send_message(f"You have added the {role.name} role", ephemeral=True)
 
-    @app_commands.command(name = "list")
+    @app_commands.command(name="list")
     async def ListRole(self, interaction: Interaction):
         """List all optional roles
 
@@ -94,15 +95,18 @@ class SelfAssignableRoles(commands.GroupCog, name = "giveme", description = "Tog
         """
         roles = await self.bot.fetch("SELECT role FROM selfroles WHERE guild = $1", interaction.guild_id)
         if not roles:
-            return await interaction.response.send_message("no roles", ephemeral = True)
+            return await interaction.response.send_message("no roles", ephemeral=True)
         for index, value in enumerate(roles):
             roles[index] = interaction.guild.get_role(value["role"])
             if not roles[index]:
                 await self.bot.execute("DELETE FROM selfroles WHERE role=$1", value["role"])
         embed_list = EmbedGen.SimpleEmbedList(
-            title = "giveme roles",
-            descriptions = "\n\n".join(f"`{i + 1}: {'Broken role' if not role else role.name}`" for i, role in enumerate(roles)))
-        await interaction.response.send_message(embeds = embed_list, ephemeral = True)
+            title="giveme roles",
+            descriptions="\n\n".join(
+                f"`{i + 1}: {'Broken role' if not role else role.name}`" for i, role in enumerate(roles)
+            ),
+        )
+        await interaction.response.send_message(embeds=embed_list, ephemeral=True)
 
 
 async def setup(bot):

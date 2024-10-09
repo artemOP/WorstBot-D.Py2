@@ -2,6 +2,7 @@ import discord
 import logging
 from io import BufferedIOBase
 
+
 class FFmpegPCMAudio(discord.FFmpegPCMAudio):
     _log = logging.getLogger("discord.player")
     _log.setLevel(logging.ERROR)
@@ -15,13 +16,13 @@ class FFmpegPCMAudio(discord.FFmpegPCMAudio):
             data = source.read(8192)
             if not data:
                 self._stdin.close()
-                self._process.wait(timeout = 10)
+                self._process.wait(timeout=10)
                 return
             try:
                 if self._stdin is not None:
                     self._stdin.write(data)
             except Exception:
-                self._log.debug('Write error for %s, this is probably not a problem', self, exc_info = True)
+                self._log.debug("Write error for %s, this is probably not a problem", self, exc_info=True)
                 # at this point the source data is either exhausted or the process is fubar
                 self._process.terminate()
                 return

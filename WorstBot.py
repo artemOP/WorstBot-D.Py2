@@ -30,6 +30,7 @@ emoji_servers = (
     1099836635627126876,
 )
 
+
 class _events(StrEnum):
     autorole = auto()
     autoevent = auto()
@@ -42,10 +43,11 @@ class _events(StrEnum):
     usage = auto()
     chatter_xp = auto()
 
+
 class WorstBot(discord_commands.Bot):
 
     def __init__(self, command_prefix, activity, intents, owner_id, env_values):
-        super().__init__(command_prefix, intents = intents, owner_id = owner_id, activity = activity, tree_cls = CommandTree)
+        super().__init__(command_prefix, intents=intents, owner_id=owner_id, activity=activity, tree_cls=CommandTree)
         self.pool: Optional[asyncpg.Pool] = None
         self.session: Optional[ClientSession] = None
         self._event_toggles = {}
@@ -56,15 +58,30 @@ class WorstBot(discord_commands.Bot):
         self.custom_emoji: list[discord.Emoji] = []
 
     async def setup_hook(self) -> None:
-        self.pool = await asyncpg.create_pool(database = self.dotenv.get("postgresdb"), user = self.dotenv.get("postgresuser"), password = self.dotenv.get("postgrespassword"), command_timeout = 10, min_size = 1, max_size = 100, loop = self.loop)
-        self.session = ClientSession(loop = self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
+        self.pool = await asyncpg.create_pool(
+            database=self.dotenv.get("postgresdb"),
+            user=self.dotenv.get("postgresuser"),
+            password=self.dotenv.get("postgrespassword"),
+            command_timeout=10,
+            min_size=1,
+            max_size=100,
+            loop=self.loop,
+        )
+        self.session = ClientSession(loop=self.loop, json_serialize=lambda x: orjson.dumps(x).decode())
         self.prepare_mentions.start()
         self.load_emoji.start()
 
-        sc = spotify.SpotifyClient(client_id = self.dotenv.get("spotify_id"), client_secret = self.dotenv.get("spotify_secret"))
-        node: wavelink.Node = wavelink.Node(uri = "http://localhost:2333", password = self.dotenv.get("lavalink_password"), id = "WorstBot", retries = 0 if self.dotenv.get("lavalink_retries") else None)
+        sc = spotify.SpotifyClient(
+            client_id=self.dotenv.get("spotify_id"), client_secret=self.dotenv.get("spotify_secret")
+        )
+        node: wavelink.Node = wavelink.Node(
+            uri="http://localhost:2333",
+            password=self.dotenv.get("lavalink_password"),
+            id="WorstBot",
+            retries=0 if self.dotenv.get("lavalink_retries") else None,
+        )
         try:
-            await wavelink.NodePool.connect(client = self, nodes = [node], spotify = sc)
+            await wavelink.NodePool.connect(client=self, nodes=[node], spotify=sc)
         except client_exceptions.ClientConnectorError:
             pass
 
@@ -76,7 +93,7 @@ class WorstBot(discord_commands.Bot):
             except discord_commands.NoEntryPointError:
                 self.logger.debug("Skipping extension %s", extension)
             except Exception as e:
-                self.logger.exception(f"Failed to load extension {extension}", exc_info = e)
+                self.logger.exception(f"Failed to load extension {extension}", exc_info=e)
 
     def collect_cogs(self, root: pathlib.Path) -> typing.Generator[pathlib.Path, None, None]:
         for file in root.iterdir():
@@ -89,13 +106,13 @@ class WorstBot(discord_commands.Bot):
         self.logger.warning(f"Connected as {self.user} at {datetime.datetime.now().strftime('%d/%m/%y %H:%M')}")
 
     async def post(self, *, url: str, params: dict = None, headers: dict = None) -> dict:
-        async with self.session.post(url = url, params = params, headers = headers) as response:
+        async with self.session.post(url=url, params=params, headers=headers) as response:
             content = await response.json()
             content["status"] = response.status
             return content
 
     async def get(self, *, url: str, params: dict = None, headers: dict = None) -> dict:
-        async with self.session.get(url = url, params = params, headers = headers) as response:
+        async with self.session.get(url=url, params=params, headers=headers) as response:
             try:
                 content: list | dict = await response.json()
             except orjson.JSONDecodeError:
@@ -106,7 +123,7 @@ class WorstBot(discord_commands.Bot):
             return content
 
     async def getstatus(self, *, url: str, params: dict = None, headers: dict = None) -> int:
-        async with self.session.get(url = url, params = params, headers = headers) as response:
+        async with self.session.get(url=url, params=params, headers=headers) as response:
             return response.status
 
     async def fetch(self, sql: str, *args) -> Optional[list[asyncpg.Record]]:
@@ -140,7 +157,9 @@ class WorstBot(discord_commands.Bot):
         except (discord.Forbidden, discord.HTTPException):
             return
 
-    async def maybe_fetch_channel(self, channel_id: int) -> Optional[abc.GuildChannel | abc.PrivateChannel | discord.Thread]:
+    async def maybe_fetch_channel(
+        self, channel_id: int
+    ) -> Optional[abc.GuildChannel | abc.PrivateChannel | discord.Thread]:
         try:
             return self.get_channel(channel_id) or await self.fetch_channel(channel_id)
         except (discord.NotFound, discord.Forbidden, discord.HTTPException):
@@ -152,7 +171,9 @@ class WorstBot(discord_commands.Bot):
         except (discord.NotFound, discord.HTTPException):
             return
 
-    async def maybe_fetch_member(self, source: discord.Guild | discord.Thread, member_id: int = None) -> Optional[discord.Member]:
+    async def maybe_fetch_member(
+        self, source: discord.Guild | discord.Thread, member_id: int = None
+    ) -> Optional[discord.Member]:
         try:
             return source.get_member(member_id) or await source.fetch_member(member_id)
         except (discord.NotFound, discord.Forbidden, discord.HTTPException):
@@ -182,7 +203,7 @@ class WorstBot(discord_commands.Bot):
     @staticmethod
     def pair(guild_id: int, member_id: int) -> int:
         """Returns a unique id for a guild and member using cantor pairing function
-        
+
         :param guild_id: Guild to pair
         :param member_id: Member to pair
         :return: combined id
@@ -197,7 +218,7 @@ class WorstBot(discord_commands.Bot):
         :return: guild, member
         """
         w = floor((sqrt(8 * pair + 1) - 1) / 2)
-        y = int(pair - (w ** 2 + w) / 2)
+        y = int(pair - (w**2 + w) / 2)
         x = int(w - y)
         return (self.get_guild(x), self.get_user(y)) if get_objects else (x, y)
 
@@ -208,20 +229,22 @@ class WorstBot(discord_commands.Bot):
         else:
             command.extras[f"mention"] = mention
 
-    @tasks.loop(count = 1)
+    @tasks.loop(count=1)
     async def prepare_mentions(self):
         for guild in [*self.guilds, None]:
-            for fetched_command in await self.tree.fetch_commands(guild = guild):
-                command = self.tree.get_command(fetched_command.name, guild = guild, type = fetched_command.type)
+            for fetched_command in await self.tree.fetch_commands(guild=guild):
+                command = self.tree.get_command(fetched_command.name, guild=guild, type=fetched_command.type)
                 if command is None:
                     self.logger.debug("command not found")
                     continue
                 await self.add_to_extra(command, fetched_command.mention, None if not guild else guild.id)
                 if isinstance(command, Group):
                     for child in command.walk_commands():
-                        await self.add_to_extra(child, f"</{child.qualified_name}:{fetched_command.id}>", None if not guild else guild.id)
+                        await self.add_to_extra(
+                            child, f"</{child.qualified_name}:{fetched_command.id}>", None if not guild else guild.id
+                        )
 
-    @tasks.loop(count = 1)
+    @tasks.loop(count=1)
     async def load_emoji(self):
         for guild_id in emoji_servers:
             guild = self.get_guild(guild_id)
@@ -238,32 +261,46 @@ class WorstBot(discord_commands.Bot):
     async def before_prepare_mentions(self):
         await self.wait_until_ready()
 
+
 class CommandTree(app_commands.CommandTree):
     def __init__(self, bot):
         super().__init__(bot)
 
     async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
         if not interaction.guild:
-            await interaction.response.send_message("This bot cannot be used in dm's, sorry", ephemeral = True)
+            await interaction.response.send_message("This bot cannot be used in dm's, sorry", ephemeral=True)
             return False
         return True
 
-    def get_command(self, command_name: str, /, *, guild: Optional[abc.Snowflake] = None, type: AppCommandType = AppCommandType.chat_input) -> Optional[Command | ContextMenu | Group]:
-        command = super().get_command(command_name, guild = guild, type = type)
+    def get_command(
+        self,
+        command_name: str,
+        /,
+        *,
+        guild: Optional[abc.Snowflake] = None,
+        type: AppCommandType = AppCommandType.chat_input,
+    ) -> Optional[Command | ContextMenu | Group]:
+        command = super().get_command(command_name, guild=guild, type=type)
         if not command:
-            command = super().get_command(command_name, guild = None, type = type)
+            command = super().get_command(command_name, guild=None, type=type)
         return command
 
-    def get_commands(self, *, guild: Optional[abc.Snowflake] = None, type: Optional[AppCommandType] = None) -> list[Command | ContextMenu | Group]:
-        guild_commands = super().get_commands(guild = guild, type = type)
-        global_commands = super().get_commands(guild = None, type = type)
+    def get_commands(
+        self, *, guild: Optional[abc.Snowflake] = None, type: Optional[AppCommandType] = None
+    ) -> list[Command | ContextMenu | Group]:
+        guild_commands = super().get_commands(guild=guild, type=type)
+        global_commands = super().get_commands(guild=None, type=type)
         for global_command in global_commands:
             if global_command.name not in [guild_command.name for guild_command in guild_commands]:
                 guild_commands.append(global_command)
         return guild_commands
 
     @staticmethod
-    def flatten_commands(command_list: list[app_commands.Command | app_commands.Group | discord_commands.Command | discord_commands.Group]) -> list[app_commands.Command | discord_commands.Command]:
+    def flatten_commands(
+        command_list: list[
+            app_commands.Command | app_commands.Group | discord_commands.Command | discord_commands.Group
+        ],
+    ) -> list[app_commands.Command | discord_commands.Command]:
         flat_commands = []
         for command in command_list:
             if isinstance(command, app_commands.Group | discord_commands.Command):
@@ -273,30 +310,39 @@ class CommandTree(app_commands.CommandTree):
                 flat_commands.append(command)
         return flat_commands
 
+
 async def start() -> typing.NoReturn:
-    await asyncio.gather(discord_bot.start(env_values.get("discord")), return_exceptions = False)
+    await asyncio.gather(discord_bot.start(env_values.get("discord")), return_exceptions=False)
+
 
 if __name__ == "__main__":
-    discord.utils.setup_logging(level = INFO)
+    discord.utils.setup_logging(level=INFO)
     logging.getLogger("discord.gateway").setLevel(ERROR)
     logging.getLogger("discord.voice_client").setLevel(ERROR)
     logging.getLogger("matplotlib.category").setLevel(ERROR)
     intents = discord.Intents(
-        bans = True,
-        emojis = True,
-        guilds = True,
-        integrations = True,
-        invites = True,
-        members = True,
-        guild_messages = True,
-        guild_scheduled_events = True,
-        voice_states = True,
-        webhooks = True
+        bans=True,
+        emojis=True,
+        guilds=True,
+        integrations=True,
+        invites=True,
+        members=True,
+        guild_messages=True,
+        guild_scheduled_events=True,
+        voice_states=True,
+        webhooks=True,
     )
     env_values = dotenv_values()
-    discord_bot = WorstBot(command_prefix = discord_commands.when_mentioned,
-                           activity = discord.Streaming(name = "With ones and zeros", url = "http://definitelynotarickroll.lol/", game = "a little bit of trolling", platform = "YouTube"),
-                           intents = intents,
-                           owner_id = int(env_values.get("owner")),
-                           env_values = env_values)
+    discord_bot = WorstBot(
+        command_prefix=discord_commands.when_mentioned,
+        activity=discord.Streaming(
+            name="With ones and zeros",
+            url="http://definitelynotarickroll.lol/",
+            game="a little bit of trolling",
+            platform="YouTube",
+        ),
+        intents=intents,
+        owner_id=int(env_values.get("owner")),
+        env_values=env_values,
+    )
     asyncio.run(start())

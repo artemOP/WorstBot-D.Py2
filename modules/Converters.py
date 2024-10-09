@@ -4,18 +4,21 @@ from discord.ext import commands
 from typing import Optional
 from datetime import datetime as dt
 
+
 class CodeBlock:
     """
-        Returns codeblock in the format of:
-        ```{language}
-        code
-        ```
+    Returns codeblock in the format of:
+    ```{language}
+    code
+    ```
     """
+
     def __init__(self, language: str = "py", code: str = MISSING):
         self._codeblock = f"```{language}\n{code}```"
 
     def __str__(self) -> str:
         return self._codeblock
+
 
 def to_int(x: str | float | bytes, base: Optional[int] = 10) -> int:
     """
@@ -59,10 +62,12 @@ def to_datetime(date_str: str, date_format: str) -> dt | None:
     except (ValueError, TypeError):
         return None
 
+
 def to_command_mention(command: commands.Command, guild: discord.Guild) -> str:
     mention_str = command.extras.get(f"mention for {guild.id}")
     if not mention_str:
         mention_str = command.extras.get("mention", "None")
     return mention_str or "None"
+
 
 # todo: integrate ErrorHandler.py

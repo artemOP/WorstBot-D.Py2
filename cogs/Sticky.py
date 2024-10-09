@@ -6,27 +6,34 @@ from WorstBot import WorstBot
 
 @app_commands.default_permissions()
 @app_commands.guild_only()
-class StickyMessage(commands.GroupCog, name = "sticky"):
+class StickyMessage(commands.GroupCog, name="sticky"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS sticky(channel BIGINT UNIQUE NOT NULL,messageid BIGINT, message TEXT NOT NULL )")
+        await self.bot.execute(
+            "CREATE TABLE IF NOT EXISTS sticky(channel BIGINT UNIQUE NOT NULL,messageid BIGINT, message TEXT NOT NULL )"
+        )
         self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
         self.logger.info(f"{self.qualified_name} cog unloaded")
 
-    @app_commands.command(name = "add", description = "Pin a message to the bottom of a channel")
+    @app_commands.command(name="add", description="Pin a message to the bottom of a channel")
     async def StickyAdd(self, interaction: discord.Interaction, message: str):
-        await self.bot.execute("INSERT INTO sticky(channel, messageid, message) VALUES($1, $2, $3) ON CONFLICT (channel) DO UPDATE SET messageid=NULL , message=excluded.message", interaction.channel_id, None, message)
+        await self.bot.execute(
+            "INSERT INTO sticky(channel, messageid, message) VALUES($1, $2, $3) ON CONFLICT (channel) DO UPDATE SET messageid=NULL , message=excluded.message",
+            interaction.channel_id,
+            None,
+            message,
+        )
         await interaction.response.send_message(f'"{message}" \n\nhas been added as a sticky.')
 
-    @app_commands.command(name = "remove", description = "Remove pinned message")
+    @app_commands.command(name="remove", description="Remove pinned message")
     async def StickyRemove(self, interaction: discord.Interaction):
         await self.bot.execute("DELETE FROM sticky WHERE channel=$1", interaction.channel_id)
-        await interaction.response.send_message('Sticky has been removed from this channel.', ephemeral = True)
+        await interaction.response.send_message("Sticky has been removed from this channel.", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

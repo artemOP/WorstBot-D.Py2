@@ -8,7 +8,7 @@ from modules import Converters, EmbedGen
 
 @app_commands.default_permissions()
 @app_commands.guild_only()
-class Twitch(commands.GroupCog, name = "twitch"):
+class Twitch(commands.GroupCog, name="twitch"):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.TwitchClientId = self.bot.dotenv.get("twitch_client")
@@ -18,7 +18,9 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))")
+        await self.bot.execute(
+            "CREATE TABLE IF NOT EXISTS twitch(guild BIGINT NOT NULL, channel BIGINT NOT NULL, userid BIGINT NOT NULL, role BIGINT, live BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(guild, userid))"
+        )
         await self.TokenGen()
         await self.streamers()
         self.request.start()
@@ -32,23 +34,28 @@ class Twitch(commands.GroupCog, name = "twitch"):
         self.streamersTable = await self.bot.fetch("SELECT * FROM twitch")
 
     async def validate(self, token: int):
-        validity = await self.bot.get(url = "https://id.twitch.tv/oauth2/validate", headers = {"Authorization": f"Bearer {token}"})
+        validity = await self.bot.get(
+            url="https://id.twitch.tv/oauth2/validate", headers={"Authorization": f"Bearer {token}"}
+        )
         if validity["status"] == 200:
             return True
         await self.TokenGen()
 
     async def TokenGen(self):
-        token = await self.bot.post(url = "https://id.twitch.tv/oauth2/token",
-                                    params = {
-                                        "client_id": self.TwitchClientId,
-                                        "client_secret": self.TwitchSecret,
-                                        "grant_type": "client_credentials"
-                                    }
-                                    )
+        token = await self.bot.post(
+            url="https://id.twitch.tv/oauth2/token",
+            params={
+                "client_id": self.TwitchClientId,
+                "client_secret": self.TwitchSecret,
+                "grant_type": "client_credentials",
+            },
+        )
         self.token = token.get("access_token")
 
-    @app_commands.command(name = "add", description = "Get live alerts for your selected twitch channel")
-    async def LiveTrackingAdd(self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str, alert_role: discord.Role = None):
+    @app_commands.command(name="add", description="Get live alerts for your selected twitch channel")
+    async def LiveTrackingAdd(
+        self, interaction: Interaction, channel: discord.TextChannel, twitch_user: str, alert_role: discord.Role = None
+    ):
         twitch_user = Converters.to_int(twitch_user)
         if alert_role == interaction.guild.default_role:
             alert_role_id = 0
@@ -56,16 +63,22 @@ class Twitch(commands.GroupCog, name = "twitch"):
             alert_role_id = None
         else:
             alert_role_id = alert_role.id
-        await self.bot.execute("INSERT INTO twitch(guild, channel, userid, role) VALUES($1, $2, $3, $4) ON CONFLICT (guild, userid) DO UPDATE SET channel = excluded.channel, role = excluded.role", interaction.guild_id, channel.id, twitch_user, alert_role_id)
+        await self.bot.execute(
+            "INSERT INTO twitch(guild, channel, userid, role) VALUES($1, $2, $3, $4) ON CONFLICT (guild, userid) DO UPDATE SET channel = excluded.channel, role = excluded.role",
+            interaction.guild_id,
+            channel.id,
+            twitch_user,
+            alert_role_id,
+        )
         await self.streamers()
-        await interaction.response.send_message("Streamer has been added to the Tracking list", ephemeral = True)
+        await interaction.response.send_message("Streamer has been added to the Tracking list", ephemeral=True)
 
-    @app_commands.command(name = "remove", description = "Remove live alerts from your selected channel")
+    @app_commands.command(name="remove", description="Remove live alerts from your selected channel")
     async def LiveTrackingRemove(self, interaction: Interaction, twitch_user: str):
         twitch_user = Converters.to_int(twitch_user)
         await self.bot.execute("DELETE FROM twitch WHERE userid=$1", twitch_user)
         await self.streamers()
-        await interaction.response.send_message("Streamer has been removed from the Tracking list", ephemeral = True)
+        await interaction.response.send_message("Streamer has been removed from the Tracking list", ephemeral=True)
 
     @LiveTrackingAdd.autocomplete("twitch_user")
     async def LiveTrackingAddAutocomplete(self, interaction: Interaction, current):
@@ -73,8 +86,14 @@ class Twitch(commands.GroupCog, name = "twitch"):
             return []
         if len(current) < 3:
             return []
-        responses = await self.bot.get(url = "https://api.twitch.tv/helix/search/channels", params = {"query": current, "first": 25}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
-        return [app_commands.Choice(name = response["display_name"], value = response["id"]) for response in responses["data"]]
+        responses = await self.bot.get(
+            url="https://api.twitch.tv/helix/search/channels",
+            params={"query": current, "first": 25},
+            headers={"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token},
+        )
+        return [
+            app_commands.Choice(name=response["display_name"], value=response["id"]) for response in responses["data"]
+        ]
 
     @LiveTrackingRemove.autocomplete("twitch_user")
     async def LiveTrackingRemoveAutocomplete(self, interaction: Interaction, current):
@@ -83,14 +102,25 @@ class Twitch(commands.GroupCog, name = "twitch"):
         streamIDs = await self.bot.fetch("SELECT userid FROM twitch WHERE guild=$1 LIMIT 25", interaction.guild_id)
         if not streamIDs:
             return []
-        streamers = await self.bot.get(url = "https://api.twitch.tv/helix/channels", params = {"broadcaster_id": [streamID["userid"] for streamID in streamIDs]}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
-        return [app_commands.Choice(name = streamer["broadcaster_name"], value = streamer["broadcaster_id"]) for streamer in streamers["data"]]
+        streamers = await self.bot.get(
+            url="https://api.twitch.tv/helix/channels",
+            params={"broadcaster_id": [streamID["userid"] for streamID in streamIDs]},
+            headers={"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token},
+        )
+        return [
+            app_commands.Choice(name=streamer["broadcaster_name"], value=streamer["broadcaster_id"])
+            for streamer in streamers["data"]
+        ]
 
-    @tasks.loop(minutes = 1, reconnect = True)
+    @tasks.loop(minutes=1, reconnect=True)
     async def request(self):
         if not await self.validate(self.token):
             return
-        streams = await self.bot.get(url = "https://api.twitch.tv/helix/streams", params = {"user_id": [user["userid"] for user in self.streamersTable]}, headers = {"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token})
+        streams = await self.bot.get(
+            url="https://api.twitch.tv/helix/streams",
+            params={"user_id": [user["userid"] for user in self.streamersTable]},
+            headers={"client-id": self.TwitchClientId, "Authorization": "Bearer " + self.token},
+        )
 
         for user in self.streamersTable:
             if await self.bot.events(user["guild"], self.bot._events.twitch) is False:
@@ -115,22 +145,19 @@ class Twitch(commands.GroupCog, name = "twitch"):
                 role_mention = role.mention
 
             embed = EmbedGen.SimpleEmbed(
-                author = {
-                    "name": stream["user_name"],
-                    "url": f"https://www.twitch.tv/{stream['user_name']}"
-                },
-                title = stream["user_name"],
-                text = f"{stream['user_name']} just went live on twitch!\n{stream['title']}\nfind them at https://www.twitch.tv/{stream['user_name']}",
-                footer = {"text": stream["started_at"].split("T")[1].split("Z")[0]},
-                image = stream["thumbnail_url"].replace("-{width}x{height}", "")
+                author={"name": stream["user_name"], "url": f"https://www.twitch.tv/{stream['user_name']}"},
+                title=stream["user_name"],
+                text=f"{stream['user_name']} just went live on twitch!\n{stream['title']}\nfind them at https://www.twitch.tv/{stream['user_name']}",
+                footer={"text": stream["started_at"].split("T")[1].split("Z")[0]},
+                image=stream["thumbnail_url"].replace("-{width}x{height}", ""),
             )
-            await channel.send(embed=embed, content = role_mention)
+            await channel.send(embed=embed, content=role_mention)
 
     @request.before_loop
     async def before_my_task(self):
         await self.bot.wait_until_ready()
         await sleep(3)
 
+
 async def setup(bot):
     await bot.add_cog(Twitch(bot))
-

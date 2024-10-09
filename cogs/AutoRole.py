@@ -5,9 +5,9 @@ from WorstBot import WorstBot
 from modules import EmbedGen, Paginators, RoleManipulation
 
 
-@app_commands.default_permissions(manage_roles = True)
+@app_commands.default_permissions(manage_roles=True)
 @app_commands.guild_only()
-class AutoRole(commands.GroupCog, name = "autorole"):
+class AutoRole(commands.GroupCog, name="autorole"):
     def __init__(self, bot: WorstBot):
         super().__init__()
         self.bot = bot
@@ -20,7 +20,7 @@ class AutoRole(commands.GroupCog, name = "autorole"):
     async def cog_unload(self) -> None:
         self.logger.info(f"{self.qualified_name} cog unloaded")
 
-    @app_commands.command(name = "setup")
+    @app_commands.command(name="setup")
     async def AutoRole(self, interaction: Interaction, role: discord.Role):
         """Add or remove role from autorole.
         Autoroles are added automatically on user join.
@@ -29,14 +29,22 @@ class AutoRole(commands.GroupCog, name = "autorole"):
         :param role: The role to add or remove
         :return:
         """
-        if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM autorole WHERE guild = $1 AND role = $2)", interaction.guild_id, role.id):
-            await self.bot.execute("INSERT INTO autorole(guild, role) VALUES($1, $2) ON CONFLICT (role) DO NOTHING", interaction.guild.id, role.id)
-            await interaction.response.send_message(f"{role.name} successfully added to the AutoRole", ephemeral = True)
+        if not await self.bot.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM autorole WHERE guild = $1 AND role = $2)", interaction.guild_id, role.id
+        ):
+            await self.bot.execute(
+                "INSERT INTO autorole(guild, role) VALUES($1, $2) ON CONFLICT (role) DO NOTHING",
+                interaction.guild.id,
+                role.id,
+            )
+            await interaction.response.send_message(f"{role.name} successfully added to the AutoRole", ephemeral=True)
         else:
             await self.bot.execute("DELETE FROM autorole WHERE guild = $1 AND role = $2", interaction.guild.id, role.id)
-            await interaction.response.send_message(content = f"{role.name} successfully removed to the AutoRole", ephemeral = True)
+            await interaction.response.send_message(
+                content=f"{role.name} successfully removed to the AutoRole", ephemeral=True
+            )
 
-    @app_commands.command(name = "list")
+    @app_commands.command(name="list")
     async def AutoRoleList(self, interaction: Interaction):
         """List all roles that are automatically applied on user join
 
@@ -45,17 +53,18 @@ class AutoRole(commands.GroupCog, name = "autorole"):
         """
         roles = await self.bot.fetch("SELECT role FROM autorole WHERE guild=$1", interaction.guild.id)
         embed_list = EmbedGen.EmbedFieldList(
-            title = "Automatically applied roles",
-            fields = [
+            title="Automatically applied roles",
+            fields=[
                 EmbedGen.EmbedField(
-                    name = "Role",
-                    value = "Broken Role" if not (role := interaction.guild.get_role(role_id["role"])) else role.mention)
+                    name="Role",
+                    value="Broken Role" if not (role := interaction.guild.get_role(role_id["role"])) else role.mention,
+                )
                 for role_id in roles
             ],
-            max_fields = 9
+            max_fields=9,
         )
-        view = Paginators.ButtonPaginatedEmbeds(timeout = 60, embed_list = embed_list)
-        await interaction.response.send_message(view = view, embed = view.embedlist[0], ephemeral = True)
+        view = Paginators.ButtonPaginatedEmbeds(timeout=60, embed_list=embed_list)
+        await interaction.response.send_message(view=view, embed=view.embedlist[0], ephemeral=True)
         view.response = await interaction.original_response()
 
     @commands.Cog.listener()

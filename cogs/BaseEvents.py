@@ -6,6 +6,7 @@ from WorstBot import WorstBot, _events
 
 events = [event.name for event in _events]
 
+
 class BaseEvents(commands.Cog):
 
     def __init__(self, bot: WorstBot):
@@ -38,21 +39,24 @@ class BaseEvents(commands.Cog):
 
     @staticmethod
     def Choices() -> list[Choice[str]]:
-        return [app_commands.Choice(name = event, value = event) for event in events]
+        return [app_commands.Choice(name=event, value=event) for event in events]
 
-    @app_commands.command(name = "toggle", description = "toggle automatic events on a server level")
+    @app_commands.command(name="toggle", description="toggle automatic events on a server level")
     @app_commands.default_permissions()
-    @app_commands.choices(event = Choices())
+    @app_commands.choices(event=Choices())
     @app_commands.guild_only()
     async def toggle(self, interaction: Interaction, event: Choice[str]):
-        await interaction.response.defer(ephemeral = True)
+        await interaction.response.defer(ephemeral=True)
         if not await self.bot.fetchval("SELECT EXISTS(SELECT 1 FROM events WHERE guild = $1)", interaction.guild_id):
             await self.on_guild_join(interaction.guild)
-        toggle = await self.bot.execute(f"UPDATE events SET {event.name} = NOT {event.name} WHERE guild = $1 RETURNING {event.name}", interaction.guild_id)
+        toggle = await self.bot.execute(
+            f"UPDATE events SET {event.name} = NOT {event.name} WHERE guild = $1 RETURNING {event.name}",
+            interaction.guild_id,
+        )
         if self.bot._event_toggles.get(interaction.guild_id):
             self.bot._event_toggles.pop(interaction.guild_id)
 
-        await interaction.followup.send(f"{event.name} set to: {toggle}", ephemeral = True)
+        await interaction.followup.send(f"{event.name} set to: {toggle}", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
@@ -61,6 +65,7 @@ class BaseEvents(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
         await self.bot.execute("DELETE FROM events WHERE guild = $1", guild.id)
+
 
 async def setup(bot):
     await bot.add_cog(BaseEvents(bot))

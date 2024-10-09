@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from discord import User, Member, Interaction, Guild
     from datetime import datetime
 
+
 class Chatter:
     def __init__(self, user: User | Member, xp: int, last_message: datetime):
         self.user: User | Member = user
@@ -57,7 +58,7 @@ class Chatter:
 
 
 @app_commands.guild_only()
-class ChatterXP(commands.GroupCog, name = "chatter-xp"):
+class ChatterXP(commands.GroupCog, name="chatter-xp"):
 
     def __init__(self, bot: WorstBot):
         self.bot = bot
@@ -65,7 +66,9 @@ class ChatterXP(commands.GroupCog, name = "chatter-xp"):
         self.chatters: dict[User | Member, Chatter] = {}
 
     async def cog_load(self) -> None:
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS chatter_xp(user_id BIGINT PRIMARY KEY, xp INT DEFAULT 0, last_message TIMESTAMPTZ DEFAULT NOW())")
+        await self.bot.execute(
+            "CREATE TABLE IF NOT EXISTS chatter_xp(user_id BIGINT PRIMARY KEY, xp INT DEFAULT 0, last_message TIMESTAMPTZ DEFAULT NOW())"
+        )
         self.logger.info(f"{self.qualified_name} cog loaded")
 
     async def cog_unload(self) -> None:
@@ -114,70 +117,83 @@ class ChatterXP(commands.GroupCog, name = "chatter-xp"):
             return
 
         chatter = await self.get_chatter(message.author)
-        if chatter.last_message + timedelta(minutes = 1) > utcnow():
-            self.logger.debug(f"Message from {message.author} too soon, time remaining: {chatter.last_message + timedelta(minutes = 1) - utcnow()}")
+        if chatter.last_message + timedelta(minutes=1) > utcnow():
+            self.logger.debug(
+                f"Message from {message.author} too soon, time remaining: {chatter.last_message + timedelta(minutes = 1) - utcnow()}"
+            )
             return
 
         chatter.last_message = utcnow()
         level_up = chatter.add_xp(1)
-        await self.bot.execute("UPDATE chatter_xp SET xp = $1, last_message = $2 WHERE user_id = $3", chatter.xp, chatter.last_message, chatter.user.id)
+        await self.bot.execute(
+            "UPDATE chatter_xp SET xp = $1, last_message = $2 WHERE user_id = $3",
+            chatter.xp,
+            chatter.last_message,
+            chatter.user.id,
+        )
 
         if level_up:
             await message.channel.send(
-                embed = EmbedGen.FullEmbed(
-                    author = {"name": message.author.name, "icon_url": message.author.display_avatar.url},
-                    title = "Level Up!",
-                    fields = [
-                        EmbedGen.EmbedField(name = "level", value = chatter.level),
-                        EmbedGen.EmbedField(name = "xp", value = chatter.xp),
-                    ]
+                embed=EmbedGen.FullEmbed(
+                    author={"name": message.author.name, "icon_url": message.author.display_avatar.url},
+                    title="Level Up!",
+                    fields=[
+                        EmbedGen.EmbedField(name="level", value=chatter.level),
+                        EmbedGen.EmbedField(name="xp", value=chatter.xp),
+                    ],
                 ),
-                delete_after = 60)
+                delete_after=60,
+            )
 
-    @app_commands.command(name = "progress")
+    @app_commands.command(name="progress")
     async def current_xp(self, interaction: Interaction):
         """View your current xp and level.
 
         :param interaction:
         :return:
         """
-        await interaction.response.defer(ephemeral = True)
+        await interaction.response.defer(ephemeral=True)
         chatter = await self.get_chatter(interaction.user)
         next_level = int((5 * (chatter.level + 1) * (chatter.level + 2)) / 2)
         await interaction.followup.send(
-            embed = EmbedGen.FullEmbed(
-                author = {"name": interaction.user.name, "icon_url": interaction.user.display_avatar.url},
-                title = "Current XP",
-                fields = [
-                    EmbedGen.EmbedField(name = "level", value = chatter.level),
-                    EmbedGen.EmbedField(name = "xp", value = chatter.xp),
-                    EmbedGen.EmbedField(name = "level progress", value = f"{chatter.xp/next_level:.2%}")
-                ]
+            embed=EmbedGen.FullEmbed(
+                author={"name": interaction.user.name, "icon_url": interaction.user.display_avatar.url},
+                title="Current XP",
+                fields=[
+                    EmbedGen.EmbedField(name="level", value=chatter.level),
+                    EmbedGen.EmbedField(name="xp", value=chatter.xp),
+                    EmbedGen.EmbedField(name="level progress", value=f"{chatter.xp/next_level:.2%}"),
+                ],
             )
         )
 
-    @app_commands.command(name = "leaderboard")
+    @app_commands.command(name="leaderboard")
     async def leaderboard(self, interaction: Interaction):
         """Earn xp by sending messages, view your spot on the leaderboard here.
 
         :param interaction:
         :return:
         """
-        await interaction.response.defer(ephemeral = True)
+        await interaction.response.defer(ephemeral=True)
         chatters = await self.prepare_guild(interaction.guild)
-        chatters.sort(key = lambda chatter: chatter.xp, reverse = True)
+        chatters.sort(key=lambda chatter: chatter.xp, reverse=True)
 
         embed_list = EmbedGen.EmbedFieldList(
-            title = "Leaderboard",
-            fields = [
-                EmbedGen.EmbedField(name = f"{i + 1}: {chatter.user.display_name}", value = f"Level {chatter.level} ({chatter.xp} xp)", inline = False)
+            title="Leaderboard",
+            fields=[
+                EmbedGen.EmbedField(
+                    name=f"{i + 1}: {chatter.user.display_name}",
+                    value=f"Level {chatter.level} ({chatter.xp} xp)",
+                    inline=False,
+                )
                 for i, chatter in enumerate(chatters)
             ],
-            max_fields = 10
+            max_fields=10,
         )
         view = Paginators.ButtonPaginatedEmbeds(embed_list)
-        await interaction.followup.send(view = view, embed = embed_list[0], ephemeral = True)
+        await interaction.followup.send(view=view, embed=embed_list[0], ephemeral=True)
         view.response = await interaction.original_response()
+
 
 async def setup(bot):
     await bot.add_cog(ChatterXP(bot))

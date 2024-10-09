@@ -5,14 +5,19 @@ from WorstBot import WorstBot
 from re import sub
 from asyncio import sleep
 
+
 class Opinion(commands.Cog):
     def __init__(self, bot: WorstBot):
         self.bot = bot
         self.logger = self.bot.logger.getChild(self.qualified_name)
 
     async def cog_load(self) -> None:
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS Opinion(guild BIGINT NOT NULL, timestamp TIMESTAMP WITH TIME ZONE NOT NULL, content TEXT DEFAULT NULL)")
-        await self.bot.execute("CREATE TABLE IF NOT EXISTS PrefixBlacklist(guild BIGINT NOT NULL, prefix TEXT NOT NULL)")
+        await self.bot.execute(
+            "CREATE TABLE IF NOT EXISTS Opinion(guild BIGINT NOT NULL, timestamp TIMESTAMP WITH TIME ZONE NOT NULL, content TEXT DEFAULT NULL)"
+        )
+        await self.bot.execute(
+            "CREATE TABLE IF NOT EXISTS PrefixBlacklist(guild BIGINT NOT NULL, prefix TEXT NOT NULL)"
+        )
         self.DeleteOld.start()
         self.logger.info(f"{self.qualified_name} cog loaded")
 
@@ -34,20 +39,33 @@ class Opinion(commands.Cog):
 
         content = sub(r"http\S+", "", message.clean_content)
         content = sub(r"<(?P<animated>a?):(?P<name>\w{2,32}):(?P<id>\d{18,22})>", "", content)
-        await self.bot.execute("INSERT INTO opinion(guild, timestamp, content) VALUES ($1, $2, $3)", message.guild.id, message.created_at, content)
+        await self.bot.execute(
+            "INSERT INTO opinion(guild, timestamp, content) VALUES ($1, $2, $3)",
+            message.guild.id,
+            message.created_at,
+            content,
+        )
 
     @app_commands.command(name="opinion", description="Ask worst bot for its opinion on your super important questions")
     @app_commands.guild_only()
     async def opinion(self, interaction: discord.Interaction, opinion: str = None):
-        content = await self.bot.fetchval("SELECT content FROM Opinion WHERE GUILD=$1 ORDER BY random() LIMIT 1", interaction.guild.id)
-        await interaction.response.send_message(content=f"what is my opinion on `{opinion}`?\n\n{content or 'I have no opinions'}")
+        content = await self.bot.fetchval(
+            "SELECT content FROM Opinion WHERE GUILD=$1 ORDER BY random() LIMIT 1", interaction.guild.id
+        )
+        await interaction.response.send_message(
+            content=f"what is my opinion on `{opinion}`?\n\n{content or 'I have no opinions'}"
+        )
 
-    @app_commands.command(name = "prefix-blacklist", description = "blacklist prefixes used by other bots in opinion forming")
+    @app_commands.command(
+        name="prefix-blacklist", description="blacklist prefixes used by other bots in opinion forming"
+    )
     @app_commands.default_permissions()
     @app_commands.guild_only()
     async def PrefixBlacklist(self, interaction: discord.Interaction, prefix: str):
-        await self.bot.execute("INSERT INTO prefixblacklist(guild, prefix) VALUES ($1, $2)", interaction.guild_id, prefix)
-        await interaction.response.send_message(f"messages starting with {prefix} will be ignored", ephemeral = True)
+        await self.bot.execute(
+            "INSERT INTO prefixblacklist(guild, prefix) VALUES ($1, $2)", interaction.guild_id, prefix
+        )
+        await interaction.response.send_message(f"messages starting with {prefix} will be ignored", ephemeral=True)
 
     @tasks.loop(hours=24, reconnect=True)
     async def DeleteOld(self):

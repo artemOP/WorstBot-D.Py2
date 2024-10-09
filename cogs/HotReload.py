@@ -10,7 +10,7 @@ IGNORE_EXTENSIONS = ["-template"]
 
 
 def path_from_extension(extension: str) -> pathlib.Path:
-    return pathlib.Path(extension.replace('.', os.sep) + '.py')
+    return pathlib.Path(extension.replace(".", os.sep) + ".py")
 
 
 class HotReload(commands.Cog):
@@ -31,7 +31,7 @@ class HotReload(commands.Cog):
         self.logger.info(f"{self.qualified_name} cog unloaded")
         self.hot_reload_loop.stop()
 
-    @tasks.loop(seconds = 3)
+    @tasks.loop(seconds=3)
     async def hot_reload_loop(self):
         for extension in list(self.bot.extensions.keys()):
             if extension in IGNORE_EXTENSIONS:
@@ -53,7 +53,7 @@ class HotReload(commands.Cog):
                 self.logger.error(f"Couldn't reload extension: {extension}")
             else:
                 self.logger.info(f"Reloaded extension: {extension}")
-                self.bot.dispatch("cog_reload", root = None, file = f"{extension}.py")
+                self.bot.dispatch("cog_reload", root=None, file=f"{extension}.py")
                 await self.bot.prepare_mentions.start()
             finally:
                 self.last_modified_time[extension] = time
