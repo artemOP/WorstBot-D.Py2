@@ -41,3 +41,7 @@ class NoAsAService(commands.Cog, name="no-as-a-service"):
 
         embed = EmbedGen.SimpleEmbed(text=resp.get("reason", ""), colour=discord.Colour.green())
         await interaction.followup.send(embed=embed)
+
+
+async def setup(bot: WorstBot) -> None:
+    await bot.add_cog(NoAsAService(bot))
